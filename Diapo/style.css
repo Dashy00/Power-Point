@@ -35,16 +35,27 @@ body {
   align-items: center;
   justify-content: center;
 }
-
 .slide {
-  width: 900px;
-  aspect-ratio: 16/9;
-  background: white;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  border-radius: 4px;
-  overflow: hidden;
+    width: min(960px, 92vw);
+    aspect-ratio: 16 / 9;
+    background-color: #ffffff; /* Couleur par défaut */
+    background-size: cover;    /* L'image remplit toute la slide */
+    background-position: center;
+    position: relative;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Garde le fond dans les arrondis */
 }
+
+/* Style pour l'input couleur pour qu'il soit plus joli */
+#bgColorPicker {
+    border: none;
+    height: 40px;
+    border-radius: 8px;
+    padding: 2px;
+}
+
 
 /* -------- TEXT BOX -------- */
 

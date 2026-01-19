@@ -2,6 +2,9 @@ const addTextBtn = document.getElementById("addTextBtn");
 const addImageBtn = document.getElementById("addImageBtn");
 const imageInput  = document.getElementById("imageInput");
 const slide       = document.getElementById("slide");
+const bgColorPicker = document.getElementById("bgColorPicker");
+const bgImageBtn = document.getElementById("bgImageBtn");
+const bgImageInput = document.getElementById("bgImageInput");
 
 let addMode = false;
 
@@ -261,4 +264,35 @@ window.addEventListener("mousemove", (e) => {
 window.addEventListener("mouseup", () => {
   dragging = null;
   resizing = null;
+});
+// -----------------------------
+// CHANGEMENT COULEUR DE FOND
+// -----------------------------
+bgColorPicker.addEventListener("input", (e) => {
+    slide.style.backgroundImage = "none"; // Enlever l'image si on choisit une couleur
+    slide.style.backgroundColor = e.target.value;
+});
+
+// -----------------------------
+// IMAGE DE FOND (Wallpaper)
+// -----------------------------
+bgImageBtn.addEventListener("click", () => {
+    bgImageInput.click();
+});
+
+bgImageInput.addEventListener("change", () => {
+    const file = bgImageInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        // Appliquer l'image au style de la slide
+        slide.style.backgroundColor = "transparent";
+        slide.style.backgroundImage = `url(${reader.result})`;
+        slide.style.backgroundSize = "cover";
+        slide.style.backgroundPosition = "center";
+        slide.style.backgroundRepeat = "no-repeat";
+    };
+    reader.readAsDataURL(file);
+    bgImageInput.value = ""; // Reset pour pouvoir réimporter la même image
 });
