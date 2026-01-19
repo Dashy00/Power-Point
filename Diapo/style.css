@@ -1,4 +1,8 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
   height: 100vh;
@@ -27,35 +31,185 @@ body {
   font-weight: bold;
 }
 
-.btn.active { background: #059669; }
+.btn.active {
+  background: #059669;
+}
 
 .workspace {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 50px;
+}
+
+/* -------- MENU FIXE EN HAUT -------- */
+.top-toolbar {
+  position: fixed;
+  top: 0;
+  left: 240px;
+  right: 0;
+  height: 50px;
+  background: #1f2937;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  z-index: 900;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 20px;
+  border-right: 1px solid #374151;
+}
+
+.toolbar-group:last-of-type {
+  border-right: none;
+}
+
+.top-toolbar select {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #374151;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.top-toolbar input[type="color"] {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.top-tool-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: #374151;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.top-tool-btn:hover {
+  background: #4b5563;
+}
+
+.top-tool-btn.active {
+  background: #2563eb;
+}
+
+.toolbar-hint {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+/* -------- BARRE FLOTTANTE -------- */
+.floating-toolbar {
+  position: absolute;
+  display: none;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: #1f2937;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.floating-toolbar.visible {
+  display: flex;
+}
+
+.floating-toolbar select {
+  padding: 5px 8px;
+  border: none;
+  border-radius: 4px;
+  background: #374151;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.floating-toolbar input[type="color"] {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tool-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 4px;
+  background: #374151;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.tool-btn:hover {
+  background: #4b5563;
+}
+
+.tool-btn.active {
+  background: #2563eb;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #4b5563;
+  margin: 0 5px;
+}
+
+/* Mise en évidence du texte en édition */
+.text-box.editing {
+  border-color: #2563eb;
+  border-style: solid;
 }
 .slide {
-    width: min(960px, 92vw);
-    aspect-ratio: 16 / 9;
-    background-color: #ffffff; /* Couleur par défaut */
-    background-size: cover;    /* L'image remplit toute la slide */
-    background-position: center;
-    position: relative;
-    border-radius: 14px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
-    overflow: hidden; /* Garde le fond dans les arrondis */
+  width: min(960px, 92vw);
+  aspect-ratio: 16 / 9;
+  background-color: #ffffff; /* Couleur par défaut */
+  background-size: cover; /* L'image remplit toute la slide */
+  background-position: center;
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Garde le fond dans les arrondis */
 }
 
 /* Style pour l'input couleur pour qu'il soit plus joli */
 #bgColorPicker {
-    border: none;
-    height: 40px;
-    border-radius: 8px;
-    padding: 2px;
+  border: none;
+  height: 40px;
+  border-radius: 8px;
+  padding: 2px;
 }
-
 
 /* -------- TEXT BOX -------- */
 
@@ -96,7 +250,9 @@ body {
   pointer-events: auto;
 }
 
-.text-box:hover .delete-btn { opacity: 1; }
+.text-box:hover .delete-btn {
+  opacity: 1;
+}
 
 /* -------- IMAGE BOX -------- */
 
@@ -126,10 +282,15 @@ body {
   cursor: nwse-resize;
 }
 
-
 /* Afficher la croix aussi quand on survole une image */
-.image-box:hover .delete-btn { opacity: 1; }
+.image-box:hover .delete-btn {
+  opacity: 1;
+}
 
 /* Optionnel : évite que l'image masque les boutons */
-.image-box { z-index: 1; }
-.text-box { z-index: 2; }
+.image-box {
+  z-index: 1;
+}
+.text-box {
+  z-index: 2;
+}

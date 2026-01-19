@@ -1,40 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Éditeur Slide</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Menu de formatage fixe en haut -->
+    <header class="top-toolbar" id="topToolbar">
+      <div class="toolbar-group">
+        <select id="topFontFamily" title="Police">
+          <option value="Arial">Arial</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Courier New">Courier New</option>
+        </select>
 
-   <aside class="sidebar">
-    <h1>Outils</h1>
-    <button class="btn" id="addTextBtn">Ajouter un texte</button>
-    <button class="btn" id="addImageBtn">Ajouter une image</button>
-    
-    <hr style="border: 0.5px solid #444; margin: 10px 0;">
-    
-    <h1>Arrière-plan</h1>
-    <label style="font-size: 12px;">Couleur de fond :</label>
-    <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
-    
-    <button class="btn" id="bgImageBtn" style="background-color: #4b5563; margin-top: 10px;">Image de fond</button>
+        <select id="topFontSize" title="Taille">
+          <option value="12px">12</option>
+          <option value="16px">16</option>
+          <option value="18px" selected>18</option>
+          <option value="24px">24</option>
+          <option value="32px">32</option>
+          <option value="48px">48</option>
+        </select>
+      </div>
 
-    <input type="file" id="imageInput" accept="image/*" hidden>
-    <input type="file" id="bgImageInput" accept="image/*" hidden>
+      <div class="toolbar-group">
+        <input
+          type="color"
+          id="topTextColor"
+          value="#333333"
+          title="Couleur du texte"
+        />
+        <button class="top-tool-btn" id="topBoldBtn" title="Gras">
+          <b>G</b>
+        </button>
+        <button class="top-tool-btn" id="topItalicBtn" title="Italique">
+          <i>I</i>
+        </button>
+        <button class="top-tool-btn" id="topUnderlineBtn" title="Souligné">
+          <u>S</u>
+        </button>
+      </div>
 
+<<<<<<< HEAD
 
         
     </aside>
 
 
+=======
+      <div class="toolbar-group">
+        <input
+          type="color"
+          id="topHighlightColor"
+          value="#ffff00"
+          title="Couleur surlignage"
+        />
+        <button class="top-tool-btn" id="topHighlightBtn" title="Surligner">
+          🖍️
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">
+          ↩️
+        </button>
+        <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">
+          ↪️
+        </button>
+      </div>
+
+      <span class="toolbar-hint" id="toolbarHint"
+        >Sélectionnez du texte pour le formater</span
+      >
+    </header>
+
+    <aside class="sidebar">
+      <h1>Outils</h1>
+      <button class="btn" id="addTextBtn">Ajouter un texte</button>
+      <button class="btn" id="addImageBtn">Ajouter une image</button>
+
+      <hr style="border: 0.5px solid #444; margin: 10px 0" />
+
+      <h1>Arrière-plan</h1>
+      <label style="font-size: 12px">Couleur de fond :</label>
+      <input
+        type="color"
+        id="bgColorPicker"
+        value="#ffffff"
+        style="width: 100%; cursor: pointer"
+      />
+
+      <button
+        class="btn"
+        id="bgImageBtn"
+        style="background-color: #4b5563; margin-top: 10px"
+      >
+        Image de fond
+      </button>
+
+      <input type="file" id="imageInput" accept="image/*" hidden />
+      <input type="file" id="bgImageInput" accept="image/*" hidden />
+    </aside>
+
 
     <main class="workspace">
-        <div class="slide" id="slide"></div>
+      <div class="slide" id="slide"></div>
     </main>
 
+    <!-- Barre d'outils flottante -->
+    <div class="floating-toolbar" id="floatingToolbar">
+      <select id="fontFamily" title="Police">
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Courier New">Courier New</option>
+      </select>
+
+      <select id="fontSize" title="Taille">
+        <option value="12px">12</option>
+        <option value="16px">16</option>
+        <option value="18px" selected>18</option>
+        <option value="24px">24</option>
+        <option value="32px">32</option>
+        <option value="48px">48</option>
+      </select>
+
+      <input
+        type="color"
+        id="textColor"
+        value="#333333"
+        title="Couleur du texte"
+      />
+
+      <div class="toolbar-separator"></div>
+
+      <button class="tool-btn" id="boldBtn" title="Gras"><b>G</b></button>
+      <button class="tool-btn" id="italicBtn" title="Italique"><i>I</i></button>
+      <button class="tool-btn" id="underlineBtn" title="Souligné">
+        <u>S</u>
+      </button>
+
+      <div class="toolbar-separator"></div>
+
+      <input
+        type="color"
+        id="highlightColor"
+        value="#ffff00"
+        title="Couleur de surlignage"
+      />
+      <button class="tool-btn" id="highlightBtn" title="Surligner">🖍️</button>
+    </div>
+
     <script src="script.js"></script>
-    
-</body>
+  </body>
 </html>
