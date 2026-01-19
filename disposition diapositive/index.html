@@ -10,11 +10,10 @@
 
     <div class="editor-wrapper">
         
-        <!-- BARRE LATÉRALE GAUCHE -->
         <div class="sidebar">
-            <div class="sidebar-item" id="btn-powerpoint" title="Power-Point">
-                <span class="icon">🌳</span>
-                <span class="label">Power-Point</span>
+            <div class="sidebar-header">
+                <span class="tree-icon">🌳</span>
+                <h2>Power-Point</h2>
             </div>
             
             <div class="sidebar-item" id="btn-new-slide" title="Nouvelle diapositive">
@@ -39,33 +38,29 @@
             
             <div class="sidebar-spacer"></div>
             
-            <button id="btn-delete" class="sidebar-item delete" title="Supprimer">
+            <button id="btn-delete" class="sidebar-btn delete" title="Supprimer">
                 <span class="icon">🗑️</span>
                 <span class="label">Supprimer</span>
             </button>
             
-            <button id="btn-export" class="sidebar-item export" title="Générer & Télécharger">
-                <span class="icon">💾</span>
+            <button id="btn-generate" class="sidebar-btn generate" title="Générer & Télécharger">
+                <span class="icon">📄</span>
                 <span class="label">Générer &<br>Télécharger</span>
             </button>
         </div>
 
-        <!-- ZONE PRINCIPALE -->
         <div class="main-content">
-            
-            <div class="workspace">
-                <div class="viewport" id="viewport">
-                    <svg id="connections-svg" class="connections-layer"></svg>
-                    <div class="canvas" id="canvas"></div>
-                </div>
+            <div class="viewport" id="viewport">
+                <div class="canvas" id="canvas">
+                    <svg id="connections-layer"></svg>
+                    </div>
             </div>
 
-            <!-- ZOOM POPUP (bas-droit) -->
-            <div class="zoom-popup" id="zoomPopup">
-                <button id="zoomOut" class="zoom-btn">−</button>
-                <span id="zoomPercent" class="zoom-percent">100%</span>
-                <button id="zoomIn" class="zoom-btn">+</button>
-                <button id="resetZoom" class="zoom-btn reset">↺</button>
+            <div class="zoom-controls">
+                <span id="zoom-text">100 %</span>
+                <button id="btn-zoom-out" class="zoom-btn">−</button>
+                <button id="btn-zoom-in" class="zoom-btn">+</button>
+                <button id="btn-reset" class="reset-btn">Réinitialiser</button>
             </div>
         </div>
     </div>
