@@ -252,9 +252,20 @@ slide.addEventListener("mousedown", (e) => {
   const target = e.target.closest(".text-box, .image-box");
   if (!target) return;
 
-  // Si texte en édition (on clique dans le content) => pas de drag
-  if (e.target.classList.contains("content") && e.target.isContentEditable)
+  // Si c'est un text-box en mode édition, ne pas drag pour permettre la sélection
+  if (target.classList.contains("text-box")) {
+    const content = target.querySelector(".content");
+    if (content && content.isContentEditable) {
+      // Ne pas déclencher le drag si on est en mode édition
+      return;
+    }
+  }
+
+  // Si on clique directement sur le content (même non éditable),
+  // on laisse le double-clic activer l'édition
+  if (e.target.classList.contains("content")) {
     return;
+  }
 
   dragging = target;
   activeItem = target;
