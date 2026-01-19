@@ -52,6 +52,7 @@
     </aside>
 
 
+
       <div class="toolbar-group">
         <input
           type="color"
@@ -84,6 +85,13 @@
       <button class="btn" id="addImageBtn">Ajouter une image</button>
 
       <hr style="border: 0.5px solid #444; margin: 10px 0" />
+      <h1>Formes</h1>
+  <div class="shape-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+    <button class="btn btn-small" onclick="addShape('rect')">Rectangle</button>
+    <button class="btn btn-small" onclick="addShape('circle')">Cercle</button>
+    <button class="btn btn-small" onclick="addShape('triangle')">Triangle</button>
+  </div>
+  <hr style="border: 0.5px solid #444; margin: 10px 0" />
 
       <h1>Arrière-plan</h1>
       <label style="font-size: 12px">Couleur de fond :</label>
