@@ -739,3 +739,45 @@ document.addEventListener("keydown", (e) => {
 
 // Sauvegarder l'état initial
 saveState();
+
+// ============= FORMES =============
+
+function addShape(type) {
+  saveState();
+
+  const box = document.createElement("div");
+  box.className = `shape-box ${type}`;
+
+  const shape = document.createElement("div");
+  shape.className = "shape-content";
+
+  // Croix de suppression
+  const del = document.createElement("div");
+  del.className = "delete-btn";
+  del.textContent = "✕";
+
+  del.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    saveState();
+    box.remove();
+    if (activeItem === box) activeItem = null;
+  });
+
+  // Poignée de resize
+  const handle = document.createElement("div");
+  handle.className = "resize-handle";
+
+  box.appendChild(shape);
+  box.appendChild(del);
+  box.appendChild(handle);
+
+  // Position au centre de la slide
+  const slideRect = slide.getBoundingClientRect();
+  box.style.left = `${(slideRect.width - 100) / 2}px`;
+  box.style.top = `${(slideRect.height - 100) / 2}px`;
+  box.style.width = "100px";
+  box.style.height = "100px";
+
+  slide.appendChild(box);
+  activeItem = box;
+}
