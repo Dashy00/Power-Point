@@ -3,19 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Éditeur – Canvas infini</title>
+    <title>Éditeur – Présentation non-linéaire</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="editor-background">
-        <div class="workspace">
+    <div class="editor-wrapper">
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="tree-icon">🌳</span>
+                <h2>Power-Point</h2>
+            </div>
+            
+            <div class="sidebar-item" id="btn-new-slide" title="Nouvelle diapositive">
+                <span class="icon">➕</span>
+                <span class="label">Nouvelle<br>diapositive</span>
+            </div>
+            
+            <div class="sidebar-item" id="btn-info-bulle" title="Info Bulle">
+                <span class="icon">●</span>
+                <span class="label">Info Bulle</span>
+            </div>
+            
+            <div class="sidebar-item" id="btn-condition" title="Condition">
+                <span class="icon">■</span>
+                <span class="label">Condition</span>
+            </div>
+            
+            <div class="sidebar-item" id="btn-bloc-fin" title="Bloc Fin">
+                <span class="icon">✚</span>
+                <span class="label">Bloc Fin</span>
+            </div>
+            
+            <div class="sidebar-spacer"></div>
+            
+            <button id="btn-delete" class="sidebar-btn delete" title="Supprimer">
+                <span class="icon">🗑️</span>
+                <span class="label">Supprimer</span>
+            </button>
+            
+            <button id="btn-generate" class="sidebar-btn generate" title="Générer & Télécharger">
+                <span class="icon">📄</span>
+                <span class="label">Générer &<br>Télécharger</span>
+            </button>
+        </div>
+
+        <div class="main-content">
             <div class="viewport" id="viewport">
-                <div class="canvas" id="canvas"></div>
+                <div class="canvas" id="canvas">
+                    <svg id="connections-layer"></svg>
+                    </div>
+            </div>
+
+            <div class="zoom-controls">
+                <span id="zoom-text">100 %</span>
+                <button id="btn-zoom-out" class="zoom-btn">−</button>
+                <button id="btn-zoom-in" class="zoom-btn">+</button>
+                <button id="btn-reset" class="reset-btn">Réinitialiser</button>
             </div>
         </div>
     </div>
 
-    <script src="canvas.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

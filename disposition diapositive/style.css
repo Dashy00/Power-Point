@@ -1,8 +1,10 @@
+/* RESET ET BASE */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     user-select: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 html, body {
@@ -11,54 +13,208 @@ html, body {
     overflow: hidden;
 }
 
-body {
-    background-color: #1f1f1f;
+/* LAYOUT GLOBAL */
+.editor-wrapper {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
-}
-
-.editor-background {
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #1f1f1f;
 }
 
-.workspace {
-    width: 80%;
-    height: 85%;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+/* --- BARRE LATÉRALE --- */
+.sidebar {
+    width: 220px;
+    background-color: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #34495e;
+    margin-bottom: 10px;
+}
+
+.sidebar-header h2 { font-size: 18px; font-weight: 600; color: #ecf0f1; }
+.tree-icon { font-size: 24px; }
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 6px;
+}
+
+.sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+.sidebar-item .icon { font-size: 24px; width: 30px; text-align: center; }
+.sidebar-item .label { font-size: 14px; line-height: 1.2; font-weight: 500; }
+.sidebar-spacer { flex: 1; }
+
+.sidebar-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    transition: transform 0.1s;
+    text-align: left;
+    margin-top: 5px;
+}
+.sidebar-btn:active { transform: scale(0.98); }
+.sidebar-btn.delete { background-color: #c0392b; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.sidebar-btn.generate { background-color: #5f6a6a; border: 1px solid #7f8c8d; }
+
+/* --- ZONE PRINCIPALE (Viewport) --- */
+.main-content {
+    flex: 1;
+    position: relative;
+    background-color: #ecf0f1;
     overflow: hidden;
 }
 
 .viewport {
     width: 100%;
     height: 100%;
-    background-color: #f5f5f5;
-    position: relative;
-    overflow: hidden;
     cursor: grab;
+    overflow: hidden;
+    position: relative;
 }
 
-.viewport:active {
-    cursor: grabbing;
-}
+.viewport:active { cursor: grabbing; }
 
+/* --- CANVAS INFINI --- */
 .canvas {
     position: absolute;
-    width: 5000px;
-    height: 5000px;
-    background-image:
-        linear-gradient(#d0d0d0 1px, transparent 1px),
-        linear-gradient(90deg, #d0d0d0 1px, transparent 1px);
-    background-size: 50px 50px;
-    top: 0;
-    left: 0;
-    pointer-events: none;
+    width: 0; height: 0;
+    top: 50%; left: 50%;
+    background-image: radial-gradient(#bdc3c7 2px, transparent 2px);
+    background-size: 20px 20px;
+    width: 10000px;
+    height: 10000px;
+    left: -5000px;
+    top: -5000px;
+    background-color: #fcfcfc;
+    transform-origin: 5000px 5000px;
+}
+
+/* --- SLIDES --- */
+.slide {
+    position: absolute;
+    min-width: 150px;
+    min-height: 80px;
+    background: white;
+    border: 2px solid #2c3e50;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    color: #2c3e50;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 2;
+    cursor: move;
+}
+
+.slide.info {
+    border-radius: 50%;
+    width: 120px; height: 120px;
+    background-color: #34495e; color: white; border: none; text-align: center;
+}
+.slide.condition {
+    background-color: #5d6d7e; color: white; border: none; border-radius: 2px;
+}
+.slide.fin {
+    border: 2px solid #c0392b; color: #c0392b;
+}
+.slide.selected {
+    outline: 2px solid #3498db;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+}
+
+/* --- PORTS --- */
+.port {
+    position: absolute; width: 10px; height: 10px;
+    background-color: #2980b9; border-radius: 50%;
+    cursor: crosshair; z-index: 10; opacity: 0; transition: opacity 0.2s;
+}
+.slide:hover .port { opacity: 1; }
+.port.top { top: -5px; left: 50%; transform: translateX(-50%); }
+.port.bottom { bottom: -5px; left: 50%; transform: translateX(-50%); }
+.port.left { left: -5px; top: 50%; transform: translateY(-50%); }
+.port.right { right: -5px; top: 50%; transform: translateY(-50%); }
+
+/* --- FLÈCHES SVG --- */
+#connections-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; pointer-events: none; z-index: 1;
+}
+line { stroke: #2c3e50; stroke-width: 2; }
+
+/* --- NOUVEAU DESIGN ZOOM (Comme image fournie) --- */
+.zoom-controls {
+    position: absolute;
+    top: 20px; /* En haut à droite comme sur l'image ? Ou bas droite */
+    right: 20px;
+    background-color: #1e1e1e; /* Fond sombre */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 30px; /* Forme pillule */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 100;
+}
+
+#zoom-text {
+    font-weight: 500;
+    font-size: 14px;
+    padding: 0 5px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.zoom-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 5px;
+    transition: color 0.2s;
+}
+.zoom-btn:hover { color: #3498db; }
+
+.reset-btn {
+    background-color: transparent;
+    border: 1px solid #4a4a4a;
+    color: #4db6ac; /* Couleur turquoise style 'Réinitialiser' */
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 5px;
+    transition: all 0.2s;
+}
+.reset-btn:hover {
+    background-color: rgba(77, 182, 172, 0.1);
+    border-color: #4db6ac;
 }
