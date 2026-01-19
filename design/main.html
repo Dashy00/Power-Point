@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditeur de Diapositive</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <button class="back-btn">‹</button>
+        </div>
+        
+        <div class="header-center">
+            <div class="tool-title">Ajout texte</div>
+            <div class="tool-options">
+                <span>souligné</span>
+                <span>surligné</span>
+                <span>couleur</span>
+                <span class="bold">gras</span>
+                <span class="italic">italique</span>
+                <span>copier style d'écriture</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <span>Ajout image</span>
+            <span>Ajout vidéo</span>
+        </div>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <div class="context-box" id="box-1" data-target="1">
+                <span class="box-number">1</span>
+                <div class="box-content">Propriétés titre</div>
+            </div>
+            <div class="context-box" id="box-2" data-target="2">
+                <span class="box-number">2</span>
+                <div class="box-content">Propriétés texte</div>
+            </div>
+            <div class="context-box" id="box-3" data-target="3">
+                <span class="box-number">3</span>
+                <div class="box-content">Propriétés image</div>
+            </div>
+            <div class="context-box" id="box-4" data-target="4">
+                <span class="box-number">4</span>
+                <div class="box-content">Propriétés lien</div>
+            </div>
+        </aside>
+
+        <div class="nav-arrow left"></div>
+
+        <section class="slide-container" id="slide-area">
+            <div class="dot" id="dot-1" data-id="1" style="top: 15%; left: 10%;">1</div>
+            <div class="dot" id="dot-2" data-id="2" style="top: 35%; left: 10%;">2</div>
+            <div class="dot" id="dot-3" data-id="3" style="top: 55%; left: 10%;">3</div>
+            <div class="dot" id="dot-4" data-id="4" style="top: 75%; left: 10%;">4</div>
+        </section>
+
+        <div class="nav-arrow right"></div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
