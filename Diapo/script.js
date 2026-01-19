@@ -35,6 +35,11 @@ let startW = 0,
 let startMouseX = 0,
   startMouseY = 0;
 
+// rotation texte
+let rotating = null;
+let startAngle = 0;
+let currentRotation = 0;
+
 // -----------------------------
 // MODE AJOUT TEXTE
 // -----------------------------
@@ -135,6 +140,7 @@ slide.addEventListener("click", (e) => {
   box.innerHTML = `
     <div class="content" contenteditable="false">Double-cliquez pour modifier</div>
     <div class="delete-btn">✕</div>
+    <div class="rotate-handle" title="Rotation">↻</div>
   `;
 
   box.style.left = `${e.clientX - rect.left - 75}px`;
@@ -200,6 +206,7 @@ window.addEventListener("keydown", (e) => {
 // -----------------------------
 // MOUSEDOWN :
 // - si poignée resize => resize image
+// - si poignée rotate => rotation texte
 // - sinon drag texte/image
 // -----------------------------
 slide.addEventListener("mousedown", (e) => {
@@ -219,7 +226,29 @@ slide.addEventListener("mousedown", (e) => {
     return;
   }
 
-  // 2) DRAG
+  // 2) ROTATION
+  const rotateHandle = e.target.closest(".rotate-handle");
+  if (rotateHandle) {
+    rotating = rotateHandle.parentElement;
+    activeItem = rotating;
+
+    const rect = rotating.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Angle initial de la souris par rapport au centre
+    startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+
+    // Rotation actuelle de l'élément
+    const transform = rotating.style.transform;
+    const match = transform.match(/rotate\((-?\d+\.?\d*)deg\)/);
+    currentRotation = match ? parseFloat(match[1]) : 0;
+
+    e.preventDefault();
+    return;
+  }
+
+  // 3) DRAG
   const target = e.target.closest(".text-box, .image-box");
   if (!target) return;
 
@@ -238,7 +267,7 @@ slide.addEventListener("mousedown", (e) => {
 });
 
 // -----------------------------
-// MOUSEMOVE : resize ou drag
+// MOUSEMOVE : resize, rotation ou drag
 // -----------------------------
 window.addEventListener("mousemove", (e) => {
   // RESIZE IMAGE
@@ -252,6 +281,24 @@ window.addEventListener("mousemove", (e) => {
 
     resizing.style.width = `${newW}px`;
     resizing.style.height = `${newH}px`;
+    return;
+  }
+
+  // ROTATION TEXTE
+  if (rotating) {
+    const rect = rotating.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Nouvel angle de la souris
+    const newAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+
+    // Différence d'angle en degrés
+    const angleDiff = (newAngle - startAngle) * (180 / Math.PI);
+
+    // Appliquer la rotation
+    const finalRotation = currentRotation + angleDiff;
+    rotating.style.transform = `rotate(${finalRotation}deg)`;
     return;
   }
 
@@ -283,8 +330,12 @@ window.addEventListener("mousemove", (e) => {
 // MOUSEUP : fin drag / resize
 // -----------------------------
 window.addEventListener("mouseup", () => {
+  if (rotating) {
+    saveState();
+  }
   dragging = null;
   resizing = null;
+  rotating = null;
 });
 // -----------------------------
 // CHANGEMENT COULEUR DE FOND
