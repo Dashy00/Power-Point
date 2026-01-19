@@ -9,7 +9,6 @@
 <body>
 
     <div class="editor-wrapper">
-        
         <div class="sidebar">
             <div class="sidebar-header">
                 <span class="tree-icon">🌳</span>
@@ -20,17 +19,14 @@
                 <span class="icon">➕</span>
                 <span class="label">Nouvelle<br>diapositive</span>
             </div>
-            
             <div class="sidebar-item" id="btn-info-bulle" title="Info Bulle">
                 <span class="icon">●</span>
                 <span class="label">Info Bulle</span>
             </div>
-            
             <div class="sidebar-item" id="btn-condition" title="Condition">
                 <span class="icon">■</span>
                 <span class="label">Condition</span>
             </div>
-            
             <div class="sidebar-item" id="btn-bloc-fin" title="Bloc Fin">
                 <span class="icon">✚</span>
                 <span class="label">Bloc Fin</span>
@@ -42,18 +38,26 @@
                 <span class="icon">🗑️</span>
                 <span class="label">Supprimer</span>
             </button>
-            
-            <button id="btn-generate" class="sidebar-btn generate" title="Générer & Télécharger">
+            <button id="btn-generate" class="sidebar-btn generate" title="Générer">
                 <span class="icon">📄</span>
-                <span class="label">Générer &<br>Télécharger</span>
+                <span class="label">Générer</span>
             </button>
         </div>
 
         <div class="main-content">
             <div class="viewport" id="viewport">
                 <div class="canvas" id="canvas">
-                    <svg id="connections-layer"></svg>
-                    </div>
+                    <svg id="connections-layer">
+                        <defs>
+                            <marker id="arrow-end" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+                                <path d="M0,0 L10,5 L0,10" fill="#2c3e50" />
+                            </marker>
+                            <marker id="arrow-start" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto">
+                                <path d="M10,0 L0,5 L10,10" fill="#2c3e50" />
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
             </div>
 
             <div class="zoom-controls">
@@ -61,6 +65,19 @@
                 <button id="btn-zoom-out" class="zoom-btn">−</button>
                 <button id="btn-zoom-in" class="zoom-btn">+</button>
                 <button id="btn-reset" class="reset-btn">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-editor" class="slide-editor-overlay">
+        <div class="editor-container">
+            <div class="editor-header">
+                <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
+                <span class="editor-title">Édition de la diapositive</span>
+            </div>
+            <div class="editor-content">
+                <input type="text" id="slide-title-input" placeholder="Titre de la diapositive" class="title-input">
+                <textarea id="slide-body-input" placeholder="Contenu de la page (texte, notes...)" class="body-input"></textarea>
             </div>
         </div>
     </div>

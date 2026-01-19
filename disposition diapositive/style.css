@@ -160,13 +160,28 @@ html, body {
 .port.left { left: -5px; top: 50%; transform: translateY(-50%); }
 .port.right { right: -5px; top: 50%; transform: translateY(-50%); }
 
-/* --- FLÈCHES SVG --- */
+/* --- FLÈCHES (SVG) --- */
 #connections-layer {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%; pointer-events: none; z-index: 1;
+    position: absolute; 
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; /* Laisse passer les clics vers le fond/grille */
+    z-index: 1;
 }
-line { stroke: #2c3e50; stroke-width: 2; }
 
+line {
+    stroke: #2c3e50;
+    stroke-width: 3; /* Un peu plus épais de base pour faciliter le clic */
+    cursor: pointer;
+    pointer-events: auto; /* IMPORTANT: Rend la ligne cliquable même si le parent ne l'est pas */
+    transition: all 0.2s;
+}
+
+/* Zone de survol pour faciliter le clic */
+line:hover {
+    stroke-width: 6; /* Devient bien épais au survol pour montrer qu'on peut cliquer */
+    stroke: #3498db; /* Devient bleu */
+}
 /* --- NOUVEAU DESIGN ZOOM (Comme image fournie) --- */
 .zoom-controls {
     position: absolute;
