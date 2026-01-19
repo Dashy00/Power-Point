@@ -4,7 +4,7 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+ 
 body {
   height: 100vh;
   display: flex;
@@ -12,7 +12,7 @@ body {
   background: #f0f2f5;
   overflow: hidden;
 }
-
+ 
 /* --- SIDEBAR --- */
 .sidebar {
   width: 240px;
@@ -24,7 +24,7 @@ body {
   gap: 15px;
   z-index: 1000;
 }
-
+ 
 .btn {
   padding: 12px;
   border: none;
@@ -35,15 +35,15 @@ body {
   font-weight: bold;
   transition: background 0.2s;
 }
-
+ 
 .btn:hover {
   background: #1d4ed8;
 }
-
+ 
 .btn.active {
   background: #059669;
 }
-
+ 
 /* --- WORKSPACE & SLIDE --- */
 .workspace {
   flex: 1;
@@ -54,7 +54,7 @@ body {
   position: relative;
   background: #e5e7eb;
 }
-
+ 
 .slide {
   width: min(960px, 92vw);
   aspect-ratio: 16 / 9;
@@ -67,7 +67,7 @@ body {
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
   /* overflow: hidden; -> Supprimé pour laisser voir les boutons qui dépassent */
 }
-
+ 
 /* --- MENU FIXE EN HAUT --- */
 .top-toolbar {
   position: fixed;
@@ -83,7 +83,7 @@ body {
   z-index: 900;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
-
+ 
 .toolbar-group {
   display: flex;
   align-items: center;
@@ -91,9 +91,8 @@ body {
   padding-right: 20px;
   border-right: 1px solid #374151;
 }
-
-.top-toolbar select,
-.top-tool-btn {
+ 
+.top-toolbar select, .top-tool-btn {
   padding: 6px 10px;
   border: none;
   border-radius: 4px;
@@ -101,7 +100,7 @@ body {
   color: white;
   cursor: pointer;
 }
-
+ 
 /* --- BARRE FLOTTANTE --- */
 .floating-toolbar {
   position: absolute;
@@ -114,75 +113,24 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   z-index: 1001;
 }
-
+ 
 .floating-toolbar.visible {
   display: flex;
 }
-
-.floating-toolbar select {
-  padding: 5px 8px;
-  border: none;
-  border-radius: 4px;
-  background: #374151;
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.floating-toolbar input[type="color"] {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.tool-btn {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 4px;
-  background: #374151;
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
-.tool-btn:hover {
-  background: #4b5563;
-}
-
-.tool-btn.active {
-  background: #2563eb;
-}
-
-.toolbar-separator {
-  width: 1px;
-  height: 24px;
-  background: #4b5563;
-  margin: 0 5px;
-}
-
+ 
 /* --- OBJETS GÉNÉRIQUES (Text, Image, Shape) --- */
-.text-box,
-.image-box,
-.shape-box {
+.text-box, .image-box, .shape-box {
   position: absolute;
   cursor: move;
   padding: 5px;
 }
-
+ 
 /* État sélectionné */
 .selected {
   outline: 2px solid #2563eb;
   outline-offset: 4px;
 }
-
+ 
 /* --- BOUTON SUPPRIMER (Croix rouge) --- */
 .delete-btn {
   position: absolute;
@@ -200,78 +148,47 @@ body {
   font-weight: bold;
   cursor: pointer;
   opacity: 0; /* Caché par défaut */
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   z-index: 1010;
   border: 2px solid white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-
+ 
 /* Affichage au survol de n'importe quel objet */
 .text-box:hover .delete-btn,
 .image-box:hover .delete-btn,
 .shape-box:hover .delete-btn {
   opacity: 1;
 }
-
+ 
 .delete-btn:hover {
   transform: scale(1.2);
   background: #dc2626;
 }
-
-/* Poignée de rotation */
-.rotate-handle {
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
-  background: #2563eb;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  cursor: grab;
-  opacity: 0;
-  transition: 0.2s;
-  user-select: none;
-}
-
-.rotate-handle:active {
-  cursor: grabbing;
-}
-
-.text-box:hover .rotate-handle {
-  opacity: 1;
-}
-
+ 
 /* --- BOITE DE TEXTE --- */
 .text-box {
   min-width: 100px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.8);
   border: 1px dashed transparent;
 }
-
+ 
 .text-box:hover {
   border-color: #3498db;
 }
-
+ 
 .text-box.editing {
   border: 1px solid #2563eb;
   background: white;
 }
-
+ 
 .content {
   outline: none;
   min-height: 1em;
   font-size: 18px;
   color: #333;
 }
-
+ 
 /* --- BOITE D'IMAGE --- */
 .image-box img {
   width: 100%;
@@ -280,29 +197,29 @@ body {
   border-radius: 4px;
   pointer-events: none; /* Laisse le clic passer à la box pour le drag */
 }
-
+ 
 /* --- BOITE DE FORME --- */
 .shape-box {
   width: 100px;
   height: 100px;
 }
-
+ 
 .shape-content {
   width: 100%;
   height: 100%;
   background-color: #3498db;
   transition: background-color 0.2s;
 }
-
+ 
 /* Types de formes */
 .circle .shape-content {
   border-radius: 50%;
 }
-
+ 
 .triangle .shape-content {
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
-
+ 
 /* --- POIGNÉE DE REDIMENSIONNEMENT --- */
 .resize-handle {
   position: absolute;
@@ -316,14 +233,9 @@ body {
   z-index: 1011;
   border: 2px solid white;
 }
-
+ 
 /* --- Z-INDEX LAYERS --- */
-.image-box {
-  z-index: 1;
-}
-.shape-box {
-  z-index: 2;
-}
-.text-box {
-  z-index: 3;
-}
+.image-box { z-index: 1; }
+.shape-box { z-index: 2; }
+.text-box { z-index: 3; }
+ 
