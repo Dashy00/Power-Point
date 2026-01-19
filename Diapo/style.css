@@ -217,9 +217,18 @@ body {
   position: absolute;
   min-width: 150px;
   padding: 10px;
-  border: 1px dashed #3498db;
-  background: white;
+  border: 1px dashed transparent;
+  background: transparent;
   cursor: move;
+}
+
+.text-box:hover {
+  border-color: #3498db;
+}
+
+.text-box.editing {
+  border-color: #2563eb;
+  border-style: solid;
 }
 
 .content {
