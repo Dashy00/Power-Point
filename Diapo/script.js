@@ -22,9 +22,12 @@ let activeItem = null;
 let activeTextBox = null;
 let dragging = null;
 let resizing = null;
+let rotating = null;
 let offsetX = 0, offsetY = 0;
 let startW = 0, startH = 0;
 let startMouseX = 0, startMouseY = 0;
+let startAngle = 0;
+let currentRotation = 0;
  
 // --- AJOUT TEXTE ---
 addTextBtn.addEventListener("click", (e) => {
@@ -53,7 +56,7 @@ function createImageBox(src) {
     box.className = "image-box";
     box.style.width = "260px";
     box.style.height = "180px";
-    box.innerHTML = `<img src="${src}"><div class="resize-handle"></div><div class="delete-btn">✕</div>`;
+    box.innerHTML = `<img src="${src}"><div class="resize-handle"></div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`;
    
     const slideRect = slide.getBoundingClientRect();
     box.style.left = `${(slideRect.width - 260) / 2}px`;
@@ -104,7 +107,7 @@ slide.addEventListener("click", (e) => {
         const rect = slide.getBoundingClientRect();
         const box = document.createElement("div");
         box.className = "text-box";
-        box.innerHTML = `<div class="content" contenteditable="false">Double-cliquez pour modifier</div><div class="delete-btn">✕</div>`;
+        box.innerHTML = `<div class="content" contenteditable="false">Double-cliquez pour modifier</div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`;
         box.style.left = `${e.clientX - rect.left - 75}px`;
         box.style.top = `${e.clientY - rect.top - 20}px`;
        
@@ -118,8 +121,9 @@ slide.addEventListener("click", (e) => {
     }
 });
  
-// --- DRAG ET RESIZE ---
+// --- DRAG, RESIZE ET ROTATION ---
 slide.addEventListener("mousedown", (e) => {
+    // 1) RESIZE
     const handle = e.target.closest(".resize-handle");
     if (handle) {
         resizing = handle.parentElement;
@@ -131,7 +135,28 @@ slide.addEventListener("mousedown", (e) => {
         e.preventDefault();
         return;
     }
+
+    // 2) ROTATION
+    const rotateHandle = e.target.closest(".rotate-handle");
+    if (rotateHandle) {
+        rotating = rotateHandle.parentElement;
+        activeItem = rotating;
+        
+        const rect = rotating.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        
+        const transform = rotating.style.transform;
+        const match = transform.match(/rotate\((-?\d+\.?\d*)deg\)/);
+        currentRotation = match ? parseFloat(match[1]) : 0;
+        
+        e.preventDefault();
+        return;
+    }
  
+    // 3) DRAG
     const target = e.target.closest(".text-box, .image-box, .shape-box");
     if (!target || (e.target.classList.contains("content") && e.target.isContentEditable)) return;
  
@@ -170,13 +195,30 @@ window.addEventListener("keydown", (e) => {
 });
  
 window.addEventListener("mousemove", (e) => {
+    // RESIZE
     if (resizing) {
         const dx = e.clientX - startMouseX;
         const dy = e.clientY - startMouseY;
         resizing.style.width = `${Math.max(30, startW + dx)}px`;
         resizing.style.height = `${Math.max(30, startH + dy)}px`;
+        return;
+    }
+
+    // ROTATION
+    if (rotating) {
+        const rect = rotating.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        const newAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const angleDiff = (newAngle - startAngle) * (180 / Math.PI);
+        const finalRotation = currentRotation + angleDiff;
+        
+        rotating.style.transform = `rotate(${finalRotation}deg)`;
+        return;
     }
  
+    // DRAG
     if (dragging) {
         const slideRect = slide.getBoundingClientRect();
         let newLeft = e.clientX - slideRect.left - offsetX;
@@ -189,8 +231,12 @@ window.addEventListener("mousemove", (e) => {
  
  
 window.addEventListener("mouseup", () => {
+    if (rotating) {
+        saveState();
+    }
     dragging = null;
     resizing = null;
+    rotating = null;
 });
  
 // --- SUPPRESSION ---

@@ -165,7 +165,41 @@ body {
   transform: scale(1.2);
   background: #dc2626;
 }
- 
+
+/* --- POIGNÉE DE ROTATION --- */
+.rotate-handle {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+  user-select: none;
+  z-index: 1012;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.rotate-handle:active {
+  cursor: grabbing;
+}
+
+.text-box:hover .rotate-handle,
+.image-box:hover .rotate-handle,
+.shape-box:hover .rotate-handle {
+  opacity: 1;
+}
+
 /* --- BOITE DE TEXTE --- */
 .text-box {
   min-width: 100px;
