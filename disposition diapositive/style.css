@@ -3,6 +3,7 @@
     padding: 0;
     box-sizing: border-box;
     user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 }
 
 html, body {
@@ -12,37 +13,112 @@ html, body {
 }
 
 body {
-    background-color: #1f1f1f;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
 }
 
-.editor-background {
+/* LAYOUT PRINCIPAL */
+.editor-wrapper {
+    display: flex;
     width: 100%;
     height: 100%;
+}
+
+/* BARRE LATÉRALE GAUCHE */
+.sidebar {
+    width: 200px;
+    background: linear-gradient(135deg, #4a5a6a 0%, #3a4a5a 100%);
+    padding: 20px 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    background-color: #1f1f1f;
+    gap: 15px;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    width: 160px;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-item:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-item .icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.sidebar-item .label {
+    line-height: 1.2;
+}
+
+.sidebar-spacer {
+    flex: 1;
+}
+
+.sidebar-item.delete {
+    background-color: rgba(200, 50, 50, 0.3);
+    border-color: rgba(200, 50, 50, 0.5);
+    margin-top: auto;
+}
+
+.sidebar-item.delete:hover {
+    background-color: rgba(200, 50, 50, 0.5);
+}
+
+.sidebar-item.export {
+    background-color: rgba(100, 200, 100, 0.3);
+    border-color: rgba(100, 200, 100, 0.5);
+}
+
+.sidebar-item.export:hover {
+    background-color: rgba(100, 200, 100, 0.5);
+}
+
+/* CONTENU PRINCIPAL */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
 .workspace {
-    width: 80%;
-    height: 85%;
+    flex: 1;
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .viewport {
-    width: 100%;
-    height: 100%;
-    background-color: #f5f5f5;
+    width: 95%;
+    height: 95%;
+    background-color: #f9f9f9;
     position: relative;
     overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     cursor: grab;
 }
 
@@ -50,15 +126,161 @@ body {
     cursor: grabbing;
 }
 
+.viewport.panning {
+    cursor: grabbing;
+}
+
+/* SVG CONNEXIONS */
+.connections-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.connections-layer.drawing {
+    pointer-events: auto;
+}
+
+/* CANVAS INFINI */
 .canvas {
     position: absolute;
     width: 5000px;
     height: 5000px;
     background-image:
-        linear-gradient(#d0d0d0 1px, transparent 1px),
-        linear-gradient(90deg, #d0d0d0 1px, transparent 1px);
+        linear-gradient(#e0e0e0 1px, transparent 1px),
+        linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
     background-size: 50px 50px;
+    background-color: #fafafa;
     top: 0;
     left: 0;
+    will-change: transform;
+    z-index: 2;
+}
+
+/* SLIDES */
+.slide {
+    position: absolute;
+    width: 180px;
+    height: 100px;
+    background-color: #ffffff;
+    border: 2px solid #333;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    cursor: move;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.slide:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.slide.selected {
+    border: 3px solid #4CAF50;
+    background-color: #f0f8f0;
+}
+
+.slide.connecting {
+    opacity: 0.6;
+}
+
+/* PORTS DE CONNEXION */
+.connection-port {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #4CAF50;
+    border: 2px solid #2E7D32;
+    border-radius: 50%;
+    cursor: crosshair;
+    display: none;
+}
+
+.slide:hover .connection-port {
+    display: block;
+}
+
+.connection-port.top { top: -6px; left: 50%; transform: translateX(-50%); }
+.connection-port.bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
+.connection-port.left { left: -6px; top: 50%; transform: translateY(-50%); }
+.connection-port.right { right: -6px; top: 50%; transform: translateY(-50%); }
+
+/* ZOOM POPUP */
+.zoom-popup {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+    transition: all 0.3s ease;
     pointer-events: none;
+    z-index: 100;
+}
+
+.zoom-popup:hover,
+.zoom-popup.active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    background-color: #1f1f1f;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+    background-color: #444;
+    border-color: #4CAF50;
+}
+
+.zoom-btn.reset {
+    background-color: #4CAF50;
+    border-color: #2E7D32;
+    color: #fff;
+}
+
+.zoom-btn.reset:hover {
+    background-color: #45a049;
+}
+
+.zoom-percent {
+    color: #aaa;
+    font-size: 12px;
+    min-width: 50px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* LIGNE DE CONNEXION EN COURS */
+.temp-connection-line {
+    stroke: #4CAF50;
+    stroke-width: 2;
+    stroke-dasharray: 5,5;
+    fill: none;
 }
