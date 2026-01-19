@@ -1,177 +1,81 @@
-/* --- VARIABLES & RESET --- */
+/* --- VARIABLES --- */
 :root {
-    --primary-border: #8a2be2;
+    --primary: #8a2be2;
     --bg-dot: #dcd7c9;
-    --bg-dot-hover: #c5c0b0;
     --text-color: #333;
-    --active-color: #8a2be2;
+    --selected-border: #2196F3; /* Bleu pour la sélection d'édition */
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Empêche la sélection de texte accidentelle pendant le drag & drop */
-    user-select: none; 
-}
-
-body {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    border: 4px solid #e0e0e0;
-}
+/* Base */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { height: 100vh; display: flex; flex-direction: column; padding: 20px; border: 4px solid #e0e0e0; overflow: hidden; }
 
 /* --- HEADER --- */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 20px;
+header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+
+/* Boutons Toolbar */
+button { background: none; border: none; cursor: pointer; font-size: 0.95rem; padding: 5px 10px; border-radius: 4px; transition: 0.2s; }
+button:hover { background-color: #f0f0f0; color: var(--primary); }
+.action-btn { font-weight: bold; color: var(--primary); }
+.tool-separator { width: 1px; height: 20px; background: #ccc; margin: 0 15px; }
+
+.header-center { display: flex; align-items: center; }
+.tool-options { display: flex; align-items: center; gap: 5px; }
+.color-wrapper { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; margin: 0 10px; cursor: pointer;}
+input[type="color"] { border: none; width: 25px; height: 25px; background: none; cursor: pointer; }
+
+/* --- MAIN --- */
+main { display: flex; flex: 1; align-items: center; justify-content: center; gap: 20px; position: relative; }
+
+/* Sidebar */
+.sidebar { width: 180px; display: flex; flex-direction: column; gap: 10px; }
+.context-box { border: 1px solid #ddd; height: 60px; display: flex; align-items: center; padding: 10px; opacity: 0.4; cursor: pointer; transition: 0.3s; background: #fff; }
+.context-box.active { opacity: 1; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.box-number { font-weight: bold; margin-right: 10px; background: #eee; padding: 2px 6px; border-radius: 4px; }
+
+/* Slide Container */
+.slide-container {
+    width: 700px; height: 450px; 
+    border: 3px solid var(--primary); 
+    position: relative; 
+    background: white; 
+    overflow: hidden; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
 }
 
-.back-btn {
-    background-color: #dcdcdc;
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    font-size: 30px;
-    line-height: 40px;
-    cursor: pointer;
-    font-weight: bold;
+/* --- ÉLÉMENTS GLISSABLES GÉNÉRIQUES (Texte, Image, Vidéo) --- */
+.draggable-item {
+    position: absolute;
+    min-width: 50px; min-height: 20px;
+    cursor: move; /* Indique qu'on peut bouger l'élément */
+    border: 1px solid transparent; /* Bordure invisible par défaut */
+    padding: 5px;
+    outline: none; /* Enlève le contour bleu par défaut du navigateur */
 }
 
-.header-center {
-    text-align: center;
-    flex: 1;
+/* Quand un élément est sélectionné ou en cours d'édition */
+.draggable-item:focus, .draggable-item.selected {
+    border: 1px dashed var(--selected-border);
+    background-color: rgba(33, 150, 243, 0.05);
+    z-index: 100;
 }
 
-.tool-title {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
-    color: var(--text-color);
+.text-element { font-size: 16px; color: #333; }
+.image-element { max-width: 200px; object-fit: cover; }
+.video-element { max-width: 300px; }
+
+/* --- RONDS SPECIFIQUES --- */
+.dot {
+    width: 30px; height: 30px; 
+    background: var(--bg-dot); border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    font-weight: bold; color: #555; position: absolute; 
+    cursor: move; z-index: 200; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    user-select: none;
 }
+.dot.active { background: var(--primary); color: white; transform: scale(1.1); }
 
-.tool-options {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    font-size: 0.9rem;
-    color: #444;
-}
-
-.tool-options span { cursor: pointer; }
-.tool-options span:hover { color: var(--primary-border); }
-.bold { font-weight: bold; }
-.italic { font-style: italic; }
-
-.header-right { display: flex; gap: 20px; }
-
-/* --- MAIN LAYOUT --- */
-main {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-}
-
-/* --- SIDEBAR --- */
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 180px;
-}
-
-.context-box {
-    border: 1px solid #999;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    background: #fff;
-    opacity: 0.3;
-    transition: all 0.3s ease;
-    cursor: pointer; /* Indique qu'on peut cliquer */
-}
-
-.context-box:hover {
-    opacity: 0.6;
-}
-
-.context-box.active {
-    opacity: 1;
-    border: 2px solid var(--primary-border);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transform: translateX(5px);
-}
-
-.box-number {
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-.box-content {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-/* --- FLÈCHES --- */
-.nav-arrow {
-    width: 30px;
-    height: 50px;
-    background-color: #e0dfd5;
-    cursor: pointer;
-}
+/* Navigation */
+.nav-arrow { width: 30px; height: 50px; background: #ddd; cursor: pointer; }
 .nav-arrow.left { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
 .nav-arrow.right { clip-path: polygon(0 0, 100% 50%, 0 100%); }
-
-/* --- SLIDE CONTAINER --- */
-.slide-container {
-    width: 650px;
-    height: 400px;
-    border: 5px solid var(--primary-border);
-    position: relative; 
-    background: white;
-    overflow: hidden; /* Empêche les points de sortir visuellement */
-}
-
-/* --- RONDS DÉPLAÇABLES --- */
-.dot {
-    width: 32px;
-    height: 32px;
-    background-color: var(--bg-dot);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #555;
-    position: absolute;
-    /* CSS pour le drag & drop */
-    cursor: grab; 
-    z-index: 10;
-    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-    /* Note: on enlève la transition sur 'top' et 'left' pour que le drag soit fluide */
-}
-
-.dot:active {
-    cursor: grabbing; /* La main se ferme quand on clique */
-}
-
-.dot:hover {
-    background-color: var(--bg-dot-hover);
-}
-
-.dot.active {
-    background-color: var(--active-color);
-    color: white;
-    transform: scale(1.15);
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
-    z-index: 20; /* Passe au dessus des autres */
-}

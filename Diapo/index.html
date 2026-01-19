@@ -8,22 +8,27 @@
 </head>
 <body>
 
-    <aside class="sidebar">
-        <h1>Outils</h1>
-        <button class="btn" id="addTextBtn">Ajouter un texte</button>
-        <button class="btn" id="addImageBtn">Ajouter une image</button>
+   <aside class="sidebar">
+    <h1>Outils</h1>
+    <button class="btn" id="addTextBtn">Ajouter un texte</button>
+    <button class="btn" id="addImageBtn">Ajouter une image</button>
+    
+    <hr style="border: 0.5px solid #444; margin: 10px 0;">
+    
+    <h1>Arrière-plan</h1>
+    <label style="font-size: 12px;">Couleur de fond :</label>
+    <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
+    
+    <button class="btn" id="bgImageBtn" style="background-color: #4b5563; margin-top: 10px;">Image de fond</button>
 
-<input 
-    type="file" 
-    id="imageInput" 
-    accept="image/*" 
-    hidden
->
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <input type="file" id="bgImageInput" accept="image/*" hidden>
 
-        <p class="hint">
-           
-        </p>
+
+        
     </aside>
+
+
 
     <main class="workspace">
         <div class="slide" id="slide"></div>
