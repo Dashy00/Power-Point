@@ -545,13 +545,24 @@ document.getElementById("topHighlightColor").addEventListener("input", (e) => {
 });
 document.getElementById("topHighlightBtn").onclick = () => formatText("hiliteColor", document.getElementById("topHighlightColor").value);
 document.getElementById("topFontFamily").addEventListener("change", (e) => {
-    if (activeTextBox) {
-        activeTextBox.querySelector(".content").style.fontFamily = e.target.value;
+    if (activeItem && activeItem.classList.contains("text-box")) {
+        saveState();
+        activeItem.querySelector(".content").style.fontFamily = e.target.value;
+    } else {
+        formatText("fontName", e.target.value);
     }
 });
 document.getElementById("topFontSize").addEventListener("change", (e) => {
-    if (activeTextBox) {
-        activeTextBox.querySelector(".content").style.fontSize = e.target.value;
+    if (activeItem && activeItem.classList.contains("text-box")) {
+        saveState();
+        activeItem.querySelector(".content").style.fontSize = e.target.value;
+    } else {
+        document.execCommand("fontSize", false, "7");
+        const fontElements = document.querySelectorAll("font[size='7']");
+        fontElements.forEach(el => {
+            el.removeAttribute("size");
+            el.style.fontSize = e.target.value;
+        });
     }
 });
 
