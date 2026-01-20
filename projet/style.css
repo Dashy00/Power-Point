@@ -31,10 +31,23 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f0f
     transform-origin: 2500px 2500px;
 }
 
-/* FLÈCHES */
-#connections-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
-line { stroke: #2c3e50; stroke-width: 3; pointer-events: stroke; cursor: pointer; transition: stroke 0.2s; }
-line:hover { stroke: #3498db; stroke-width: 5; }
+/* FLÈCHES (SVG) */
+#connections-layer { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    pointer-events: none; z-index: 1; overflow: visible; 
+}
+line { 
+    stroke: #2c3e50; stroke-width: 3; 
+    pointer-events: stroke; /* Cliquable */
+    cursor: pointer; transition: all 0.2s;
+}
+line:hover { stroke: #3498db; stroke-width: 6; }
+
+/* STYLE SÉLECTION FLÈCHE */
+line.selected {
+    stroke: #e74c3c !important; /* Rouge */
+    stroke-width: 5 !important;
+}
 
 /* SLIDES */
 .slide {
@@ -74,8 +87,9 @@ line:hover { stroke: #3498db; stroke-width: 5; }
 #zoom-text { font-size: 14px; min-width: 50px; text-align: center; }
 .reset-btn { background: transparent; border: 1px solid #4a4a4a; color: #4db6ac; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
 
-/* OVERLAY EDITEUR */
+/* OVERLAY */
 .editor-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; display: flex; flex-direction: column; }
+<<<<<<< Updated upstream
 .overlay-header { height: 50px; background: #1f2937; display: flex; align-items: center; padding: 0 20px; color: white; gap: 15px; }
 .toolbar-group { display: flex; align-items: center; gap: 8px; padding-right: 15px; border-right: 1px solid #374151; }
 .toolbar-group select { padding: 6px 10px; border: none; border-radius: 4px; background: #374151; color: white; cursor: pointer; }
@@ -138,3 +152,14 @@ line:hover { stroke: #3498db; stroke-width: 5; }
 
 /* État sélectionné */
 .selected { outline: 2px solid #2563eb; outline-offset: 4px; }
+=======
+.overlay-header { height: 50px; background: #1f2937; display: flex; align-items: center; padding: 0 20px; color: white; gap: 20px; }
+.back-btn { padding: 5px 15px; background: #374151; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.overlay-body { display: flex; flex: 1; }
+.overlay-sidebar { width: 200px; background: #111827; color: white; padding: 20px; }
+.overlay-workspace { flex: 1; display: flex; justify-content: center; align-items: center; background: #e5e7eb; }
+.overlay-slide { width: 800px; height: 450px; background: white; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+.overlay-btn { display: block; width: 100%; padding: 10px; margin-bottom: 10px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+.item-box { position: absolute; border: 1px dashed transparent; cursor: move; padding: 5px; }
+.item-box.selected { border: 1px solid #2563eb; }
+>>>>>>> Stashed changes
