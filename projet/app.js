@@ -53,18 +53,31 @@ viewport.addEventListener('mouseup', () => {
 function createSlide(type) {
     state.slideCount++;
     const id = `slide-${state.slideCount}`;
-    state.slidesContent[id] = { html: "", bg: "#ffffff" }; 
+    // Initialisation des données
+    state.slidesContent[id] = { html: "", bg: "#ffffff", img: "none" }; 
 
     const slide = document.createElement('div');
     slide.className = `slide ${type}`;
     slide.id = id;
-    slide.innerHTML = (type==='info'?'ℹ️':(type==='condition'?'❓':(type==='fin'?'🏁':'📄'))) + ' ' + state.slideCount;
+
+    // 1. Création du conteneur de prévisualisation (vide au début)
+    const previewWrapper = document.createElement('div');
+    previewWrapper.className = 'slide-preview-wrapper';
+    previewWrapper.id = `preview-${id}`;
     
-    // Spawn au centre
+    // 2. Création de l'info (Icone + ID) par dessus
+    const infoOverlay = document.createElement('div');
+    infoOverlay.className = 'slide-info-overlay';
+    infoOverlay.innerHTML = (type==='info'?'ℹ️':(type==='condition'?'❓':(type==='fin'?'🏁':''))) + ' ' + state.slideCount;
+
+    slide.appendChild(previewWrapper);
+    slide.appendChild(infoOverlay);
+    
+    // ... (Le reste du code de positionnement et events reste identique) ...
     const centerX = 2500 - (state.pointX / state.scale);
     const centerY = 2500 - (state.pointY / state.scale);
-    slide.style.left = (centerX - 75) + 'px';
-    slide.style.top = (centerY - 40) + 'px';
+    slide.style.left = (centerX - 80) + 'px'; // Ajusté pour la largeur 160
+    slide.style.top = (centerY - 45) + 'px';  // Ajusté pour la hauteur 90
 
     slide.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('port')) return;
@@ -88,6 +101,29 @@ function createSlide(type) {
     });
 
     canvas.appendChild(slide);
+    
+    // Initialisation visuelle
+    updateNodePreview(id); 
+}
+
+// --- NOUVELLE FONCTION (à ajouter à la fin de app.js ou render) ---
+// C'est elle qui fait le lien entre les données et le visuel du graphe
+window.updateNodePreview = function(id) {
+    const wrapper = document.getElementById(`preview-${id}`);
+    const data = state.slidesContent[id];
+    
+    if (!wrapper || !data) return;
+
+    // On copie le HTML brut
+    wrapper.innerHTML = data.html || "";
+    
+    // On applique le fond
+    wrapper.style.backgroundColor = data.bg || "#ffffff";
+    wrapper.style.backgroundImage = data.img || "none";
+    wrapper.style.backgroundSize = "cover";
+    
+    // Note: Le CSS se charge de masquer les boutons 'delete' et 'resize'
+    // grâce à .slide-preview-wrapper .delete-btn { display: none }
 }
 
 // Boutons

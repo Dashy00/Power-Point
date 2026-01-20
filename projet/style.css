@@ -38,17 +38,40 @@ line:hover { stroke: #3498db; stroke-width: 5; }
 
 /* SLIDES */
 .slide {
-    position: absolute; width: 150px; height: 80px;
-    background: white; border: 2px solid #2c3e50; border-radius: 4px;
-    display: flex; justify-content: center; align-items: center;
-    padding: 10px; font-size: 13px; font-weight: 600; color: #333;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2; cursor: move;
+    /* Dimensions exactes calculées (800*0.2 et 450*0.2) */
+    width: 160px;
+    height: 90px;
+    
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid #999;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    
+    /* Pour centrer le numéro (Overlay) par dessus la preview */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* IMPORTANT : Coupe tout ce qui dépasse pour un cadre net */
+    overflow: hidden; 
+    user-select: none;
+    z-index: 1; /* Niveau de base */
 }
 .slide.selected { outline: 2px solid #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); }
 .slide.info { border-radius: 50%; width: 100px; height: 100px; background: #34495e; color: white; border: none; }
 .slide.condition { background: #5d6d7e; color: white; border: none; }
 .slide.fin { border-color: #c0392b; color: #c0392b; }
-
+.slide-preview-wrapper {
+    width: 800px;   /* Taille réelle de ta zone d'édition */
+    height: 450px;
+    transform: scale(0.2); /* Réduction à 20% */
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none; /* On ne peut pas cliquer sur les éléments dedans */
+    z-index: 0;
+}
 /* PORTS */
 .port {
     position: absolute; width: 12px; height: 12px;
@@ -62,6 +85,21 @@ line:hover { stroke: #3498db; stroke-width: 5; }
 .port.left { left: -6px; top: 50%; transform: translateY(-50%); }
 .port.right { right: -6px; top: 50%; transform: translateY(-50%); }
 
+/* IMPORTANT : On cache les outils d'édition dans la miniature */
+.slide-preview-wrapper .resize-handle,
+.slide-preview-wrapper .delete-btn,
+.slide-preview-wrapper .rotate-handle {
+    display: none !important;
+}
+
+.slide-info-overlay {
+    position: absolute;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 2px 5px;
+    border-radius: 4px;
+    pointer-events: none;
+}
 /* ZOOM */
 .zoom-controls {
     position: absolute; top: 20px; right: 20px;
