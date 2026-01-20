@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+ 
     <div class="editor-wrapper" id="graph-interface">
-        
+       
         <div class="sidebar">
             <div class="sidebar-header">
                 <span class="tree-icon">🌳</span>
                 <h2>Power-Point</h2>
             </div>
-            
+           
             <div class="sidebar-item" id="btn-new-slide">
                 <span class="icon">➕</span>
                 <span class="label">Nouvelle<br>diapositive</span>
@@ -32,9 +32,9 @@
                 <span class="icon">✚</span>
                 <span class="label">Bloc Fin</span>
             </div>
-            
+           
             <div class="sidebar-spacer"></div>
-            
+           
             <button id="btn-delete" class="sidebar-item delete">
                 <span class="icon">🗑️</span>
                 <span class="label">Supprimer</span>
@@ -44,7 +44,7 @@
                 <span class="label">Générer</span>
             </button>
         </div>
-
+ 
         <div class="main-content">
             <div class="viewport" id="viewport">
                 <div class="canvas" id="canvas">
@@ -60,7 +60,7 @@
                     </svg>
                     </div>
             </div>
-
+ 
             <div class="zoom-controls">
                 <button id="btn-zoom-out" class="zoom-btn">−</button>
                 <span id="zoom-text">100 %</span>
@@ -74,7 +74,7 @@
         <!-- Barre d'outils fixe en haut -->
         <div class="overlay-header">
             <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
-            
+           
             <div class="toolbar-group">
                 <select id="topFontFamily" title="Police">
                     <option value="Arial">Arial</option>
@@ -90,26 +90,29 @@
                     <option value="24px">24</option>
                     <option value="32px">32</option>
                     <option value="48px">48</option>
+                    <option value="64px">64</option>
+                    <option value="72px">72</option>
+                    <option value="96px">96</option>
                 </select>
             </div>
-
+ 
             <div class="toolbar-group">
                 <input type="color" id="topTextColor" value="#333333" title="Couleur du texte">
                 <button class="top-tool-btn" id="topBoldBtn" title="Gras"><b>G</b></button>
                 <button class="top-tool-btn" id="topItalicBtn" title="Italique"><i>I</i></button>
                 <button class="top-tool-btn" id="topUnderlineBtn" title="Souligné"><u>S</u></button>
             </div>
-
+ 
             <div class="toolbar-group">
                 <input type="color" id="topHighlightColor" value="#ffff00" title="Couleur surlignage">
                 <button class="top-tool-btn" id="topHighlightBtn" title="Surligner">🖍️</button>
             </div>
-
+ 
             <div class="toolbar-group" style="border-right: none;">
                 <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">↩️</button>
                 <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
             </div>
-
+ 
             <!-- Contrôles de zoom -->
             <div class="zoom-controls-editor">
                 <button class="zoom-btn" onclick="zoomOut()" title="Dézoomer">−</button>
@@ -118,7 +121,7 @@
                 <button class="reset-btn" onclick="resetZoom()" title="Réinitialiser">⟲</button>
             </div>
         </div>
-
+ 
         <div class="overlay-body">
             <!-- Sidebar gauche -->
             <div class="overlay-sidebar">
@@ -127,31 +130,31 @@
                 <button class="overlay-btn" id="addImageBtn">Image</button>
                 <button class="overlay-btn" id="addBubbleBtn">Bulle</button>
                 <input type="file" id="imageInput" hidden accept="image/*">
-                
+               
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
-                
+               
                 <h4>Formes</h4>
                 <div class="shape-grid">
                     <button class="overlay-btn shape-btn" onclick="addEditorShape('square')" title="Carré">▢</button>
                     <button class="overlay-btn shape-btn" onclick="addEditorShape('circle')" title="Cercle">○</button>
                     <button class="overlay-btn shape-btn" onclick="addEditorShape('triangle')" title="Triangle">△</button>
                 </div>
-
+ 
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
-                
+               
                 <h4>Arrière-plan</h4>
                 <label style="font-size: 12px">Couleur de fond :</label>
                 <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
                 <button class="overlay-btn" id="bgImageBtn" style="margin-top:5px; font-size:12px;">Image de fond</button>
                 <input type="file" id="bgImageInput" hidden accept="image/*">
             </div>
-
+ 
             <!-- Zone de travail -->
             <div class="overlay-workspace">
                 <div class="slide-zoom-wrapper" id="slideZoomWrapper">
                     <div id="editable-slide" class="overlay-slide"></div>
                 </div>
-                
+               
                 <!-- Barre d'outils flottante -->
                 <div class="floating-toolbar" id="floatingToolbar">
                     <select id="fontFamily" title="Police">
@@ -168,6 +171,9 @@
                         <option value="24px">24</option>
                         <option value="32px">32</option>
                         <option value="48px">48</option>
+                        <option value="64px">64</option>
+                        <option value="72px">72</option>
+                        <option value="96px">96</option>
                     </select>
                     <input type="color" id="textColor" value="#333333" title="Couleur du texte">
                     <div class="toolbar-separator"></div>
@@ -181,9 +187,10 @@
             </div>
         </div>
     </div>
-
+ 
     <script src="globals.js"></script>
     <script src="editor.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
+ 
