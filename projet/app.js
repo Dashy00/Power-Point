@@ -1,14 +1,19 @@
-// --- ZOOM & PAN ---
+// =================================================================
+// GESTION DU GRAPHE (ZOOM, PAN, SLIDES, FLÈCHES)
+// =================================================================
+
+// --- 1. ZOOM & PAN ---
 function setTransform() {
     canvas.style.transform = `translate(${state.pointX}px, ${state.pointY}px) scale(${state.scale})`;
-    zoomText.innerText = Math.round(state.scale * 100) + '%';
+    zoomText.innerText = Math.round(state.scale * 100) + ' %';
 }
 document.getElementById('btn-zoom-in').onclick = () => { state.scale = Math.min(state.scale + 0.1, 3); setTransform(); };
 document.getElementById('btn-zoom-out').onclick = () => { state.scale = Math.max(state.scale - 0.1, 0.2); setTransform(); };
 document.getElementById('btn-reset').onclick = () => { state.scale = 1; state.pointX = 0; state.pointY = 0; setTransform(); };
 
 viewport.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('.slide') && !e.target.closest('.port')) {
+    if (!e.target.closest('.slide') && !e.target.closest('.port') && e.target.tagName !== 'line') {
+        deselectAll();
         state.panning = true;
         state.startX = e.clientX - state.pointX;
         state.startY = e.clientY - state.pointY;
@@ -18,20 +23,24 @@ viewport.addEventListener('mousedown', (e) => {
 
 viewport.addEventListener('mousemove', (e) => {
     e.preventDefault();
+    // Pan
     if (state.panning) {
         state.pointX = e.clientX - state.startX;
         state.pointY = e.clientY - state.startY;
         setTransform();
     }
+    // Drag Slide
     if (state.isDraggingSlide && state.selectedSlide) {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / state.scale - state.dragOffset.x;
-        const y = (e.clientY - rect.top) / state.scale - state.dragOffset.y;
-        state.selectedSlide.style.left = x + 'px'; state.selectedSlide.style.top = y + 'px';
+        const x = (e.clientX - canvas.getBoundingClientRect().left) / state.scale - state.dragOffset.x;
+        const y = (e.clientY - canvas.getBoundingClientRect().top) / state.scale - state.dragOffset.y;
+        state.selectedSlide.style.left = x + 'px';
+        state.selectedSlide.style.top = y + 'px';
         updateConnections();
     }
+    // Création Flèche
     if (state.isConnecting && state.tempLine) {
         const rect = canvas.getBoundingClientRect();
+        // Coordonnées relatives au canvas (qui fait 5000px)
         const mouseX = (e.clientX - rect.left) / state.scale;
         const mouseY = (e.clientY - rect.top) / state.scale;
         state.tempLine.setAttribute('x2', mouseX);
@@ -43,13 +52,14 @@ viewport.addEventListener('mouseup', () => {
     state.panning = false;
     state.isDraggingSlide = false;
     viewport.style.cursor = 'grab';
-    if(state.isConnecting) {
-        if(state.tempLine) state.tempLine.remove();
+    if(state.isConnecting && state.tempLine) {
+        if (!event.target.classList.contains('port')) state.tempLine.remove();
         state.isConnecting = false;
+        state.tempLine = null;
     }
 });
 
-// --- SLIDES ---
+// --- 2. SLIDES ---
 function createSlide(type) {
     state.slideCount++;
     const id = `slide-${state.slideCount}`;
@@ -58,27 +68,35 @@ function createSlide(type) {
     const slide = document.createElement('div');
     slide.className = `slide ${type}`;
     slide.id = id;
-    slide.innerHTML = (type==='info'?'ℹ️':(type==='condition'?'❓':(type==='fin'?'🏁':'📄'))) + ' ' + state.slideCount;
+    slide.innerHTML = getTypeLabel(type) + ' ' + state.slideCount;
     
-    // Spawn au centre
+    // --- CORRECTION DU CENTRAGE ---
+    // Le canvas fait 5000x5000. Son centre est à 2500,2500.
+    // On veut placer la slide au centre VISUEL de l'écran.
+    // Formule : CentreAbsolu - (DécalagePan / Zoom)
     const centerX = 2500 - (state.pointX / state.scale);
     const centerY = 2500 - (state.pointY / state.scale);
-    slide.style.left = (centerX - 75) + 'px';
-    slide.style.top = (centerY - 40) + 'px';
+    
+    slide.style.left = (centerX - 75) + 'px'; // -75 pour centrer la largeur
+    slide.style.top = (centerY - 40) + 'px'; // -40 pour centrer la hauteur
 
+    // Drag
     slide.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('port')) return;
         e.stopPropagation();
-        if(state.selectedSlide) state.selectedSlide.classList.remove('selected');
-        state.selectedSlide = slide;
-        slide.classList.add('selected');
+        selectSlide(slide);
         state.isDraggingSlide = true;
         state.dragOffset.x = e.offsetX;
         state.dragOffset.y = e.offsetY;
     });
 
-    slide.addEventListener('dblclick', (e) => { e.stopPropagation(); openEditor(id); });
+    // Ouvrir éditeur
+    slide.addEventListener('dblclick', (e) => { 
+        e.stopPropagation(); 
+        if(typeof openEditor === "function") openEditor(id);
+    });
 
+    // Ports
     ['top','right','bottom','left'].forEach(pos => {
         const port = document.createElement('div');
         port.className = `port ${pos}`;
@@ -90,14 +108,9 @@ function createSlide(type) {
     canvas.appendChild(slide);
 }
 
-// Boutons
-document.getElementById('btn-new-slide').onclick = () => createSlide('default');
-document.getElementById('btn-info-bulle').onclick = () => createSlide('info');
-document.getElementById('btn-condition').onclick = () => createSlide('condition');
-document.getElementById('btn-bloc-fin').onclick = () => createSlide('fin');
-document.getElementById('btn-delete').onclick = () => { if(state.selectedSlide){state.selectedSlide.remove(); state.selectedSlide=null;} };
+function getTypeLabel(type) { return (type==='info')?'ℹ️':(type==='condition')?'❓':(type==='fin')?'🏁':'📄'; }
 
-// --- CONNEXIONS ---
+// --- 3. CONNEXIONS ---
 function startConnection(e, id, port) {
     e.stopPropagation();
     state.isConnecting = true;
@@ -126,23 +139,19 @@ function endConnection(e, id, port) {
             state.tempLine.setAttribute('x2', end.x);
             state.tempLine.setAttribute('y2', end.y);
             
-            // Double Clic : Double Sens
-            state.tempLine.addEventListener('dblclick', function(evt) {
+            const connObj = { line: state.tempLine, fromPort: state.connectionStart.port, toPort: port, fromId: state.connectionStart.id, toId: id };
+            
+            // Events Flèche
+            state.tempLine.addEventListener('click', (evt) => { evt.stopPropagation(); selectConnection(connObj); });
+            state.tempLine.addEventListener('dblclick', (evt) => {
                 evt.stopPropagation();
-                const start = this.getAttribute('marker-start');
-                this.setAttribute('marker-start', start ? '' : 'url(#arrow-start)');
-            });
-            // Clic Droit : Supprimer
-            state.tempLine.addEventListener('contextmenu', function(evt) {
-                evt.preventDefault();
-                this.remove();
+                const start = state.tempLine.getAttribute('marker-start');
+                state.tempLine.setAttribute('marker-start', start ? '' : 'url(#arrow-start)');
             });
 
-            state.connections.push({ line: state.tempLine, fromPort: state.connectionStart.port, toPort: port });
+            state.connections.push(connObj);
             state.tempLine = null;
-        } else {
-            state.tempLine.remove();
-        }
+        } else { state.tempLine.remove(); }
         state.isConnecting = false;
     }
 }
@@ -164,6 +173,46 @@ function updateConnections() {
         conn.line.setAttribute('x2', end.x); conn.line.setAttribute('y2', end.y);
     });
 }
+
+// --- SELECTION ---
+function selectSlide(slide) {
+    deselectAll();
+    state.selectedSlide = slide;
+    slide.classList.add('selected');
+}
+function selectConnection(conn) {
+    deselectAll();
+    state.selectedConnection = conn;
+    conn.line.classList.add('selected');
+    conn.line.setAttribute('stroke', '#e74c3c');
+}
+function deselectAll() {
+    if(state.selectedSlide) { state.selectedSlide.classList.remove('selected'); state.selectedSlide = null; }
+    if(state.selectedConnection) { 
+        state.selectedConnection.line.classList.remove('selected'); 
+        state.selectedConnection.line.setAttribute('stroke', '#2c3e50');
+        state.selectedConnection = null; 
+    }
+}
+
+// BOUTONS
+document.getElementById('btn-new-slide').onclick = () => createSlide('default');
+document.getElementById('btn-info-bulle').onclick = () => createSlide('info');
+document.getElementById('btn-condition').onclick = () => createSlide('condition');
+document.getElementById('btn-bloc-fin').onclick = () => createSlide('fin');
+document.getElementById('btn-delete').onclick = () => {
+    if(state.selectedSlide) {
+        state.connections = state.connections.filter(c => {
+            if(c.fromId === state.selectedSlide.id || c.toId === state.selectedSlide.id) { c.line.remove(); return false; }
+            return true;
+        });
+        state.selectedSlide.remove(); state.selectedSlide = null;
+    } else if(state.selectedConnection) {
+        state.selectedConnection.line.remove();
+        state.connections = state.connections.filter(c => c !== state.selectedConnection);
+        state.selectedConnection = null;
+    }
+};
 
 // Init
 setTransform();
