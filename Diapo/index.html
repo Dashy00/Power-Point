@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Éditeur Slide</title>
     <link rel="stylesheet" href="style.css" />
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   </head>
   <body>
     <!-- Menu de formatage fixe en haut -->
@@ -91,15 +92,26 @@
       <button class="btn" id="addTextBtn">Ajouter un texte</button>
       <button class="btn" id="addImageBtn">Ajouter une image</button>
       <button class="btn" id="addBubbleBtn">Ajouter une bulle</button>
-
+ 
  
       <hr style="border: 0.5px solid #444; margin: 10px 0" />
       <h1>Formes</h1>
-  <div class="shape-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-    <button class="btn btn-small" onclick="addShape('rect')">Rectangle</button>
-    <button class="btn btn-small" onclick="addShape('circle')">Cercle</button>
-    <button class="btn btn-small" onclick="addShape('triangle')">Triangle</button>
-  </div>
+<div class="shape-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+<button class="btn btn-small" onclick="addShape('square')" title="Carré">
+    <i class="fa-regular fa-square"></i>
+</button>
+
+<button class="btn btn-small" onclick="addShape('circle')" title="Cercle">
+    <i class="fa-regular fa-circle"></i>
+</button>
+
+<button class="btn btn-small" onclick="addShape('triangle')" title="Triangle">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3l9 18H3L12 3z"></path>
+    </svg>
+</button>
+
+</div>
   <hr style="border: 0.5px solid #444; margin: 10px 0" />
  
       <h1>Arrière-plan</h1>
@@ -172,11 +184,12 @@
       />
       <button class="tool-btn" id="highlightBtn" title="Surligner">🖍️</button>
     </div>
-
-
-  
-
+ 
+ 
+ 
+ 
  
     <script src="script.js"></script>
   </body>
 </html>
+ 

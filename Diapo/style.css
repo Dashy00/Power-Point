@@ -333,4 +333,55 @@ body {
  
  
  
- 
+ /* Applique la bordure uniquement au contenu des formes */
+.shape-box .shape-content {
+    border: 2px solid black;
+    box-sizing: border-box; /* Garde la bordure à l'intérieur des dimensions (150x150) */
+}
+
+/* Cas spécial du triangle : clip-path coupe la bordure CSS standard */
+.triangle .shape-content {
+    border: none; /* On retire la bordure standard qui ne s'affiche pas bien */
+    filter: drop-shadow(2px 0 0 black) 
+            drop-shadow(-2px 0 0 black) 
+            drop-shadow(0 2px 0 black) 
+            drop-shadow(0 -2px 0 black); /* Simule une bordure sur les bords découpés */
+}
+.btn-small {
+padding: 8px; /* Un peu plus petit que tes boutons standards */
+font-size: 1.1rem;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/* Empêche l'icône de capturer le clic, c'est le bouton qui doit le recevoir */
+.btn-small i {
+pointer-events: none;
+}
+/* Style pour les boutons avec seulement des icônes */
+.btn-small {
+    background: transparent; /* Supprime le fond bleu */
+    border: none;            /* Supprime les bordures */
+    color: #ffffff;          /* Couleur de l'icône (ajuste selon ton fond de sidebar) */
+    font-size: 1.5rem;       /* Agrandit un peu le symbole pour qu'il soit bien visible */
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;             /* Prend toute la place de la cellule de la grille */
+}
+
+/* Effet au survol : l'icône change de couleur ou grossit légèrement */
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.1); /* Un léger fond gris translucide pour le feedback */
+    color: #2563eb;                       /* L'icône devient bleue au survol */
+    transform: scale(1.1);
+    border-radius: 4px;
+}
+
+/* Supprime les effets par défaut des boutons globaux si nécessaire */
+.shape-grid .btn-small {
+    box-shadow: none;
+}
