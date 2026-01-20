@@ -71,41 +71,103 @@
     </div>
 // ------------- ÉDITEUR DE DIAPOSITIVE ------------- //
     <div id="editor-overlay" class="editor-overlay" style="display: none;">
+        <!-- Barre d'outils fixe en haut -->
         <div class="overlay-header">
             <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
+            
             <div class="toolbar-group">
-                <button class="top-tool-btn" id="topBoldBtn"><b>G</b></button>
-                <button class="top-tool-btn" id="topItalicBtn"><i>I</i></button>
-                <button class="top-tool-btn" id="topUnderlineBtn"><u>S</u></button>
-                <input type="color" id="topTextColor" value="#333333">
+                <select id="topFontFamily" title="Police">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Courier New">Courier New</option>
+                </select>
+                <select id="topFontSize" title="Taille">
+                    <option value="12px">12</option>
+                    <option value="16px">16</option>
+                    <option value="18px" selected>18</option>
+                    <option value="24px">24</option>
+                    <option value="32px">32</option>
+                    <option value="48px">48</option>
+                </select>
+            </div>
+
+            <div class="toolbar-group">
+                <input type="color" id="topTextColor" value="#333333" title="Couleur du texte">
+                <button class="top-tool-btn" id="topBoldBtn" title="Gras"><b>G</b></button>
+                <button class="top-tool-btn" id="topItalicBtn" title="Italique"><i>I</i></button>
+                <button class="top-tool-btn" id="topUnderlineBtn" title="Souligné"><u>S</u></button>
+            </div>
+
+            <div class="toolbar-group">
+                <input type="color" id="topHighlightColor" value="#ffff00" title="Couleur surlignage">
+                <button class="top-tool-btn" id="topHighlightBtn" title="Surligner">🖍️</button>
+            </div>
+
+            <div class="toolbar-group" style="border-right: none;">
+                <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">↩️</button>
+                <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
             </div>
         </div>
 
         <div class="overlay-body">
+            <!-- Sidebar gauche -->
             <div class="overlay-sidebar">
                 <h4>Ajouter</h4>
                 <button class="overlay-btn" id="addTextBtn">Texte</button>
                 <button class="overlay-btn" id="addImageBtn">Image</button>
-                <input type="file" id="imageInput" hidden>
+                <button class="overlay-btn" id="addBubbleBtn">Bulle</button>
+                <input type="file" id="imageInput" hidden accept="image/*">
                 
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
                 
                 <h4>Formes</h4>
-                <div style="display:flex; gap:5px;">
-                    <button class="overlay-btn small" onclick="addEditorShape('rect')">Rect.</button>
-                    <button class="overlay-btn small" onclick="addEditorShape('circle')">Cercle</button>
-                    <button class="overlay-btn small" onclick="addEditorShape('triangle')">Tri.</button>
+                <div class="shape-grid">
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('square')" title="Carré">▢</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('circle')" title="Cercle">○</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('triangle')" title="Triangle">△</button>
                 </div>
 
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
-                <h4>Fond</h4>
+                
+                <h4>Arrière-plan</h4>
+                <label style="font-size: 12px">Couleur de fond :</label>
                 <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
-                <button class="overlay-btn" id="bgImageBtn" style="margin-top:5px; font-size:12px;">Img Fond</button>
-                <input type="file" id="bgImageInput" hidden>
+                <button class="overlay-btn" id="bgImageBtn" style="margin-top:5px; font-size:12px;">Image de fond</button>
+                <input type="file" id="bgImageInput" hidden accept="image/*">
             </div>
 
+            <!-- Zone de travail -->
             <div class="overlay-workspace">
                 <div id="editable-slide" class="overlay-slide"></div>
+                
+                <!-- Barre d'outils flottante -->
+                <div class="floating-toolbar" id="floatingToolbar">
+                    <select id="fontFamily" title="Police">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Courier New">Courier New</option>
+                    </select>
+                    <select id="fontSize" title="Taille">
+                        <option value="12px">12</option>
+                        <option value="16px">16</option>
+                        <option value="18px" selected>18</option>
+                        <option value="24px">24</option>
+                        <option value="32px">32</option>
+                        <option value="48px">48</option>
+                    </select>
+                    <input type="color" id="textColor" value="#333333" title="Couleur du texte">
+                    <div class="toolbar-separator"></div>
+                    <button class="tool-btn" id="boldBtn" title="Gras"><b>G</b></button>
+                    <button class="tool-btn" id="italicBtn" title="Italique"><i>I</i></button>
+                    <button class="tool-btn" id="underlineBtn" title="Souligné"><u>S</u></button>
+                    <div class="toolbar-separator"></div>
+                    <input type="color" id="highlightColor" value="#ffff00" title="Couleur de surlignage">
+                    <button class="tool-btn" id="highlightBtn" title="Surligner">🖍️</button>
+                </div>
             </div>
         </div>
     </div>
