@@ -61,7 +61,7 @@ document.getElementById('btn-close-editor').onclick = () => {
         state.slidesContent[state.currentEditingId] = {
             html: editableSlide.innerHTML,
             bg: editableSlide.style.backgroundColor,
-            img: editableSlide.style.backgroundImage
+            bgImg: editableSlide.style.backgroundImage
         };
         
         // --- MISE A JOUR DE LA PREVIEW ---
@@ -71,8 +71,8 @@ document.getElementById('btn-close-editor').onclick = () => {
         }
 
         // Feedback visuel (bordure verte)
-        const slide = document.getElementById(state.currentEditingId);
-        if (editableSlide.innerHTML.trim() !== "") slide.style.border = "2px solid #2ecc71";
+        const slideNode = document.getElementById(state.currentEditingId);
+        if (editableSlide.innerHTML.trim() !== "" && slideNode) slideNode.style.border = "2px solid #2ecc71";
     }
     editorOverlay.style.display = 'none';
     state.currentEditingId = null;
@@ -104,22 +104,16 @@ slide.addEventListener("dblclick", (e) => {
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
- 
+
+// Dimensions fixes de la slide (sans zoom)
+const SLIDE_WIDTH = 960;
+const SLIDE_HEIGHT = 540;
+
 // Force un élément à rester dans la slide (position + taille)
+// Désactivé pour permettre le dépassement des bordures
 function keepInsideSlide(el) {
-  const slideRect = slide.getBoundingClientRect();
- 
-  const w = el.offsetWidth;
-  const h = el.offsetHeight;
- 
-  let left = parseFloat(el.style.left) || 0;
-  let top  = parseFloat(el.style.top) || 0;
- 
-  left = clamp(left, 0, slideRect.width - w);
-  top  = clamp(top,  0, slideRect.height - h);
- 
-  el.style.left = `${left}px`;
-  el.style.top  = `${top}px`;
+  // Ne fait plus rien - les éléments peuvent dépasser
+  return;
 }
  
  
@@ -416,24 +410,19 @@ window.addEventListener("mousemove", (e) => {
         return;
     }
  
-    // DRAG
-   if (dragging) {
+  // DRAG
+  if (dragging) {
     const slideRect = slide.getBoundingClientRect();
-    let newLeft = e.clientX - slideRect.left - offsetX;
-    let newTop  = e.clientY - slideRect.top  - offsetY;
- 
-    const elW = dragging.offsetWidth;
-    const elH = dragging.offsetHeight;
- 
-    newLeft = clamp(newLeft, 0, slideRect.width - elW);
-    newTop  = clamp(newTop,  0, slideRect.height - elH);
- 
+    // Diviser par le zoom pour obtenir les coordonnées réelles
+    let newLeft = (e.clientX - slideRect.left) / editorZoom - offsetX;
+    let newTop = (e.clientY - slideRect.top) / editorZoom - offsetY;
+
+    // Pas de limite - les éléments peuvent dépasser les bordures
     dragging.style.left = `${newLeft}px`;
-    dragging.style.top  = `${newTop}px`;
- 
+    dragging.style.top = `${newTop}px`;
+
     if (dragging === activeTextBox) showToolbar(dragging);
-}
- 
+  }
 });
  
  
@@ -647,5 +636,57 @@ document.addEventListener("keydown", (e) => {
 reattachEventListeners();
 function reattachEventListeners() {
     document.querySelectorAll(".text-box, .image-box, .shape-box, .bubble-box").forEach(setupDeleteBtn);
+}
+
+// --- ZOOM DE L'ESPACE DE TRAVAIL ---
+let editorZoom = 1;
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 3;
+
+const overlayWorkspace = document.querySelector(".overlay-workspace");
+const slideZoomWrapper = document.getElementById("slideZoomWrapper");
+
+function applyZoom() {
+  if (slideZoomWrapper) {
+    slideZoomWrapper.style.transform = `scale(${editorZoom})`;
+  }
+  updateZoomDisplay();
+}
+
+if (overlayWorkspace) {
+  overlayWorkspace.addEventListener("wheel", (e) => {
+    // Seulement si Ctrl est enfoncé (pour ne pas interférer avec le scroll normal)
+    if (e.ctrlKey) {
+      e.preventDefault();
+      
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      editorZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, editorZoom + delta));
+      
+      applyZoom();
+    }
+  }, { passive: false });
+}
+
+// Fonctions de zoom accessibles globalement
+function zoomIn() {
+  editorZoom = Math.min(MAX_ZOOM, editorZoom + 0.1);
+  applyZoom();
+}
+
+function zoomOut() {
+  editorZoom = Math.max(MIN_ZOOM, editorZoom - 0.1);
+  applyZoom();
+}
+
+function resetZoom() {
+  editorZoom = 1;
+  applyZoom();
+}
+
+function updateZoomDisplay() {
+  const zoomIndicator = document.getElementById("editor-zoom-text");
+  if (zoomIndicator) {
+    zoomIndicator.textContent = Math.round(editorZoom * 100) + "%";
+  }
 }
  

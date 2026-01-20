@@ -109,6 +109,14 @@
                 <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">↩️</button>
                 <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
             </div>
+
+            <!-- Contrôles de zoom -->
+            <div class="zoom-controls-editor">
+                <button class="zoom-btn" onclick="zoomOut()" title="Dézoomer">−</button>
+                <span id="editor-zoom-text">100%</span>
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoomer">+</button>
+                <button class="reset-btn" onclick="resetZoom()" title="Réinitialiser">⟲</button>
+            </div>
         </div>
 
         <div class="overlay-body">
@@ -140,7 +148,9 @@
 
             <!-- Zone de travail -->
             <div class="overlay-workspace">
-                <div id="editable-slide" class="overlay-slide"></div>
+                <div class="slide-zoom-wrapper" id="slideZoomWrapper">
+                    <div id="editable-slide" class="overlay-slide"></div>
+                </div>
                 
                 <!-- Barre d'outils flottante -->
                 <div class="floating-toolbar" id="floatingToolbar">
