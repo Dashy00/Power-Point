@@ -39,7 +39,9 @@ viewport.addEventListener("wheel", (e) => {
 }, { passive: false });
 
 viewport.addEventListener("mousedown", (e) => {
-  if (!e.target.closest(".slide") && !e.target.closest(".port")) {
+  // Désélectionner si on clique dans le vide (ni slide, ni port, ni ligne)
+  if (!e.target.closest(".slide") && !e.target.closest(".port") && e.target.tagName !== 'line') {
+    deselectAll();
     state.panning = true;
     state.startX = e.clientX - state.pointX;
     state.startY = e.clientY - state.pointY;
@@ -81,6 +83,60 @@ viewport.addEventListener("mouseup", () => {
   }
 });
 
+// --- GESTION DE LA SÉLECTION ---
+function deselectAll() {
+    if (state.selectedSlide) {
+        state.selectedSlide.classList.remove('selected');
+        state.selectedSlide = null;
+    }
+    if (state.selectedConnection) {
+        state.selectedConnection.line.classList.remove('selected');
+        state.selectedConnection = null;
+    }
+}
+
+function selectSlide(slide) {
+    deselectAll();
+    state.selectedSlide = slide;
+    slide.classList.add('selected');
+}
+
+function selectConnection(connObj) {
+    deselectAll();
+    state.selectedConnection = connObj;
+    connObj.line.classList.add('selected');
+}
+
+// --- BOUTONS D'ACTION ---
+document.getElementById("btn-new-slide").onclick = () => createSlide("default");
+document.getElementById("btn-info-bulle").onclick = () => createSlide("info");
+document.getElementById("btn-condition").onclick = () => createSlide("condition");
+document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
+
+// BOUTON SUPPRIMER (Gère Slides ET Flèches)
+document.getElementById("btn-delete").onclick = () => {
+  if (state.selectedSlide) {
+    // 1. Supprimer les connexions liées à cette slide
+    state.connections = state.connections.filter(c => {
+        if (c.fromId === state.selectedSlide.id || c.toId === state.selectedSlide.id) {
+            c.line.remove(); // Supprime du DOM SVG
+            return false;    // Retire du tableau
+        }
+        return true;
+    });
+    // 2. Supprimer la slide
+    state.selectedSlide.remove();
+    state.selectedSlide = null;
+  } 
+  else if (state.selectedConnection) {
+    // 1. Supprimer la flèche sélectionnée
+    state.selectedConnection.line.remove();
+    // 2. Retirer du tableau global
+    state.connections = state.connections.filter(c => c !== state.selectedConnection);
+    state.selectedConnection = null;
+  }
+};
+
 // --- SLIDES ---
 function createSlide(type) {
   state.slideCount++;
@@ -92,29 +148,21 @@ function createSlide(type) {
   slide.className = `slide ${type}`;
   slide.id = id;
 
-  // 1. Création du conteneur de prévisualisation (vide au début)
+  // 1. Création du conteneur de prévisualisation
   const previewWrapper = document.createElement("div");
   previewWrapper.className = "slide-preview-wrapper";
   previewWrapper.id = `preview-${id}`;
 
-  // 2. Création de l'info (Icone + ID) par dessus
+  // 2. Création de l'info (Icone + ID)
   const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
   infoOverlay.innerHTML =
-    (type === "info"
-      ? "ℹ️"
-      : type === "condition"
-        ? "❓"
-        : type === "fin"
-          ? "🏁"
-          : "") +
-    " " +
-    state.slideCount;
+    (type === "info" ? "ℹ️" : type === "condition" ? "❓" : type === "fin" ? "🏁" : "") +
+    " " + state.slideCount;
 
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
 
-  // ... (Le reste du code de positionnement et events reste identique) ...
   const centerX = 2500 - state.pointX / state.scale;
   const centerY = 2500 - state.pointY / state.scale;
   slide.style.left = centerX - 80 + "px"; // Ajusté pour la largeur 160
@@ -123,9 +171,7 @@ function createSlide(type) {
   slide.addEventListener("mousedown", (e) => {
     if (e.target.classList.contains("port")) return;
     e.stopPropagation();
-    if (state.selectedSlide) state.selectedSlide.classList.remove("selected");
-    state.selectedSlide = slide;
-    slide.classList.add("selected");
+    selectSlide(slide); // Utilise la fonction centralisée
     state.isDraggingSlide = true;
     state.dragOffset.x = e.offsetX;
     state.dragOffset.y = e.offsetY;
@@ -150,8 +196,7 @@ function createSlide(type) {
   updateNodePreview(id);
 }
 
-// --- NOUVELLE FONCTION (à ajouter à la fin de app.js ou render) ---
-// C'est elle qui fait le lien entre les données et le visuel du graphe
+// --- FONCTION DE MISE A JOUR VISUELLE ---
 window.updateNodePreview = function (id) {
   const wrapper = document.getElementById(`preview-${id}`);
   const data = state.slidesContent[id];
@@ -165,22 +210,6 @@ window.updateNodePreview = function (id) {
   wrapper.style.backgroundColor = data.bg || "#ffffff";
   wrapper.style.backgroundImage = data.bgImg || "none";
   wrapper.style.backgroundSize = "cover";
-
-  // Note: Le CSS se charge de masquer les boutons 'delete' et 'resize'
-  // grâce à .slide-preview-wrapper .delete-btn { display: none }
-};
-
-// Boutons
-document.getElementById("btn-new-slide").onclick = () => createSlide("default");
-document.getElementById("btn-info-bulle").onclick = () => createSlide("info");
-document.getElementById("btn-condition").onclick = () =>
-  createSlide("condition");
-document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
-document.getElementById("btn-delete").onclick = () => {
-  if (state.selectedSlide) {
-    state.selectedSlide.remove();
-    state.selectedSlide = null;
-  }
 };
 
 // --- CONNEXIONS ---
@@ -214,23 +243,37 @@ function endConnection(e, id, port) {
       state.tempLine.setAttribute("x2", end.x);
       state.tempLine.setAttribute("y2", end.y);
 
-      // Double Clic : Double Sens
+      // Création de l'objet connexion
+      const connectionObj = {
+        line: state.tempLine,
+        fromId: state.connectionStart.id,
+        toId: id,
+        fromPort: state.connectionStart.port,
+        toPort: port,
+      };
+
+      // 1. Clic Simple : Sélectionner la flèche
+      state.tempLine.addEventListener("click", function(evt) {
+          evt.stopPropagation();
+          selectConnection(connectionObj);
+      });
+
+      // 2. Double Clic : Double Sens
       state.tempLine.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
         this.setAttribute("marker-start", start ? "" : "url(#arrow-start)");
       });
-      // Clic Droit : Supprimer
+
+      // 3. Clic Droit (Backup)
       state.tempLine.addEventListener("contextmenu", function (evt) {
         evt.preventDefault();
+        // Si on veut supprimer direct au clic droit :
         this.remove();
+        state.connections = state.connections.filter(c => c !== connectionObj);
       });
 
-      state.connections.push({
-        line: state.tempLine,
-        fromPort: state.connectionStart.port,
-        toPort: port,
-      });
+      state.connections.push(connectionObj);
       state.tempLine = null;
     } else {
       state.tempLine.remove();
