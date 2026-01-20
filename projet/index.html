@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditeur Graphique Modulaire</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="editor-wrapper" id="graph-interface">
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span class="tree-icon">🌳</span>
+                <h2>Power-Point</h2>
+            </div>
+            
+            <div class="sidebar-item" id="btn-new-slide">
+                <span class="icon">➕</span>
+                <span class="label">Nouvelle<br>diapositive</span>
+            </div>
+            <div class="sidebar-item" id="btn-info-bulle">
+                <span class="icon">●</span>
+                <span class="label">Info Bulle</span>
+            </div>
+            <div class="sidebar-item" id="btn-condition">
+                <span class="icon">■</span>
+                <span class="label">Condition</span>
+            </div>
+            <div class="sidebar-item" id="btn-bloc-fin">
+                <span class="icon">✚</span>
+                <span class="label">Bloc Fin</span>
+            </div>
+            
+            <div class="sidebar-spacer"></div>
+            
+            <button id="btn-delete" class="sidebar-item delete">
+                <span class="icon">🗑️</span>
+                <span class="label">Supprimer</span>
+            </button>
+            <button id="btn-generate" class="sidebar-item export">
+                <span class="icon">💾</span>
+                <span class="label">Générer</span>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="viewport" id="viewport">
+                <div class="canvas" id="canvas">
+                    <svg id="connections-layer">
+                        <defs>
+                            <marker id="arrow-end" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+                                <path d="M0,0 L10,5 L0,10" fill="#2c3e50" />
+                            </marker>
+                            <marker id="arrow-start" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto">
+                                <path d="M10,0 L0,5 L10,10" fill="#2c3e50" />
+                            </marker>
+                        </defs>
+                    </svg>
+                    </div>
+            </div>
+
+            <div class="zoom-controls">
+                <button id="btn-zoom-out" class="zoom-btn">−</button>
+                <span id="zoom-text">100 %</span>
+                <button id="btn-zoom-in" class="zoom-btn">+</button>
+                <button id="btn-reset" class="reset-btn">⟲</button>
+            </div>
+        </div>
+    </div>
+// ------------- ÉDITEUR DE DIAPOSITIVE ------------- //
+    <div id="editor-overlay" class="editor-overlay" style="display: none;">
+        <div class="overlay-header">
+            <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
+            <div class="toolbar-group">
+                <button class="top-tool-btn" id="topBoldBtn"><b>G</b></button>
+                <button class="top-tool-btn" id="topItalicBtn"><i>I</i></button>
+                <button class="top-tool-btn" id="topUnderlineBtn"><u>S</u></button>
+                <input type="color" id="topTextColor" value="#333333">
+            </div>
+        </div>
+
+        <div class="overlay-body">
+            <div class="overlay-sidebar">
+                <h4>Ajouter</h4>
+                <button class="overlay-btn" id="addTextBtn">Texte</button>
+                <button class="overlay-btn" id="addImageBtn">Image</button>
+                <input type="file" id="imageInput" hidden>
+                
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
+                
+                <h4>Formes</h4>
+                <div style="display:flex; gap:5px;">
+                    <button class="overlay-btn small" onclick="addEditorShape('rect')">Rect.</button>
+                    <button class="overlay-btn small" onclick="addEditorShape('circle')">Cercle</button>
+                    <button class="overlay-btn small" onclick="addEditorShape('triangle')">Tri.</button>
+                </div>
+
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
+                <h4>Fond</h4>
+                <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
+                <button class="overlay-btn" id="bgImageBtn" style="margin-top:5px; font-size:12px;">Img Fond</button>
+                <input type="file" id="bgImageInput" hidden>
+            </div>
+
+            <div class="overlay-workspace">
+                <div id="editable-slide" class="overlay-slide"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="globals.js"></script>
+    <script src="editor.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
