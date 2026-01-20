@@ -477,20 +477,64 @@ function formatText(cmd, val = null) {
 document.getElementById("topTextColor").addEventListener("input", (e) => formatText("foreColor", e.target.value));
 document.getElementById("topBoldBtn").onclick = () => formatText("bold");
  
-// --- HISTORIQUE (Save state) ---
+// --- HISTORIQUE (Undo/Redo) ---
+let historyStack = [];
+let redoStack = [];
+
 function saveState() {
     historyStack.push({
         innerHTML: slide.innerHTML,
         bg: slide.style.backgroundColor,
         img: slide.style.backgroundImage
     });
+    redoStack = [];
 }
-let historyStack = [];
- 
+
+function undo() {
+    if (historyStack.length === 0) return;
+    redoStack.push({
+        innerHTML: slide.innerHTML,
+        bg: slide.style.backgroundColor,
+        img: slide.style.backgroundImage
+    });
+    const state = historyStack.pop();
+    slide.innerHTML = state.innerHTML;
+    slide.style.backgroundColor = state.bg;
+    slide.style.backgroundImage = state.img;
+    reattachEventListeners();
+}
+
+function redo() {
+    if (redoStack.length === 0) return;
+    historyStack.push({
+        innerHTML: slide.innerHTML,
+        bg: slide.style.backgroundColor,
+        img: slide.style.backgroundImage
+    });
+    const state = redoStack.pop();
+    slide.innerHTML = state.innerHTML;
+    slide.style.backgroundColor = state.bg;
+    slide.style.backgroundImage = state.img;
+    reattachEventListeners();
+}
+
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("redoBtn").addEventListener("click", redo);
+
+document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "z") {
+        e.preventDefault();
+        undo();
+    }
+    if (e.ctrlKey && e.key === "y") {
+        e.preventDefault();
+        redo();
+    }
+});
+
 // Initialisation
 reattachEventListeners();
 function reattachEventListeners() {
     document.querySelectorAll(".text-box, .image-box, .shape-box, .bubble-box").forEach(setupDeleteBtn);
- 
 }
  

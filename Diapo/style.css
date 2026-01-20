@@ -118,7 +118,66 @@ body {
 .floating-toolbar.visible {
   display: flex;
 }
- 
+
+/* Selects dans la toolbar flottante */
+.floating-toolbar select {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: #374151;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.floating-toolbar select:hover {
+  background: #4b5563;
+}
+
+/* Color pickers */
+.floating-toolbar input[type="color"] {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+
+/* Boutons d'outils */
+.tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #374151;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tool-btn:hover {
+  background: #4b5563;
+}
+
+.tool-btn.active {
+  background: #2563eb;
+}
+
+/* Séparateur vertical */
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #4b5563;
+  margin: 0 4px;
+}
+
 /* --- OBJETS GÉNÉRIQUES (Text, Image, Shape) --- */
 .text-box,
 .image-box,
