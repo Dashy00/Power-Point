@@ -53,10 +53,32 @@ function closeEditor() {
 }
 
 // Bouton retour
-document.getElementById("btn-close-editor").addEventListener("click", closeEditor);
+// --- Dans editor.js ---
 
- 
- 
+document.getElementById('btn-close-editor').onclick = () => {
+    if (state.currentEditingId) {
+        // Sauvegarde des données
+        state.slidesContent[state.currentEditingId] = {
+            html: editableSlide.innerHTML,
+            bg: editableSlide.style.backgroundColor,
+            img: editableSlide.style.backgroundImage
+        };
+        
+        // --- MISE A JOUR DE LA PREVIEW ---
+        // On appelle la fonction créée dans app.js
+        if(window.updateNodePreview) {
+            window.updateNodePreview(state.currentEditingId);
+        }
+
+        // Feedback visuel (bordure verte)
+        const slide = document.getElementById(state.currentEditingId);
+        if (editableSlide.innerHTML.trim() !== "") slide.style.border = "2px solid #2ecc71";
+    }
+    editorOverlay.style.display = 'none';
+    state.currentEditingId = null;
+};
+
+
  
  
  
@@ -519,6 +541,9 @@ document.getElementById("topTextColor").addEventListener("input", (e) => {
     if (activeItem && activeItem.classList.contains("shape-box")) {
         saveState();
         activeItem.querySelector(".shape-content").style.backgroundColor = e.target.value;
+    } else if (activeItem && activeItem.classList.contains("bubble-box")) {
+        saveState();
+        activeItem.style.backgroundColor = e.target.value;
     } else {
         formatText("foreColor", e.target.value);
     }
