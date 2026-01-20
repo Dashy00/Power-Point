@@ -54,7 +54,7 @@ function createSlide(type) {
     state.slideCount++;
     const id = `slide-${state.slideCount}`;
     // Initialisation des données
-    state.slidesContent[id] = { html: "", bg: "#ffffff", img: "none" }; 
+    state.slidesContent[id] = { html: "", bg: "#ffffff", bgImg: "none" }; 
 
     const slide = document.createElement('div');
     slide.className = `slide ${type}`;
@@ -119,7 +119,7 @@ window.updateNodePreview = function(id) {
     
     // On applique le fond
     wrapper.style.backgroundColor = data.bg || "#ffffff";
-    wrapper.style.backgroundImage = data.img || "none";
+    wrapper.style.backgroundImage = data.bgImg || "none";
     wrapper.style.backgroundSize = "cover";
     
     // Note: Le CSS se charge de masquer les boutons 'delete' et 'resize'
