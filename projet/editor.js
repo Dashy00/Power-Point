@@ -541,6 +541,9 @@ document.getElementById("topTextColor").addEventListener("input", (e) => {
     if (activeItem && activeItem.classList.contains("shape-box")) {
         saveState();
         activeItem.querySelector(".shape-content").style.backgroundColor = e.target.value;
+    } else if (activeItem && activeItem.classList.contains("bubble-box")) {
+        saveState();
+        activeItem.style.backgroundColor = e.target.value;
     } else {
         formatText("foreColor", e.target.value);
     }
