@@ -22,11 +22,14 @@ function openEditor(slideId) {
     state.currentEditingId = slideId;
     
     // Charger le contenu sauvegardé (s'il existe)
-    const data = state.slidesContent[slideId] || { html: "", bg: "#ffffff", bgImg: "" };
+    const data = state.slidesContent[slideId] || { html: "", bg: "#ffffff", bgImg: "", slideNum: "" };
     slide.innerHTML = data.html;
     slide.style.backgroundColor = data.bg;
     slide.style.backgroundImage = data.bgImg || "";
     bgColorPicker.value = data.bg || "#ffffff";
+    
+    // Charger le numéro de la diapositive
+    document.getElementById("slideNumber").value = data.slideNum || "";
     
     // Réattacher les event listeners sur les objets
     reattachEventListeners();
@@ -61,7 +64,8 @@ document.getElementById('btn-close-editor').onclick = () => {
         state.slidesContent[state.currentEditingId] = {
             html: editableSlide.innerHTML,
             bg: editableSlide.style.backgroundColor,
-            bgImg: editableSlide.style.backgroundImage
+            bgImg: editableSlide.style.backgroundImage,
+            slideNum: document.getElementById("slideNumber").value
         };
         
         // --- MISE A JOUR DE LA PREVIEW ---

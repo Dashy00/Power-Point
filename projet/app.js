@@ -199,6 +199,7 @@ function createSlide(type) {
 // --- FONCTION DE MISE A JOUR VISUELLE ---
 window.updateNodePreview = function (id) {
   const wrapper = document.getElementById(`preview-${id}`);
+  const slideNode = document.getElementById(id);
   const data = state.slidesContent[id];
 
   if (!wrapper || !data) return;
@@ -210,6 +211,18 @@ window.updateNodePreview = function (id) {
   wrapper.style.backgroundColor = data.bg || "#ffffff";
   wrapper.style.backgroundImage = data.bgImg || "none";
   wrapper.style.backgroundSize = "cover";
+  
+  // Mise à jour du numéro dans l'overlay
+  if (slideNode) {
+    const infoOverlay = slideNode.querySelector('.slide-info-overlay');
+    if (infoOverlay && data.slideNum) {
+      // Récupérer l'icône du type
+      const slideType = slideNode.classList.contains('info') ? 'ℹ️' : 
+                        slideNode.classList.contains('condition') ? '❓' : 
+                        slideNode.classList.contains('fin') ? '🏁' : '';
+      infoOverlay.innerHTML = slideType + ' ' + data.slideNum;
+    }
+  }
 };
 
 // --- CONNEXIONS ---
