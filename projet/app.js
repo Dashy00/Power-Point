@@ -18,6 +18,26 @@ document.getElementById("btn-reset").onclick = () => {
   setTransform();
 };
 
+// --- ZOOM avec la molette de la souris ---
+viewport.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  const newScale = Math.min(Math.max(state.scale + delta, 0.2), 3);
+  
+  // Zoom centré sur la position de la souris
+  const rect = viewport.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  
+  // Ajuster le point de translation pour zoomer vers la souris
+  const scaleDiff = newScale - state.scale;
+  state.pointX -= mouseX * scaleDiff / state.scale;
+  state.pointY -= mouseY * scaleDiff / state.scale;
+  
+  state.scale = newScale;
+  setTransform();
+}, { passive: false });
+
 viewport.addEventListener("mousedown", (e) => {
   if (!e.target.closest(".slide") && !e.target.closest(".port")) {
     state.panning = true;
