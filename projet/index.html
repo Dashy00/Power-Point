@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Éditeur Graphique & Slides</title>
+    <title>Éditeur Graphique Modulaire</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -62,87 +62,56 @@
             </div>
 
             <div class="zoom-controls">
-                <button id="btn-zoom-out" class="zoom-btn" title="Dézoomer">−</button>
+                <button id="btn-zoom-out" class="zoom-btn">−</button>
                 <span id="zoom-text">100 %</span>
-                <button id="btn-zoom-in" class="zoom-btn" title="Zoomer">+</button>
+                <button id="btn-zoom-in" class="zoom-btn">+</button>
                 <button id="btn-reset" class="reset-btn">⟲</button>
             </div>
         </div>
     </div>
-
+// ------------- ÉDITEUR DE DIAPOSITIVE ------------- //
     <div id="editor-overlay" class="editor-overlay" style="display: none;">
-        
-        <header class="top-toolbar" id="topToolbar">
-            <button id="btn-close-editor" class="back-btn">← Retour</button>
-            
+        <div class="overlay-header">
+            <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
             <div class="toolbar-group">
-                <select id="topFontFamily" title="Police">
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Courier New">Courier New</option>
-                </select>
-        
-                <select id="topFontSize" title="Taille">
-                    <option value="12px">12</option>
-                    <option value="16px">16</option>
-                    <option value="18px" selected>18</option>
-                    <option value="24px">24</option>
-                    <option value="32px">32</option>
-                    <option value="48px">48</option>
-                </select>
+                <button class="top-tool-btn" id="topBoldBtn"><b>G</b></button>
+                <button class="top-tool-btn" id="topItalicBtn"><i>I</i></button>
+                <button class="top-tool-btn" id="topUnderlineBtn"><u>S</u></button>
+                <input type="color" id="topTextColor" value="#333333">
             </div>
-        
-            <div class="toolbar-group">
-                <input type="color" id="topTextColor" value="#333333" title="Couleur du texte">
-                <button class="top-tool-btn" id="topBoldBtn" title="Gras"><b>G</b></button>
-                <button class="top-tool-btn" id="topItalicBtn" title="Italique"><i>I</i></button>
-                <button class="top-tool-btn" id="topUnderlineBtn" title="Souligné"><u>S</u></button>
-            </div>
-
-            <div class="toolbar-group">
-                 <input type="color" id="topHighlightColor" value="#ffff00" title="Couleur surlignage">
-                 <button class="top-tool-btn" id="topHighlightBtn" title="Surligner">🖍️</button>
-            </div>
-        </header>
+        </div>
 
         <div class="overlay-body">
-            <aside class="overlay-sidebar">
-                <h1>Outils</h1>
-                <button class="overlay-btn" id="addTextBtn">Ajouter un texte</button>
-                <button class="overlay-btn" id="addImageBtn">Ajouter une image</button>
-                <input type="file" id="imageInput" accept="image/*" hidden>
+            <div class="overlay-sidebar">
+                <h4>Ajouter</h4>
+                <button class="overlay-btn" id="addTextBtn">Texte</button>
+                <button class="overlay-btn" id="addImageBtn">Image</button>
+                <input type="file" id="imageInput" hidden>
                 
-                <hr style="border: 0.5px solid #444; margin: 10px 0;">
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
                 
-                <h1>Formes</h1>
-                <div class="shape-grid">
+                <h4>Formes</h4>
+                <div style="display:flex; gap:5px;">
                     <button class="overlay-btn small" onclick="addEditorShape('rect')">Rect.</button>
                     <button class="overlay-btn small" onclick="addEditorShape('circle')">Cercle</button>
-                    <button class="overlay-btn small" onclick="addEditorShape('triangle')">Triangle</button>
+                    <button class="overlay-btn small" onclick="addEditorShape('triangle')">Tri.</button>
                 </div>
 
-                <hr style="border: 0.5px solid #444; margin: 10px 0;">
-
-                <h1>Arrière-plan</h1>
-                <label style="font-size: 12px; color: white;">Couleur de fond :</label>
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
+                <h4>Fond</h4>
                 <input type="color" id="bgColorPicker" value="#ffffff" style="width: 100%; cursor: pointer;">
-                
-                <button class="overlay-btn" id="bgImageBtn" style="background-color: #4b5563; margin-top: 10px;">Image de fond</button>
-                <input type="file" id="bgImageInput" accept="image/*" hidden>
-            </aside>
+                <button class="overlay-btn" id="bgImageBtn" style="margin-top:5px; font-size:12px;">Img Fond</button>
+                <input type="file" id="bgImageInput" hidden>
+            </div>
 
-            <main class="overlay-workspace">
-                <div id="editable-slide" class="overlay-slide">
-                    </div>
-            </main>
-            
-            <div class="floating-toolbar" id="floatingToolbar">
-                </div>
+            <div class="overlay-workspace">
+                <div id="editable-slide" class="overlay-slide"></div>
+            </div>
         </div>
     </div>
 
+    <script src="globals.js"></script>
+    <script src="editor.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
