@@ -38,24 +38,17 @@ line:hover { stroke: #3498db; stroke-width: 5; }
 
 /* SLIDES */
 .slide {
-    /* Dimensions exactes calculées (800*0.2 et 450*0.2) */
-    width: 160px;
-    height: 90px;
-    
+    width: 160px;  /* 800px * 0.2 */
+    height: 90px;  /* 450px * 0.2 */
+    background: #fff;
+    border: 1px solid #ccc;
     position: absolute;
-    background: #ffffff;
-    border: 1px solid #999;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    
-    /* Pour centrer le numéro (Overlay) par dessus la preview */
+    overflow: hidden; /* Important pour couper ce qui dépasse */
     display: flex;
-    justify-content: center;
     align-items: center;
-    
-    /* IMPORTANT : Coupe tout ce qui dépasse pour un cadre net */
-    overflow: hidden; 
+    justify-content: center;
     user-select: none;
-    z-index: 1; /* Niveau de base */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 .slide.selected { outline: 2px solid #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); }
 .slide.info { border-radius: 50%; width: 100px; height: 100px; background: #34495e; color: white; border: none; }

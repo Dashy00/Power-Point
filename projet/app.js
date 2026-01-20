@@ -76,8 +76,8 @@ function createSlide(type) {
     // ... (Le reste du code de positionnement et events reste identique) ...
     const centerX = 2500 - (state.pointX / state.scale);
     const centerY = 2500 - (state.pointY / state.scale);
-    slide.style.left = (centerX - 80) + 'px'; // Ajusté pour la largeur 160
-    slide.style.top = (centerY - 45) + 'px';  // Ajusté pour la hauteur 90
+    slide.style.left = (centerX - 80) + 'px'; 
+    slide.style.top = (centerY - 45) + 'px';  
 
     slide.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('port')) return;
