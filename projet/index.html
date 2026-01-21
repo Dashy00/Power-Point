@@ -12,31 +12,38 @@
        
         <div class="sidebar">
             <div class="sidebar-header">
-                <span class="tree-icon">🌳</span>
-                <h2>Power-Point</h2>
+                <img src="images/logo_avec_fond_blanc.png" alt="Logo" class="sidebar-logo">
             </div>
            
             <div class="sidebar-item" id="btn-new-slide">
-                <span class="icon">➕</span>
+                <img src="images/add_diapo.png" class="icon" alt="+">
                 <span class="label">Nouvelle<br>diapositive</span>
             </div>
+            
             <div class="sidebar-item" id="btn-condition">
-                <span class="icon">■</span>
+                <img src="images/condition.png" class="icon" alt="Condition">
                 <span class="label">Condition</span>
             </div>
+            
             <div class="sidebar-item" id="btn-bloc-fin">
-                <span class="icon">✚</span>
+                <img src="images/add_end.png" class="icon" alt="Fin">
                 <span class="label">Bloc Fin</span>
+            </div>
+
+            <div class="sidebar-item set-start" id="btn-set-start">
+                <span class="icon-text">🚩</span>
+                <span class="label">Définir comme<br>Début</span>
             </div>
            
             <div class="sidebar-spacer"></div>
            
             <button id="btn-delete" class="sidebar-item delete">
-                <span class="icon">🗑️</span>
+                <img src="images/logo_poubelle.png" class="icon" alt="Supprimer">
                 <span class="label">Supprimer</span>
             </button>
+            
             <button id="btn-generate" class="sidebar-item export">
-                <span class="icon">💾</span>
+                <img src="images/logo_telecharger.png" class="icon" alt="Générer">
                 <span class="label">Générer</span>
             </button>
         </div>
@@ -54,7 +61,7 @@
                             </marker>
                         </defs>
                     </svg>
-                    </div>
+                </div>
             </div>
  
             <div class="zoom-controls">
@@ -65,15 +72,14 @@
             </div>
         </div>
     </div>
-// ------------- ÉDITEUR DE DIAPOSITIVE ------------- //
+
     <div id="editor-overlay" class="editor-overlay" style="display: none;">
-        <!-- Barre d'outils fixe en haut -->
         <div class="overlay-header">
             <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
            
             <div class="toolbar-group">
                 <label style="color: white; font-size: 12px; margin-right: 5px;">N°</label>
-                <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive (ex: 1, 1.1, 2.3)" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #4b5563; background: #374151; color: white; font-size: 14px;">
+                <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #4b5563; background: #374151; color: white; font-size: 14px;">
             </div>
            
             <div class="toolbar-group">
@@ -114,7 +120,6 @@
                 <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
             </div>
  
-            <!-- Contrôles de zoom -->
             <div class="zoom-controls-editor">
                 <button class="zoom-btn" onclick="zoomOut()" title="Dézoomer">−</button>
                 <span id="editor-zoom-text">100%</span>
@@ -124,7 +129,6 @@
         </div>
  
         <div class="overlay-body">
-            <!-- Sidebar gauche -->
             <div class="overlay-sidebar">
                 <h4>Ajouter</h4>
                 <button class="overlay-btn" id="addTextBtn">Texte</button>
@@ -150,13 +154,11 @@
                 <input type="file" id="bgImageInput" hidden accept="image/*">
             </div>
  
-            <!-- Zone de travail -->
             <div class="overlay-workspace">
                 <div class="slide-zoom-wrapper" id="slideZoomWrapper">
                     <div id="editable-slide" class="overlay-slide"></div>
                 </div>
                
-                <!-- Barre d'outils flottante -->
                 <div class="floating-toolbar" id="floatingToolbar">
                     <select id="fontFamily" title="Police">
                         <option value="Arial">Arial</option>
@@ -194,4 +196,3 @@
     <script src="app.js"></script>
 </body>
 </html>
- 
