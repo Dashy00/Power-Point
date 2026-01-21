@@ -218,7 +218,6 @@ function createSlide(type) {
   updateNodePreview(id);
 
   if (state.startSlideId === null) {
-      // Définir comme départ manuellement pour réutiliser la fonction visuelle
       state.startSlideId = id;
       slide.classList.add("start-node");
       const flag = document.createElement("div");
@@ -383,26 +382,16 @@ document.getElementById('btn-play').onclick = () => {
         return;
     }
     
-    // Charger la slide
     loadSlideInPlayer(state.startSlideId);
-    
-    // Afficher l'overlay
     playerOverlay.style.display = 'flex';
 
-    // Demander le plein écran
-    if (playerOverlay.requestFullscreen) {
-        playerOverlay.requestFullscreen();
-    } else if (playerOverlay.webkitRequestFullscreen) { /* Safari */
-        playerOverlay.webkitRequestFullscreen();
-    } else if (playerOverlay.msRequestFullscreen) { /* IE11 */
-        playerOverlay.msRequestFullscreen();
-    }
+    if (playerOverlay.requestFullscreen) playerOverlay.requestFullscreen();
+    else if (playerOverlay.webkitRequestFullscreen) playerOverlay.webkitRequestFullscreen();
+    else if (playerOverlay.msRequestFullscreen) playerOverlay.msRequestFullscreen();
     
-    // Adapter la taille (Fit to screen)
     fitStageToScreen();
 };
 
-// Gestion de la sortie du plein écran via la touche Echap
 document.addEventListener('fullscreenchange', exitHandler);
 document.addEventListener('webkitfullscreenchange', exitHandler);
 document.addEventListener('mozfullscreenchange', exitHandler);
@@ -410,43 +399,40 @@ document.addEventListener('MSFullscreenChange', exitHandler);
 
 function exitHandler() {
     if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-        // Si on quitte le plein écran, on cache l'overlay
         playerOverlay.style.display = 'none';
         playerStage.innerHTML = '';
         playerStage.style.transform = 'scale(1)';
     }
 }
 
-// Bouton Quitter (X)
 btnClosePlayer.onclick = () => {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else {
-        // Fallback si pas en plein écran
+    if (document.exitFullscreen) document.exitFullscreen();
+    else {
         playerOverlay.style.display = 'none';
         playerStage.innerHTML = '';
     }
 };
 
 function fitStageToScreen() {
-    // Calcul pour adapter le 960x540 à l'écran de l'utilisateur
-    const margin = 40;
-    const availableWidth = window.innerWidth - margin;
-    const availableHeight = window.innerHeight - margin;
+    // Calcul pour utiliser 100% de l'écran (marge = 0)
+    // On conserve le ratio 16:9 (960x540) via le scale
+    const availableWidth = window.innerWidth;
+    const availableHeight = window.innerHeight;
     
     const scaleX = availableWidth / 960;
     const scaleY = availableHeight / 540;
-    const scale = Math.min(scaleX, scaleY, 1.5); // Max zoom 1.5x pour ne pas flouter
+    
+    // On prend la plus petite échelle pour que tout rentre sans couper ("contain")
+    // Le fond noir du CSS comblera les vides
+    const scale = Math.min(scaleX, scaleY);
     
     playerStage.style.transform = `scale(${scale})`;
 }
 
-// Re-calculer l'échelle si on redimensionne la fenêtre
 window.addEventListener('resize', () => {
     if(playerOverlay.style.display === 'flex') fitStageToScreen();
 });
 
-// Fonction interne de chargement (utilisée pour "Afficher")
 function loadSlideInPlayer(slideId) {
     const data = state.slidesContent[slideId];
     if (!data) return;
@@ -456,13 +442,11 @@ function loadSlideInPlayer(slideId) {
     playerStage.style.backgroundImage = data.bgImg || 'none';
     playerStage.style.backgroundSize = 'cover';
 
-    // Rendre les boutons interactifs
     const links = playerStage.querySelectorAll('.link-button');
     links.forEach(link => {
         link.onclick = (e) => {
             e.stopPropagation();
             const targetId = link.dataset.target;
-            // Transition simple
             playerStage.style.opacity = 0;
             setTimeout(() => {
                 loadSlideInPlayer(targetId);
@@ -482,15 +466,13 @@ document.getElementById('btn-generate').onclick = () => {
     }
 
     const htmlContent = generateStandaloneHTML();
-    downloadFile("presentation.html", htmlContent);
+    downloadFile("presentation_nodeflow.html", htmlContent);
 };
 
 function generateStandaloneHTML() {
-    // On convertit l'objet slidesContent en JSON string pour l'intégrer au fichier
     const slidesData = JSON.stringify(state.slidesContent);
     const startId = state.startSlideId;
 
-    // Le template HTML du fichier exporté
     return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -499,7 +481,16 @@ function generateStandaloneHTML() {
     <title>Présentation NodeFlow</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; }
-        #stage { width: 960px; height: 540px; background: white; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); transform-origin: center center; transition: opacity 0.15s ease; }
+        
+        #stage { 
+            width: 960px; height: 540px; 
+            background: white; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 0 0 100vw black; 
+            transform-origin: center center; 
+            transition: opacity 0.15s ease; 
+        }
         
         /* Styles des éléments (copie simplifiée de style.css) */
         .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; }
@@ -513,7 +504,7 @@ function generateStandaloneHTML() {
         
         /* Boutons de lien */
         .link-button { background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 24px; z-index: 10; cursor: pointer; transition: transform 0.1s; border: 2px solid #a1887f; }
-        .link-button:hover { transform: scale(1.1); filter: brightness(1.1); }
+        .link-button:hover { transform: scale(1.05); filter: brightness(1.1); }
         .link-button:active { transform: scale(0.95); }
         .link-button.square { border-radius: 4px; } .link-button.round { border-radius: 50%; }
 
@@ -526,25 +517,21 @@ function generateStandaloneHTML() {
     <div id="stage"></div>
 
     <script>
-        // DONNÉES DE LA PRÉSENTATION
         const slides = ${slidesData};
         const startId = "${startId}";
         const stage = document.getElementById('stage');
 
-        // FONCTION DE NAVIGATION
         function goToSlide(id) {
             const data = slides[id];
             if (!data) return;
 
             stage.style.opacity = 0;
-            
             setTimeout(() => {
                 stage.innerHTML = data.html;
                 stage.style.backgroundColor = data.bg || '#ffffff';
                 stage.style.backgroundImage = data.bgImg || 'none';
                 stage.style.backgroundSize = 'cover';
 
-                // Réactiver les liens
                 const links = stage.querySelectorAll('.link-button');
                 links.forEach(link => {
                     link.onclick = (e) => {
@@ -552,24 +539,22 @@ function generateStandaloneHTML() {
                         goToSlide(target);
                     };
                 });
-
                 stage.style.opacity = 1;
             }, 150);
         }
 
-        // ADAPTATION ÉCRAN (RESPONSIVE)
         function resize() {
-            const margin = 20;
+            // Calcul Plein Écran (Marge 0)
             const ratio = Math.min(
-                (window.innerWidth - margin) / 960,
-                (window.innerHeight - margin) / 540
+                window.innerWidth / 960,
+                window.innerHeight / 540
             );
             stage.style.transform = 'scale(' + ratio + ')';
         }
         window.onresize = resize;
         resize();
 
-        // Lancement
+        // Lancer la présentation
         goToSlide(startId);
     <\/script>
 </body>

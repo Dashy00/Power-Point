@@ -65,7 +65,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
     background-color: rgba(141, 110, 99, 0.2);
 }
 
-/* NOUVEAU : Afficher (Bleu) - Déplacé ici depuis le HTML */
+/* NOUVEAU : Afficher (Bleu) */
 .sidebar-item.play {
     background-color: rgba(52, 152, 219, 0.1);
     border-color: #3498db;
@@ -77,7 +77,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 .sidebar-item.play .icon-text {
     color: #2980b9;
 }
-
 
 /* CANVAS */
 .main-content { flex: 1; position: relative; background-color: #f9f8f3; overflow: hidden; }
@@ -238,37 +237,31 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
 .selected { outline: 2px solid #8d6e63; outline-offset: 4px; }
 
-/* --- LECTEUR (MODE PRÉSENTATION) --- */
+/* --- LECTEUR (MODE PRÉSENTATION & EXPORT) --- */
 .player-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: #000; z-index: 5000;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: black; z-index: 5000;
     display: flex; justify-content: center; align-items: center;
-    flex-direction: column;
+    overflow: hidden;
 }
 
-/* En mode plein écran natif, on s'assure que le fond est noir */
-.player-overlay:fullscreen {
-    background-color: #000;
-    width: 100vw;
-    height: 100vh;
-}
-
+/* Bouton quitter discret */
 .player-close-btn {
     position: absolute; top: 20px; right: 20px;
-    background: rgba(255, 255, 255, 0.2); color: white;
-    border: 1px solid white; padding: 10px 20px; border-radius: 30px;
-    cursor: pointer; font-weight: bold; z-index: 5001;
-    transition: background 0.2s;
+    background: rgba(0, 0, 0, 0.5); color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 4px;
+    cursor: pointer; font-size: 12px; z-index: 5001;
+    transition: all 0.2s;
 }
-.player-close-btn:hover { background: rgba(255, 0, 0, 0.5); border-color: red; }
+.player-close-btn:hover { background: red; color: white; border-color: red; }
 
 .player-stage {
     width: 960px; height: 540px;
     background: white;
     position: relative;
-    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    /* Ombre très large pour cacher le reste si nécessaire et garantir le fond noir */
+    box-shadow: 0 0 0 100vw black; 
     overflow: hidden;
-    /* Astuce : scale automatique via JS ou CSS pour s'adapter à l'écran */
     transform-origin: center center;
 }
 
@@ -289,17 +282,9 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     transition: transform 0.1s, filter 0.1s;
 }
 .player-stage .link-button:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
     filter: brightness(1.1);
 }
 .player-stage .link-button:active {
     transform: scale(0.95);
-}
-.resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
-/* Style pour la forme Flèche */
-.arrow .shape-content { 
-    background-color: #8d6e63;
-    /* Dessine une flèche pointant vers la droite */
-    clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);
-    border: none;
 }
