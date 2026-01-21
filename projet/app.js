@@ -164,13 +164,19 @@ function getNextAvailableNumber() {
     return num.toString();
 }
 
-// --- SLIDES ---
+// --- CREATION SLIDES ---
 function createSlide(type) {
   state.slideCount++;
   const id = `slide-${state.slideCount}`;
   const autoNum = getNextAvailableNumber();
   
-  state.slidesContent[id] = { html: "", bg: "#ffffff", bgImg: "none", slideNum: autoNum };
+  state.slidesContent[id] = { 
+      html: "", 
+      bg: "#ffffff", 
+      bgImg: "none", 
+      slideNum: autoNum,
+      requiredSlides: [] // Initialisation pour les conditions
+  };
 
   const slide = document.createElement("div");
   slide.className = `slide ${type}`;
@@ -180,9 +186,24 @@ function createSlide(type) {
   previewWrapper.className = "slide-preview-wrapper";
   previewWrapper.id = `preview-${id}`;
 
-  const infoOverlay = document.createElement("div");
+const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
-  infoOverlay.innerHTML = (type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + autoNum;
+  
+  let prefix = "";
+  // --- MODIFICATION ICI ---
+  if(type === "condition") {
+      // Pour la condition, on affiche juste un gros point d'interrogation et le numéro
+      infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${autoNum}</span>`;
+  }
+  else if(type === "fin") {
+      prefix = "🏁 ";
+      infoOverlay.innerHTML = prefix + autoNum;
+  }
+  else {
+      infoOverlay.innerHTML = autoNum;
+  }
+  
+  infoOverlay.innerHTML = prefix + autoNum;
 
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
@@ -201,9 +222,16 @@ function createSlide(type) {
     state.dragOffset.y = e.offsetY;
   });
 
+  // --- MODIFICATION DOUBLE CLIC ---
   slide.addEventListener("dblclick", (e) => {
     e.stopPropagation();
-    openEditor(id);
+    if (slide.classList.contains("condition")) {
+        // Si c'est une condition, on ouvre la modale de configuration
+        openConditionModal(id);
+    } else {
+        // Sinon, on ouvre l'éditeur visuel
+        openEditor(id);
+    }
   });
   
   ["top", "right", "bottom", "left"].forEach((pos) => {
@@ -217,7 +245,7 @@ function createSlide(type) {
   canvas.appendChild(slide);
   updateNodePreview(id);
 
-  if (state.startSlideId === null) {
+  if (state.startSlideId === null && type !== 'condition') {
       state.startSlideId = id;
       slide.classList.add("start-node");
       const flag = document.createElement("div");
@@ -327,11 +355,11 @@ function updateConnections() {
   });
 }
 
-// --- FONCTIONS GESTION DES BOUTONS DE LIEN ---
+// --- GESTION BOUTONS LIEN ---
 function addLinkButtonToSlide(sourceId, targetId) {
     let slideData = state.slidesContent[sourceId];
     if (!slideData) {
-        slideData = { html: "", bg: "#ffffff", bgImg: "", slideNum: "" };
+        slideData = { html: "", bg: "#ffffff", bgImg: "", slideNum: "", requiredSlides: [] };
         state.slidesContent[sourceId] = slideData;
     }
 
@@ -366,6 +394,99 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
 }
 
 // =================================================================
+// --- GESTION DES MODALES (CONDITIONS & ERREURS) ---
+// =================================================================
+
+// 1. CONFIGURATION CONDITION
+const conditionOverlay = document.getElementById('condition-overlay');
+const conditionList = document.getElementById('condition-list');
+let currentConditionId = null;
+
+function openConditionModal(slideId) {
+    currentConditionId = slideId;
+    conditionList.innerHTML = ""; 
+    
+    const savedReqs = state.slidesContent[slideId].requiredSlides || [];
+
+    // Création de la liste des slides disponibles
+    Object.keys(state.slidesContent).forEach(otherId => {
+        if (otherId === slideId) return;
+
+        const data = state.slidesContent[otherId];
+        const labelText = `Diapo ${data.slideNum || "?"} `; 
+
+        const div = document.createElement("div");
+        div.className = "condition-item";
+        div.innerHTML = `
+            <label for="chk-${otherId}">${labelText}</label>
+            <input type="checkbox" id="chk-${otherId}" value="${otherId}" ${savedReqs.includes(otherId) ? "checked" : ""}>
+        `;
+        conditionList.appendChild(div);
+    });
+
+    if(conditionOverlay) conditionOverlay.style.display = "flex";
+}
+
+const btnCancelCondition = document.getElementById('btn-cancel-condition');
+if(btnCancelCondition) {
+    btnCancelCondition.onclick = () => {
+        conditionOverlay.style.display = "none";
+        currentConditionId = null;
+    };
+}
+
+const btnSaveCondition = document.getElementById('btn-save-condition');
+if(btnSaveCondition) {
+    btnSaveCondition.onclick = () => {
+        if (!currentConditionId) return;
+        
+        const checkboxes = conditionList.querySelectorAll('input[type="checkbox"]:checked');
+        const requiredIds = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (!state.slidesContent[currentConditionId]) {
+            state.slidesContent[currentConditionId] = {};
+        }
+        state.slidesContent[currentConditionId].requiredSlides = requiredIds;
+        
+        // Mise à jour visuelle du label sur le graphe
+        const slideNode = document.getElementById(currentConditionId);
+        if(slideNode) {
+            const info = slideNode.querySelector('.slide-info-overlay');
+            if(info) info.innerText = `❓ ${state.slidesContent[currentConditionId].slideNum} (${requiredIds.length})`;
+        }
+
+        conditionOverlay.style.display = "none";
+        currentConditionId = null;
+    };
+}
+
+// 2. POPUP ACCÈS REFUSÉ
+const errorOverlay = document.getElementById('access-denied-overlay');
+const missingListUl = document.getElementById('missing-list');
+const btnCloseError = document.getElementById('btn-close-error');
+
+function showAccessDenied(missingIds) {
+    missingListUl.innerHTML = "";
+
+    missingIds.forEach(id => {
+        const data = state.slidesContent[id];
+        const label = data && data.slideNum ? `Diapositive N° ${data.slideNum}` : "Diapositive inconnue";
+        
+        const li = document.createElement("li");
+        li.innerHTML = `❌ ${label}`;
+        missingListUl.appendChild(li);
+    });
+
+    if(errorOverlay) errorOverlay.style.display = "flex";
+}
+
+if(btnCloseError) {
+    btnCloseError.onclick = () => {
+        errorOverlay.style.display = "none";
+    };
+}
+
+// =================================================================
 // --- LOGIQUE DU LECTEUR (MODE AFFICHER & GÉNÉRER) ---
 // =================================================================
 
@@ -373,21 +494,28 @@ const playerOverlay = document.getElementById('presentation-overlay');
 const playerStage = document.getElementById('player-stage');
 const btnClosePlayer = document.getElementById('btn-close-player');
 
-// -----------------------------------------------------------------
-// 1. FONCTION "AFFICHER" (Lecture dans le navigateur)
-// -----------------------------------------------------------------
+// Historique de session
+let visitedSlides = new Set(); 
+
+// --- AFFICHER ---
 document.getElementById('btn-play').onclick = () => {
     if (!state.startSlideId) {
         alert("Veuillez définir une diapositive de départ (drapeau 🚩).");
         return;
     }
     
+    visitedSlides.clear();
     loadSlideInPlayer(state.startSlideId);
+    
     playerOverlay.style.display = 'flex';
 
-    if (playerOverlay.requestFullscreen) playerOverlay.requestFullscreen();
-    else if (playerOverlay.webkitRequestFullscreen) playerOverlay.webkitRequestFullscreen();
-    else if (playerOverlay.msRequestFullscreen) playerOverlay.msRequestFullscreen();
+    if (playerOverlay.requestFullscreen) {
+        playerOverlay.requestFullscreen();
+    } else if (playerOverlay.webkitRequestFullscreen) { 
+        playerOverlay.webkitRequestFullscreen();
+    } else if (playerOverlay.msRequestFullscreen) { 
+        playerOverlay.msRequestFullscreen();
+    }
     
     fitStageToScreen();
 };
@@ -402,29 +530,27 @@ function exitHandler() {
         playerOverlay.style.display = 'none';
         playerStage.innerHTML = '';
         playerStage.style.transform = 'scale(1)';
+        if(errorOverlay) errorOverlay.style.display = 'none';
     }
 }
 
 btnClosePlayer.onclick = () => {
-    if (document.exitFullscreen) document.exitFullscreen();
-    else {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else {
         playerOverlay.style.display = 'none';
         playerStage.innerHTML = '';
     }
 };
 
 function fitStageToScreen() {
-    // Calcul pour utiliser 100% de l'écran (marge = 0)
-    // On conserve le ratio 16:9 (960x540) via le scale
-    const availableWidth = window.innerWidth;
-    const availableHeight = window.innerHeight;
+    const margin = 40;
+    const availableWidth = window.innerWidth - margin;
+    const availableHeight = window.innerHeight - margin;
     
     const scaleX = availableWidth / 960;
     const scaleY = availableHeight / 540;
-    
-    // On prend la plus petite échelle pour que tout rentre sans couper ("contain")
-    // Le fond noir du CSS comblera les vides
-    const scale = Math.min(scaleX, scaleY);
+    const scale = Math.min(scaleX, scaleY, 1.5); 
     
     playerStage.style.transform = `scale(${scale})`;
 }
@@ -433,32 +559,92 @@ window.addEventListener('resize', () => {
     if(playerOverlay.style.display === 'flex') fitStageToScreen();
 });
 
+// --- MOTEUR DE JEU (LOAD SLIDE) ---
+
 function loadSlideInPlayer(slideId) {
     const data = state.slidesContent[slideId];
     if (!data) return;
 
+    // Ajoute la slide actuelle à l'historique des visités
+    visitedSlides.add(slideId);
+
+    // Rendu visuel de la slide
     playerStage.innerHTML = data.html;
     playerStage.style.backgroundColor = data.bg || '#ffffff';
     playerStage.style.backgroundImage = data.bgImg || 'none';
     playerStage.style.backgroundSize = 'cover';
 
+    // Gestion des boutons de lien
     const links = playerStage.querySelectorAll('.link-button');
     links.forEach(link => {
         link.onclick = (e) => {
             e.stopPropagation();
+            
             const targetId = link.dataset.target;
-            playerStage.style.opacity = 0;
-            setTimeout(() => {
-                loadSlideInPlayer(targetId);
-                playerStage.style.opacity = 1;
-            }, 100);
+            const targetData = state.slidesContent[targetId];
+            
+            // On récupère l'élément DOM du graphe pour voir ses classes (ex: "condition")
+            const targetNodeElement = document.getElementById(targetId);
+
+            // =========================================================
+            // CAS 1 : LA CIBLE EST UN BLOC "CONDITION"
+            // =========================================================
+            if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
+                
+                // 1. Vérification des prérequis définis dans le bloc condition
+                const requiredIds = targetData.requiredSlides || [];
+                const missing = requiredIds.filter(reqId => !visitedSlides.has(reqId));
+
+                if (missing.length > 0) {
+                    // -> CONDITION NON RESPECTÉE
+                    // On affiche l'erreur et on RESTE sur la slide actuelle
+                    showAccessDenied(missing);
+                    return; 
+                } else {
+                    // -> CONDITION RESPECTÉE (Succès)
+                    // On ne s'arrête pas sur la condition. On cherche la suite.
+                    // On cherche une connexion qui part DE la condition VERS une autre slide.
+                    const outgoingConn = state.connections.find(c => c.fromId === targetId);
+                    
+                    if (outgoingConn) {
+                        // SAUT AUTOMATIQUE vers la slide suivante
+                        goToSlideWithTransition(outgoingConn.toId);
+                    } else {
+                        console.error("Erreur de configuration : Le bloc condition n'est relié à rien.");
+                        alert("Chemin incomplet après la condition.");
+                    }
+                    return;
+                }
+            }
+
+            // =========================================================
+            // CAS 2 : LA CIBLE EST UNE SLIDE NORMALE
+            // =========================================================
+            // (Vérification de sécurité au cas où des restrictions sont mises directement sur la slide)
+            if (targetData && targetData.requiredSlides && targetData.requiredSlides.length > 0) {
+                const missing = targetData.requiredSlides.filter(reqId => !visitedSlides.has(reqId));
+                
+                if (missing.length > 0) {
+                    showAccessDenied(missing);
+                    return;
+                }
+            }
+
+            // Navigation standard
+            goToSlideWithTransition(targetId);
         };
     });
 }
 
-// -----------------------------------------------------------------
-// 2. FONCTION "GÉNÉRER" (Téléchargement du fichier autonome)
-// -----------------------------------------------------------------
+function goToSlideWithTransition(targetId) {
+    playerStage.style.opacity = 0;
+    setTimeout(() => {
+        loadSlideInPlayer(targetId);
+        playerStage.style.opacity = 1;
+    }, 150);
+}
+
+// --- GÉNÉRER ---
 document.getElementById('btn-generate').onclick = () => {
     if (!state.startSlideId) {
         alert("Impossible de générer : aucune diapositive de départ définie.");
@@ -466,7 +652,7 @@ document.getElementById('btn-generate').onclick = () => {
     }
 
     const htmlContent = generateStandaloneHTML();
-    downloadFile("presentation_nodeflow.html", htmlContent);
+    downloadFile("presentation.html", htmlContent);
 };
 
 function generateStandaloneHTML() {
@@ -481,18 +667,8 @@ function generateStandaloneHTML() {
     <title>Présentation NodeFlow</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; }
+        #stage { width: 960px; height: 540px; background: white; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); transform-origin: center center; transition: opacity 0.15s ease; }
         
-        #stage { 
-            width: 960px; height: 540px; 
-            background: white; 
-            position: relative; 
-            overflow: hidden; 
-            box-shadow: 0 0 0 100vw black; 
-            transform-origin: center center; 
-            transition: opacity 0.15s ease; 
-        }
-        
-        /* Styles des éléments (copie simplifiée de style.css) */
         .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; }
         .text-box { z-index: 3; } .image-box { z-index: 1; } .shape-box { z-index: 2; }
         .image-box img { width: 100%; height: 100%; display: block; }
@@ -502,28 +678,27 @@ function generateStandaloneHTML() {
         .bubble-box { width: 36px; height: 36px; border-radius: 50%; background: #a1887f; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; z-index: 4; }
         .bubble-box:hover::after { content: attr(data-desc); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 10px; border-radius: 5px; width: max-content; max-width: 300px; margin-bottom: 10px; }
         
-        /* Boutons de lien */
         .link-button { background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 24px; z-index: 10; cursor: pointer; transition: transform 0.1s; border: 2px solid #a1887f; }
-        .link-button:hover { transform: scale(1.05); filter: brightness(1.1); }
-        .link-button:active { transform: scale(0.95); }
+        .link-button:hover { transform: scale(1.1); filter: brightness(1.1); }
         .link-button.square { border-radius: 4px; } .link-button.round { border-radius: 50%; }
 
-        /* Cacher les outils d'édition qui auraient pu être copiés */
         .resize-handle, .delete-btn, .rotate-handle { display: none !important; }
         .content { outline: none; }
     </style>
 </head>
 <body>
     <div id="stage"></div>
-
     <script>
         const slides = ${slidesData};
         const startId = "${startId}";
         const stage = document.getElementById('stage');
+        let visited = new Set(); 
 
         function goToSlide(id) {
             const data = slides[id];
             if (!data) return;
+            
+            visited.add(id);
 
             stage.style.opacity = 0;
             setTimeout(() => {
@@ -544,17 +719,13 @@ function generateStandaloneHTML() {
         }
 
         function resize() {
-            // Calcul Plein Écran (Marge 0)
-            const ratio = Math.min(
-                window.innerWidth / 960,
-                window.innerHeight / 540
-            );
+            const margin = 20;
+            const ratio = Math.min((window.innerWidth - margin) / 960, (window.innerHeight - margin) / 540);
             stage.style.transform = 'scale(' + ratio + ')';
         }
         window.onresize = resize;
         resize();
 
-        // Lancer la présentation
         goToSlide(startId);
     <\/script>
 </body>
@@ -573,7 +744,7 @@ function downloadFile(filename, content) {
     URL.revokeObjectURL(url);
 }
 
-// --- RACCOURCI CLAVIER : SUPPRESSION DANS LE GRAPHE ---
+// --- RACCOURCIS ---
 window.addEventListener("keydown", (e) => {
     if (document.getElementById("editor-overlay").style.display === "flex") return;
     if (e.key === "Delete" || e.key === "Backspace") {

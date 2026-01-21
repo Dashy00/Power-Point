@@ -288,3 +288,39 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .player-stage .link-button:active {
     transform: scale(0.95);
 }
+/* --- STYLE DU BLOC CONDITION --- */
+.slide.condition {
+    width: 100px;         /* Plus petit qu'une slide normale */
+    height: 80px;
+    background: #fff3e0;  /* Fond orange clair */
+    border: 2px dashed #f39c12; /* Bordure pointillée orange */
+    border-radius: 15px;  /* Bords arrondis */
+    color: #e67e22;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+    z-index: 2;
+}
+
+/* On cache la prévisualisation HTML pour les conditions car c'est juste de la logique */
+.slide.condition .slide-preview-wrapper {
+    display: none;
+}
+
+/* L'overlay d'info (le numéro) pour la condition */
+.slide.condition .slide-info-overlay {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    text-align: center;
+}
+
+/* Icône spécifique au survol ou sélection */
+.slide.condition:hover {
+    background: #ffe0b2;
+    border-color: #d35400;
+}
