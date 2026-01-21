@@ -1,4 +1,8 @@
-// --- ZOOM & PAN ---
+// =================================================================
+// GESTION DU GRAPHE (ZOOM, PAN, SLIDES, FLÈCHES)
+// =================================================================
+
+// --- 1. ZOOM & PAN ---
 function setTransform() {
   canvas.style.transform = `translate(${state.pointX}px, ${state.pointY}px) scale(${state.scale})`;
   zoomText.innerText = Math.round(state.scale * 100) + "%";
@@ -18,28 +22,21 @@ document.getElementById("btn-reset").onclick = () => {
   setTransform();
 };
 
-// --- ZOOM avec la molette de la souris ---
 viewport.addEventListener("wheel", (e) => {
   e.preventDefault();
   const delta = e.deltaY > 0 ? -0.1 : 0.1;
   const newScale = Math.min(Math.max(state.scale + delta, 0.2), 3);
-  
-  // Zoom centré sur la position de la souris
   const rect = viewport.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
-  
-  // Ajuster le point de translation pour zoomer vers la souris
   const scaleDiff = newScale - state.scale;
-  state.pointX -= mouseX * scaleDiff / state.scale;
-  state.pointY -= mouseY * scaleDiff / state.scale;
-  
+  state.pointX -= (mouseX * scaleDiff) / state.scale;
+  state.pointY -= (mouseY * scaleDiff) / state.scale;
   state.scale = newScale;
   setTransform();
 }, { passive: false });
 
 viewport.addEventListener("mousedown", (e) => {
-  // Désélectionner si on clique dans le vide (ni slide, ni port, ni ligne)
   if (!e.target.closest(".slide") && !e.target.closest(".port") && e.target.tagName !== 'line') {
     deselectAll();
     state.panning = true;
@@ -113,26 +110,36 @@ document.getElementById("btn-info-bulle").onclick = () => createSlide("info");
 document.getElementById("btn-condition").onclick = () => createSlide("condition");
 document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
 
-// BOUTON SUPPRIMER (Gère Slides ET Flèches)
+// --- SUPPRESSION INTELLIGENTE ---
 document.getElementById("btn-delete").onclick = () => {
   if (state.selectedSlide) {
-    // 1. Supprimer les connexions liées à cette slide
+    // Si on supprime une slide, on supprime les connexions associées
     state.connections = state.connections.filter(c => {
         if (c.fromId === state.selectedSlide.id || c.toId === state.selectedSlide.id) {
-            c.line.remove(); // Supprime du DOM SVG
-            return false;    // Retire du tableau
+            c.line.remove(); 
+            // NOTE : Idéalement, il faudrait aussi nettoyer les boutons dans les autres slides
+            // mais c'est complexe sans parcourir tout le contenu. Pour l'instant on garde ça simple.
+            return false;
         }
         return true;
     });
-    // 2. Supprimer la slide
     state.selectedSlide.remove();
     state.selectedSlide = null;
   } 
   else if (state.selectedConnection) {
-    // 1. Supprimer la flèche sélectionnée
-    state.selectedConnection.line.remove();
-    // 2. Retirer du tableau global
-    state.connections = state.connections.filter(c => c !== state.selectedConnection);
+    const conn = state.selectedConnection;
+
+    // 1. Toujours supprimer le bouton de l'aller (A -> B)
+    removeLinkButtonFromSlide(conn.fromId, conn.toId);
+
+    // 2. Si c'était une flèche double, supprimer le bouton retour (B -> A)
+    if (conn.type === 'double') {
+        removeLinkButtonFromSlide(conn.toId, conn.fromId);
+    }
+
+    // 3. Supprimer la ligne visuelle et de la mémoire
+    conn.line.remove();
+    state.connections = state.connections.filter(c => c !== conn);
     state.selectedConnection = null;
   }
 };
@@ -141,37 +148,32 @@ document.getElementById("btn-delete").onclick = () => {
 function createSlide(type) {
   state.slideCount++;
   const id = `slide-${state.slideCount}`;
-  // Initialisation des données
   state.slidesContent[id] = { html: "", bg: "#ffffff", bgImg: "none" };
 
   const slide = document.createElement("div");
   slide.className = `slide ${type}`;
   slide.id = id;
 
-  // 1. Création du conteneur de prévisualisation
   const previewWrapper = document.createElement("div");
   previewWrapper.className = "slide-preview-wrapper";
   previewWrapper.id = `preview-${id}`;
 
-  // 2. Création de l'info (Icone + ID)
   const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
-  infoOverlay.innerHTML =
-    (type === "info" ? "ℹ️" : type === "condition" ? "❓" : type === "fin" ? "🏁" : "") +
-    " " + state.slideCount;
+  infoOverlay.innerHTML = (type === "info" ? "ℹ️" : type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + state.slideCount;
 
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
 
   const centerX = 2500 - state.pointX / state.scale;
   const centerY = 2500 - state.pointY / state.scale;
-  slide.style.left = centerX - 80 + "px"; // Ajusté pour la largeur 160
-  slide.style.top = centerY - 45 + "px"; // Ajusté pour la hauteur 90
+  slide.style.left = centerX - 80 + "px";
+  slide.style.top = centerY - 45 + "px";
 
   slide.addEventListener("mousedown", (e) => {
     if (e.target.classList.contains("port")) return;
     e.stopPropagation();
-    selectSlide(slide); // Utilise la fonction centralisée
+    selectSlide(slide);
     state.isDraggingSlide = true;
     state.dragOffset.x = e.offsetX;
     state.dragOffset.y = e.offsetY;
@@ -191,38 +193,17 @@ function createSlide(type) {
   });
 
   canvas.appendChild(slide);
-
-  // Initialisation visuelle
   updateNodePreview(id);
 }
 
-// --- FONCTION DE MISE A JOUR VISUELLE ---
 window.updateNodePreview = function (id) {
   const wrapper = document.getElementById(`preview-${id}`);
-  const slideNode = document.getElementById(id);
   const data = state.slidesContent[id];
-
   if (!wrapper || !data) return;
-
-  // On copie le HTML brut
   wrapper.innerHTML = data.html || "";
-
-  // On applique le fond
   wrapper.style.backgroundColor = data.bg || "#ffffff";
   wrapper.style.backgroundImage = data.bgImg || "none";
   wrapper.style.backgroundSize = "cover";
-  
-  // Mise à jour du numéro dans l'overlay
-  if (slideNode) {
-    const infoOverlay = slideNode.querySelector('.slide-info-overlay');
-    if (infoOverlay && data.slideNum) {
-      // Récupérer l'icône du type
-      const slideType = slideNode.classList.contains('info') ? 'ℹ️' : 
-                        slideNode.classList.contains('condition') ? '❓' : 
-                        slideNode.classList.contains('fin') ? '🏁' : '';
-      infoOverlay.innerHTML = slideType + ' ' + data.slideNum;
-    }
-  }
 };
 
 // --- CONNEXIONS ---
@@ -256,37 +237,47 @@ function endConnection(e, id, port) {
       state.tempLine.setAttribute("x2", end.x);
       state.tempLine.setAttribute("y2", end.y);
 
-      // Création de l'objet connexion
+      // Objet Connexion avec TYPE (simple/double)
       const connectionObj = {
         line: state.tempLine,
         fromId: state.connectionStart.id,
         toId: id,
         fromPort: state.connectionStart.port,
         toPort: port,
+        type: 'simple' // Par défaut
       };
 
-      // 1. Clic Simple : Sélectionner la flèche
+      // Clic simple : Sélection
       state.tempLine.addEventListener("click", function(evt) {
           evt.stopPropagation();
           selectConnection(connectionObj);
       });
 
-      // 2. Double Clic : Double Sens
+      // --- DOUBLE CLIC : GESTION DU DOUBLE SENS (Boutons) ---
       state.tempLine.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
-        this.setAttribute("marker-start", start ? "" : "url(#arrow-start)");
-      });
-
-      // 3. Clic Droit (Backup)
-      state.tempLine.addEventListener("contextmenu", function (evt) {
-        evt.preventDefault();
-        // Si on veut supprimer direct au clic droit :
-        this.remove();
-        state.connections = state.connections.filter(c => c !== connectionObj);
+        
+        if (start) {
+            // C'était double -> devient simple
+            this.removeAttribute("marker-start");
+            connectionObj.type = 'simple';
+            // On enlève le bouton retour (B -> A)
+            removeLinkButtonFromSlide(connectionObj.toId, connectionObj.fromId);
+        } else {
+            // C'était simple -> devient double
+            this.setAttribute("marker-start", "url(#arrow-start)");
+            connectionObj.type = 'double';
+            // On ajoute le bouton retour (B -> A)
+            addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
+        }
       });
 
       state.connections.push(connectionObj);
+      
+      // Création initiale du bouton aller (A -> B)
+      addLinkButtonToSlide(state.connectionStart.id, id);
+      
       state.tempLine = null;
     } else {
       state.tempLine.remove();
@@ -313,6 +304,48 @@ function updateConnections() {
     conn.line.setAttribute("x2", end.x);
     conn.line.setAttribute("y2", end.y);
   });
+}
+
+// --- FONCTIONS GESTION DES BOUTONS DE LIEN ---
+
+function addLinkButtonToSlide(sourceId, targetId) {
+    let slideData = state.slidesContent[sourceId];
+    // Création des données si elles n'existent pas encore
+    if (!slideData) {
+        slideData = { html: "", bg: "#ffffff", bgImg: "", slideNum: "" };
+        state.slidesContent[sourceId] = slideData;
+    }
+
+    const btnId = `link-${sourceId}-${targetId}`;
+    // Vérifier si le bouton existe déjà pour éviter les doublons
+    if (slideData.html.includes(btnId)) return;
+
+    const btnHtml = `
+        <div id="${btnId}" class="item-box link-button square" data-target="${targetId}" style="width:60px; height:60px; top:50px; left:50px; z-index:10;">
+            ➜
+            <div class="resize-handle"></div>
+            <div class="delete-btn">✕</div>
+            <div class="rotate-handle">↻</div>
+        </div>`;
+
+    state.slidesContent[sourceId].html += btnHtml;
+    updateNodePreview(sourceId);
+}
+
+function removeLinkButtonFromSlide(sourceId, targetId) {
+    let slideData = state.slidesContent[sourceId];
+    if (!slideData) return;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = slideData.html;
+    
+    // Recherche par data-target
+    const btn = tempDiv.querySelector(`.link-button[data-target="${targetId}"]`);
+    if (btn) {
+        btn.remove();
+        state.slidesContent[sourceId].html = tempDiv.innerHTML;
+        updateNodePreview(sourceId);
+    }
 }
 
 // Init

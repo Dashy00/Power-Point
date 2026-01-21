@@ -38,16 +38,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f0f
 }
 line { 
     stroke: #2c3e50; stroke-width: 3; 
-    pointer-events: stroke; /* IMPORTANT: Rend le trait cliquable */
-    cursor: pointer; transition: stroke 0.2s; 
+    pointer-events: stroke; cursor: pointer; transition: stroke 0.2s; 
 }
 line:hover { stroke: #3498db; stroke-width: 5; }
-
-/* STYLE SÉLECTION FLÈCHE */
-line.selected {
-    stroke: #e74c3c !important; /* Rouge */
-    stroke-width: 5 !important;
-}
+line.selected { stroke: #e74c3c !important; stroke-width: 5 !important; }
 
 /* SLIDES */
 .slide {
@@ -62,19 +56,11 @@ line.selected {
 .slide.condition { background: #5d6d7e; color: white; border: none; }
 .slide.fin { border-color: #c0392b; color: #c0392b; }
 
-.slide-preview-wrapper {
-    width: 960px; height: 540px;
-    transform: scale(0.1667); transform-origin: top left;
-    position: absolute; top: 0; left: 0;
-    pointer-events: none; z-index: 0; overflow: hidden;
-}
+.slide-preview-wrapper { width: 960px; height: 540px; transform: scale(0.1667); transform-origin: top left; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.slide-info-overlay { position: absolute; z-index: 10; background: rgba(255, 255, 255, 0.7); padding: 2px 5px; border-radius: 4px; pointer-events: none; }
 
 /* PORTS */
-.port {
-    position: absolute; width: 12px; height: 12px;
-    background-color: #2980b9; border: 2px solid white; border-radius: 50%;
-    cursor: crosshair; z-index: 10; opacity: 0; transition: opacity 0.2s;
-}
+.port { position: absolute; width: 12px; height: 12px; background-color: #2980b9; border: 2px solid white; border-radius: 50%; cursor: crosshair; z-index: 10; opacity: 0; transition: opacity 0.2s; }
 .slide:hover .port { opacity: 1; }
 .port:hover { transform: scale(1.3); background-color: #3498db; }
 .port.top { top: -6px; left: 50%; transform: translateX(-50%); }
@@ -82,17 +68,7 @@ line.selected {
 .port.left { left: -6px; top: 50%; transform: translateY(-50%); }
 .port.right { right: -6px; top: 50%; transform: translateY(-50%); }
 
-.slide-preview-wrapper .resize-handle,
-.slide-preview-wrapper .delete-btn,
-.slide-preview-wrapper .rotate-handle { display: none !important; }
-
-.slide-info-overlay {
-    position: absolute; z-index: 10;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 2px 5px; border-radius: 4px; pointer-events: none;
-}
-
-/* ZOOM & OVERLAY (Reste inchangé) */
+/* ZOOM & OVERLAY */
 .zoom-controls { position: absolute; top: 20px; right: 20px; background-color: #1e1e1e; color: white; padding: 5px 10px; border-radius: 30px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); z-index: 100; }
 .zoom-btn { background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; cursor: pointer; padding: 0 5px; }
 .zoom-btn:hover { color: #3498db; }
@@ -133,7 +109,11 @@ line.selected {
 .tool-btn:hover { background: #4b5563; }
 .tool-btn.active { background: #2563eb; }
 .toolbar-separator { width: 1px; height: 24px; background: #4b5563; margin: 0 4px; }
-.text-box, .image-box, .shape-box, .bubble-box { position: absolute; cursor: move; padding: 5px; }
+
+/* --- ÉLÉMENTS DE L'ÉDITEUR --- */
+/* IMPORTANT: Ajout de .link-button ici pour qu'il soit absolu */
+.text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; cursor: move; padding: 5px; }
+
 .text-box { min-width: 100px; background: transparent; border: 1px dashed transparent; z-index: 3; }
 .text-box:hover { border-color: #3498db; }
 .text-box.editing { border: 1px solid #2563eb; background: transparent; }
@@ -147,11 +127,34 @@ line.selected {
 .bubble-box { width: 36px; height: 36px; border-radius: 50%; background: #f59e0b; color: #111827; display: flex; align-items: center; justify-content: center; font-weight: 800; user-select: none; z-index: 4; padding: 0; position: relative; }
 .bubble-box::after { content: attr(data-desc); position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%); background: rgba(17, 24, 39, 0.95); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; white-space: pre-line; text-align: left; opacity: 0; pointer-events: none; transition: 0.2s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 9999; line-height: 1.6; width: max-content; max-width: 400px; }
 .bubble-box:hover::after { opacity: 1; }
+
 .delete-btn { position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; background: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 1010; border: 2px solid white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
-.text-box:hover .delete-btn, .image-box:hover .delete-btn, .shape-box:hover .delete-btn, .bubble-box:hover .delete-btn { opacity: 1; }
+/* Ajout du hover pour le link-button */
+.text-box:hover .delete-btn, .image-box:hover .delete-btn, .shape-box:hover .delete-btn, .bubble-box:hover .delete-btn, .link-button:hover .delete-btn { opacity: 1; }
 .delete-btn:hover { transform: scale(1.2); background: #dc2626; }
+
 .rotate-handle { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: grab; opacity: 0; transition: opacity 0.2s; user-select: none; z-index: 1012; border: 2px solid white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
 .rotate-handle:active { cursor: grabbing; }
-.text-box:hover .rotate-handle, .image-box:hover .rotate-handle, .shape-box:hover .rotate-handle { opacity: 1; }
+.text-box:hover .rotate-handle, .image-box:hover .rotate-handle, .shape-box:hover .rotate-handle, .link-button:hover .rotate-handle { opacity: 1; }
+
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #2563eb; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
 .selected { outline: 2px solid #2563eb; outline-offset: 4px; }
+
+/* STYLE DU BOUTON DE LIEN */
+.link-button {
+    background-color: #27ae60;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 24px;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border: 2px solid #2ecc71;
+    transition: border-radius 0.2s, transform 0.1s;
+    user-select: none;
+}
+.link-button.square { border-radius: 4px; }
+.link-button.round { border-radius: 50%; }
+.link-button:hover { transform: scale(1.05); background-color: #2ecc71; }
