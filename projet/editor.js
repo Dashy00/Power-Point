@@ -16,11 +16,11 @@ const boldBtn = document.getElementById("boldBtn");
 const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
-
+ 
 // --- OUVRIR / FERMER L'ÉDITEUR ---
 function openEditor(slideId) {
     state.currentEditingId = slideId;
-    
+   
     // Charger le contenu
     const data = state.slidesContent[slideId] || { html: "", bg: "#ffffff", bgImg: "", slideNum: "" };
     slide.innerHTML = data.html;
@@ -28,11 +28,11 @@ function openEditor(slideId) {
     slide.style.backgroundImage = data.bgImg || "";
     bgColorPicker.value = data.bg || "#ffffff";
     if(document.getElementById("slideNumber")) document.getElementById("slideNumber").value = data.slideNum || "";
-    
+   
     reattachEventListeners();
     editorOverlay.style.display = "flex";
 }
-
+ 
 document.getElementById('btn-close-editor').onclick = () => {
     if (state.currentEditingId) {
         state.slidesContent[state.currentEditingId] = {
@@ -41,21 +41,21 @@ document.getElementById('btn-close-editor').onclick = () => {
             bgImg: slide.style.backgroundImage,
             slideNum: document.getElementById("slideNumber") ? document.getElementById("slideNumber").value : ""
         };
-        
+       
         if(window.updateNodePreview) window.updateNodePreview(state.currentEditingId);
-        
+       
         const slideNode = document.getElementById(state.currentEditingId);
         if (slide.innerHTML.trim() !== "" && slideNode) slideNode.style.border = "2px solid #2ecc71";
     }
     editorOverlay.style.display = 'none';
     state.currentEditingId = null;
 };
-
+ 
 // --- OUTILS ---
 addTextBtn.addEventListener("click", () => {
     createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box");
 });
-
+ 
 addImageBtn.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
@@ -64,18 +64,18 @@ imageInput.addEventListener("change", () => {
     reader.onload = () => createImageBox(reader.result);
     reader.readAsDataURL(file);
 });
-
+ 
 function createImageBox(src) {
     createItem(`<img src="${src}"><div class="resize-handle"></div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`, "image-box", 260, 180);
 }
-
+ 
 function addEditorShape(type) {
     let content = `<div class="shape-content" style="background:#3498db; width:100%; height:100%;"></div>`;
     if(type==='circle') content = `<div class="shape-content" style="background:#e74c3c; width:100%; height:100%; border-radius:50%;"></div>`;
     if(type==='triangle') content = `<div class="shape-content" style="background:#2ecc71; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
     createItem(content, `shape-box ${type}`, 100, 100);
 }
-
+ 
 // --- LOGIQUE ITEMS ---
 function createItem(html, className, w=150, h=50) {
     const div = document.createElement("div");
@@ -86,37 +86,37 @@ function createItem(html, className, w=150, h=50) {
     slide.appendChild(div);
     attachItemEvents(div);
 }
-
+ 
 // Dans editor.js (à la place du code précédent pour slideNumber)
-
+ 
 const slideNumberInput = document.getElementById("slideNumber");
-
+ 
 if (slideNumberInput) {
     slideNumberInput.addEventListener("input", (e) => {
         const newVal = e.target.value.trim();
         const currentId = state.currentEditingId;
-
+ 
         if (!currentId) return;
-
+ 
         // Vérifier si ce numéro est déjà pris par une AUTRE slide
         const isDuplicate = Object.entries(state.slidesContent).some(([id, data]) => {
             return id !== currentId && data.slideNum === newVal;
         });
-
+ 
         if (isDuplicate) {
             // ALERTE VISUELLE : Bordure rouge si doublon
             slideNumberInput.style.border = "2px solid #e74c3c";
             slideNumberInput.style.color = "#e74c3c";
             // On n'enregistre PAS dans le state tant que c'est un doublon
-            return; 
+            return;
         } else {
             // Tout est bon : on remet le style normal
             slideNumberInput.style.border = "1px solid #4b5563";
             slideNumberInput.style.color = "white";
-            
+           
             // On sauvegarde
             state.slidesContent[currentId].slideNum = newVal;
-
+ 
             // Mise à jour visuelle sur le graphe
             const slideNode = document.getElementById(currentId);
             if (slideNode) {
@@ -131,19 +131,19 @@ if (slideNumberInput) {
         }
     });
 }
-
+ 
 // --- SETUP DES ÉVÉNEMENTS ---
 function setupDeleteBtn(box) {
   const btn = box.querySelector(".delete-btn");
   if(btn) {
       btn.onclick = (ev) => {
         ev.stopPropagation();
-        
+       
         // >>> MODIFICATION : GESTION DE LA SUPPRESSION DE LIEN <<<
         if(box.classList.contains('link-button')) {
             handleLinkDelete(box);
         }
-        
+       
         saveState();
         box.remove();
         renumberBubbles();
@@ -151,10 +151,10 @@ function setupDeleteBtn(box) {
       };
   }
 }
-
+ 
 function attachItemEvents(div) {
     setupDeleteBtn(div);
-    
+   
     // GESTION DOUBLE CLIC BOUTON LIEN
     if (div.classList.contains('link-button')) {
         div.addEventListener('dblclick', (e) => {
@@ -164,20 +164,20 @@ function attachItemEvents(div) {
             else div.classList.replace('round', 'square');
         });
     }
-
+ 
     // DRAG
     div.onmousedown = (e) => {
         if(e.target.getAttribute("contenteditable")) return;
         e.stopPropagation();
-        
+       
         document.querySelectorAll(".item-box").forEach(i => i.classList.remove("selected"));
         div.classList.add("selected");
         state.activeItem = div;
-
+ 
         const startX = e.clientX; const startY = e.clientY;
         const startW = div.offsetWidth; const startH = div.offsetHeight;
         const startL = div.offsetLeft; const startT = div.offsetTop;
-
+ 
         // Resize
         if(e.target.classList.contains("resize-handle")) {
             function onMove(ev) {
@@ -190,7 +190,7 @@ function attachItemEvents(div) {
             window.addEventListener("mouseup", () => window.removeEventListener("mousemove", onMove), {once:true});
             return;
         }
-        
+       
         // Drag
         function onDrag(ev) {
             const dx = (ev.clientX - startX) / editorZoom;
@@ -202,11 +202,11 @@ function attachItemEvents(div) {
         window.addEventListener("mouseup", () => window.removeEventListener("mousemove", onDrag), {once:true});
     };
 }
-
+ 
 function reattachEventListeners() {
     document.querySelectorAll(".text-box, .image-box, .shape-box, .bubble-box, .link-button").forEach(attachItemEvents);
 }
-
+ 
 // --- DOUBLE CLIC (BULLES & TEXTE) ---
 slide.addEventListener("dblclick", (e) => {
   const bubble = e.target.closest(".bubble-box");
@@ -226,10 +226,10 @@ slide.addEventListener("dblclick", (e) => {
       activateTextBox(parentBox, content);
   }
 });
-
+ 
 const addBubbleBtn = document.getElementById("addBubbleBtn");
 let addBubbleMode = false;
-
+ 
 addBubbleBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   addBubbleMode = !addBubbleMode;
@@ -239,7 +239,7 @@ addBubbleBtn.addEventListener("click", (e) => {
   addTextBtn.classList.remove("active");
   addTextBtn.textContent = "Ajouter un texte";
 });
-
+ 
 function createBubble(x, y) {
   saveState();
   const desc = prompt("Texte de la bulle (affiché au survol) :") || "";
@@ -261,7 +261,7 @@ function createBubble(x, y) {
   renumberBubbles();
   state.activeItem = bubble;
 }
-
+ 
 function renumberBubbles() {
   const bubbles = slide.querySelectorAll(".bubble-box");
   bubbles.forEach((bubble, index) => {
@@ -269,7 +269,7 @@ function renumberBubbles() {
     if (num) num.textContent = index + 1;
   });
 }
-
+ 
 // --- VARIABLES GLOBALES ---
 let addMode = false;
 let activeTextBox = null;
@@ -292,7 +292,7 @@ slide.addEventListener("click", (e) => {
         return;
     }
     state.activeItem = null;
-    
+   
     // Création
     if (addBubbleMode && e.target === slide) {
         const rect = slide.getBoundingClientRect();
@@ -318,7 +318,7 @@ slide.addEventListener("click", (e) => {
         addTextBtn.classList.remove("active");
     }
 });
-
+ 
 // --- SUPPRESSION CLAVIER ---
 window.addEventListener("keydown", (e) => {
     if (!state.activeItem) return;
@@ -330,7 +330,7 @@ window.addEventListener("keydown", (e) => {
         if(state.activeItem.classList.contains('link-button')) {
             handleLinkDelete(state.activeItem);
         }
-
+ 
         saveState();
         state.activeItem.remove();
         renumberBubbles();
@@ -339,7 +339,7 @@ window.addEventListener("keydown", (e) => {
         e.preventDefault();
     }
 });
-
+ 
 // ... (Le reste du code drag/resize/formatage reste inchangé) ...
 slide.addEventListener("mousedown", (e) => {
     // RESIZE
@@ -382,7 +382,7 @@ slide.addEventListener("mousedown", (e) => {
     offsetY = (e.clientY - rect.top) / editorZoom;
     e.preventDefault();
 });
-
+ 
 window.addEventListener("mousemove", (e) => {
     if (resizing) {
         const dx = (e.clientX - startMouseX) / editorZoom;
@@ -414,7 +414,7 @@ window.addEventListener("mouseup", () => {
     if (rotating || resizing || dragging) saveState();
     dragging = null; resizing = null; rotating = null;
 });
-
+ 
 function activateTextBox(box, content) {
     if (activeTextBox && activeTextBox !== box) activeTextBox.querySelector(".content").contentEditable = "false";
     activeTextBox = box;
@@ -503,7 +503,29 @@ if (highlightBtn) highlightBtn.onclick = () => formatText("hiliteColor", highlig
 if (fontFamily) fontFamily.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontFamily = e.target.value; });
 if (fontSize) fontSize.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontSize = e.target.value; });
 if (textColor) textColor.addEventListener("input", (e) => formatText("foreColor", e.target.value));
-function addEditorShape(type) { addShape(type); }
+// Liaison des boutons de formes par ID
+const btnSquare = document.getElementById("addSquare");
+const btnCircle = document.getElementById("addCircle");
+const btnTriangle = document.getElementById("addTriangle");
+ 
+if(btnSquare) btnSquare.onclick = () => addEditorShape('square');
+if(btnCircle) btnCircle.onclick = () => addEditorShape('circle');
+if(btnTriangle) btnTriangle.onclick = () => addEditorShape('triangle');
+function addEditorShape(type) {
+    saveState(); // Pour pouvoir annuler l'action
+    let content = "";
+    let className = `shape-box ${type}`;
+   
+    if (type === 'square') {
+        content = `<div class="shape-content" style="background:#3498db; width:100%; height:100%;"></div>`;
+    } else if (type === 'circle') {
+        content = `<div class="shape-content" style="background:#e74c3c; width:100%; height:100%; border-radius:50%;"></div>`;
+    } else if (type === 'triangle') {
+        content = `<div class="shape-content" style="background:#2ecc71; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
+    }
+   
+    createItem(content, className, 100, 100);
+}
 let historyStack = []; let redoStack = [];
 function saveState() { historyStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); redoStack = []; }
 function undo() { if (historyStack.length === 0) return; redoStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); const s = historyStack.pop(); slide.innerHTML = s.innerHTML; slide.style.backgroundColor = s.bg; slide.style.backgroundImage = s.img; reattachEventListeners(); }
@@ -523,22 +545,22 @@ function zoomIn() { editorZoom = Math.min(MAX_ZOOM, editorZoom + 0.1); applyZoom
 function zoomOut() { editorZoom = Math.max(MIN_ZOOM, editorZoom - 0.1); applyZoom(); }
 function resetZoom() { editorZoom = 1; applyZoom(); }
 function updateZoomDisplay() { const z = document.getElementById("editor-zoom-text"); if(z) z.textContent = Math.round(editorZoom*100)+"%"; }
-
+ 
 // --- NOUVELLE FONCTION : GESTION SYNCHRO SUPPRESSION ---
 function handleLinkDelete(btn) {
     const targetId = btn.dataset.target;
     const myId = state.currentEditingId;
-
+ 
     // Trouver la connexion associée dans le graphe
-    const connIndex = state.connections.findIndex(c => 
-        (c.fromId === myId && c.toId === targetId) || 
+    const connIndex = state.connections.findIndex(c =>
+        (c.fromId === myId && c.toId === targetId) ||
         (c.fromId === targetId && c.toId === myId)
     );
-
+ 
     if (connIndex === -1) return;
-
+ 
     const conn = state.connections[connIndex];
-
+ 
     // CAS 1 : Je suis le départ (A -> B), je supprime le lien vers B
     if (conn.fromId === myId && conn.toId === targetId) {
         if (conn.type === 'double') {
@@ -558,6 +580,7 @@ function handleLinkDelete(btn) {
         conn.type = 'simple';
     }
 }
-
+ 
+ 
 // Init
 reattachEventListeners();
