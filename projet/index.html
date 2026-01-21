@@ -42,6 +42,11 @@
                 <span class="label">Supprimer</span>
             </button>
             
+            <button id="btn-play" class="sidebar-item play">
+                <span class="icon-text">▶️</span>
+                <span class="label">Afficher</span>
+            </button>
+
             <button id="btn-generate" class="sidebar-item export">
                 <img src="images/logo_telecharger.png" class="icon" alt="Générer">
                 <span class="label">Générer</span>
@@ -78,8 +83,8 @@
             <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
            
             <div class="toolbar-group">
-                <label style="color: white; font-size: 12px; margin-right: 5px;">N°</label>
-                <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #4b5563; background: #374151; color: white; font-size: 14px;">
+                <label style="color: #4e342e; font-size: 12px; margin-right: 5px;">N°</label>
+                <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #dcd7c9; background: #fdfbf7; color: #4e342e; font-size: 14px;">
             </div>
 
             <div class="toolbar-group">
@@ -107,16 +112,16 @@
                 <button class="overlay-btn" id="addBubbleBtn">Bulle</button>
                 <input type="file" id="imageInput" hidden accept="image/*">
                
-                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #dcd7c9;">
                
                 <h4>Formes</h4>
                 <div class="shape-grid">
-                    <button class="overlay-btn shape-btn" onclick="addEditorShape('square')" title="Carré">▢</button>
-                    <button class="overlay-btn shape-btn" onclick="addEditorShape('circle')" title="Cercle">○</button>
-                    <button class="overlay-btn shape-btn" onclick="addEditorShape('triangle')" title="Triangle">△</button>
+                    <button class="overlay-btn shape-btn" id="addSquare" title="Carré">▢</button>
+                    <button class="overlay-btn shape-btn" id="addCircle" title="Cercle">○</button>
+                    <button class="overlay-btn shape-btn" id="addTriangle" title="Triangle">△</button>
                 </div>
  
-                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #444;">
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #dcd7c9;">
                
                 <h4>Arrière-plan</h4>
                 <label style="font-size: 12px">Couleur de fond :</label>
@@ -160,6 +165,13 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="presentation-overlay" class="player-overlay" style="display: none;">
+        <button id="btn-close-player" class="player-close-btn">✕ Quitter</button>
+        
+        <div id="player-stage" class="player-stage">
+            </div>
     </div>
  
     <script src="globals.js"></script>

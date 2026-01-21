@@ -25,7 +25,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 }
 
 /* Boutons Sidebar */
-.sidebar-item { display: flex; align-items: center; gap: 12px; padding: 10px; cursor: pointer; border-radius: 6px; transition: background 0.2s; }
+.sidebar-item { display: flex; align-items: center; gap: 12px; padding: 10px; cursor: pointer; border-radius: 6px; transition: background 0.2s; border: 1px solid transparent; }
 .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.6); }
 
 /* Icônes images */
@@ -34,8 +34,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
     height: 28px; 
     object-fit: contain; 
     display: block;
-    /* Note : Comme ce sont des images, leur couleur dépend du fichier image. 
-       Si c'étaient des polices, on mettrait color: #8d6e63; */
 }
 .sidebar-item .icon-text {
     font-size: 24px;
@@ -47,22 +45,30 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 .sidebar-item .label { font-size: 14px; font-weight: 500; }
 .sidebar-spacer { flex: 1; }
 
-/* Couleurs spécifiques (Adaptées au thème marron/noir du code 2) */
-.sidebar-item.delete { background-color: rgba(0, 0, 0, 0.05); color: #000000; border: 1px solid rgba(0,0,0,0.1); }
+/* --- COULEURS SPÉCIFIQUES DES BOUTONS --- */
+
+/* Supprimer (Rouge/Noir) */
+.sidebar-item.delete { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
 .sidebar-item.delete:hover { background-color: #2c2c2c; color: #ffffff; }
 
-.sidebar-item.export { background-color: rgba(0, 0, 0, 0.05); color: #000000; border: 1px solid rgba(0,0,0,0.1); }
+/* Générer (Vert/Noir) */
+.sidebar-item.export { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
 .sidebar-item.export:hover { background-color: #2c2c2c; color: #ffffff; }
 
-/* Bouton Définir Début (Adapté pour être cohérent : Or/Marron) */
+/* Définir Début (Or/Marron) */
 .sidebar-item.set-start {
     background-color: rgba(141, 110, 99, 0.1);
-    border: 1px solid #8d6e63;
+    border-color: #8d6e63;
     color: #5d4037;
 }
 .sidebar-item.set-start:hover {
     background-color: rgba(141, 110, 99, 0.2);
 }
+
+/* NOUVEAU : - Déplacé ici depuis le HTML */
+.sidebar-item.play { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
+.sidebar-item.play:hover {background-color: #2c2c2c; color: #ffffff; }
+
 
 /* CANVAS */
 .main-content { flex: 1; position: relative; background-color: #f9f8f3; overflow: hidden; }
@@ -121,30 +127,28 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     color: #3e2723; border: 1px solid #d7ccc8;
 }
 
-/* --- PORTS (Modifié pour être plus grands) --- */
+/* PORTS */
 .port { 
     position: absolute; 
-    width: 20px;  /* Augmenté de 12px à 20px */
-    height: 20px; /* Augmenté de 12px à 20px */
+    width: 20px; 
+    height: 20px; 
     background-color: #8d6e63; 
     border: 2px solid white; 
     border-radius: 50%; 
     cursor: crosshair; 
     z-index: 10; 
     opacity: 0; 
-    transition: opacity 0.2s, transform 0.1s; /* Animation fluide */
+    transition: opacity 0.2s, transform 0.1s; 
 }
 .slide:hover .port { opacity: 1; }
-/* Grossissement au survol encore plus visible */
 .port:hover { transform: scale(1.2); background-color: #5d4037; }
 
-/* Ajustement des positions (offset = moitié de la taille, donc -10px) */
 .port.top { top: -10px; left: 50%; transform: translateX(-50%); }
 .port.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); }
 .port.left { left: -10px; top: 50%; transform: translateY(-50%); }
 .port.right { right: -10px; top: 50%; transform: translateY(-50%); }
 
-/* BOUTON DE LIEN (Adapté au thème marron) */
+/* BOUTON DE LIEN */
 .link-button {
     background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center;
     font-weight: bold; font-size: 24px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -223,3 +227,62 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .text-box:hover .rotate-handle, .image-box:hover .rotate-handle, .shape-box:hover .rotate-handle, .bubble-box:hover .rotate-handle, .link-button:hover .rotate-handle { opacity: 1; }
 
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
+.selected { outline: 2px solid #8d6e63; outline-offset: 4px; }
+
+/* --- LECTEUR (MODE PRÉSENTATION) --- */
+.player-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #000; z-index: 5000;
+    display: flex; justify-content: center; align-items: center;
+    flex-direction: column;
+}
+
+/* En mode plein écran natif, on s'assure que le fond est noir */
+.player-overlay:fullscreen {
+    background-color: #000;
+    width: 100vw;
+    height: 100vh;
+}
+
+.player-close-btn {
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(255, 255, 255, 0.2); color: white;
+    border: 1px solid white; padding: 10px 20px; border-radius: 30px;
+    cursor: pointer; font-weight: bold; z-index: 5001;
+    transition: background 0.2s;
+}
+.player-close-btn:hover { background: rgba(255, 0, 0, 0.5); border-color: red; }
+
+.player-stage {
+    width: 960px; height: 540px;
+    background: white;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+    /* Astuce : scale automatique via JS ou CSS pour s'adapter à l'écran */
+    transform-origin: center center;
+}
+
+/* Cacher les outils d'édition en lecture */
+.player-stage .resize-handle,
+.player-stage .delete-btn,
+.player-stage .rotate-handle,
+.player-stage .shape-box .delete-btn,
+.player-stage .link-button .resize-handle,
+.player-stage .link-button .rotate-handle,
+.player-stage .link-button .delete-btn {
+    display: none !important;
+}
+
+/* Rendre les boutons interactifs */
+.player-stage .link-button {
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.1s;
+}
+.player-stage .link-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+.player-stage .link-button:active {
+    transform: scale(0.95);
+}
