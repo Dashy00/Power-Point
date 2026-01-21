@@ -34,15 +34,13 @@ let historyStack = [];
 let redoStack = [];
 
 function saveState() {
-    // On enregistre l'état actuel avant modification
     historyStack.push({
         innerHTML: slide.innerHTML,
         bg: slide.style.backgroundColor,
         img: slide.style.backgroundImage
     });
-    // Limite l'historique pour les performances
     if (historyStack.length > 40) historyStack.shift();
-    redoStack = []; // On vide le redo car une nouvelle action est faite
+    redoStack = []; 
 }
 
 function undo() {
@@ -85,9 +83,8 @@ function openEditor(slideId) {
     bgColorPicker.value = data.bg || "#ffffff";
     if (slideNumberInput) slideNumberInput.value = data.slideNum || "";
     
-    historyStack = []; // Reset l'historique pour cette slide
+    historyStack = [];
     redoStack = [];
-    
     reattachEventListeners();
     editorOverlay.style.display = "flex";
 }
@@ -120,15 +117,45 @@ function createItem(html, className, w = 150, h = 50) {
     attachItemEvents(div);
 }
 
-function addEditorShape(type) {
-    let content = "";
-    if (type === 'square') content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%;"></div>`;
-    else if (type === 'circle') content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; border-radius:50%;"></div>`;
-    else if (type === 'triangle') content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
-    else if (type === 'arrow') content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);"></div>`;
-    
-    createItem(content, `shape-box ${type}`, 100, 100);
-}
+// --- LOGIQUE IMAGE ---
+addImageBtn.addEventListener("click", () => {
+    imageInput.value = ""; 
+    imageInput.click();
+});
+
+imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        createItem(`<img src="${reader.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`, "image-box", 260, 180);
+    };
+    reader.readAsDataURL(file);
+});
+
+// --- LOGIQUE FOND ---
+bgImageBtn.addEventListener("click", () => {
+    bgImageInput.value = "";
+    bgImageInput.click();
+});
+
+bgImageInput.addEventListener("change", () => {
+    const file = bgImageInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        saveState();
+        slide.style.backgroundImage = `url(${reader.result})`;
+        slide.style.backgroundSize = "cover";
+    };
+    reader.readAsDataURL(file);
+});
+
+bgColorPicker.addEventListener("input", (e) => {
+    saveState();
+    slide.style.backgroundImage = "none";
+    slide.style.backgroundColor = e.target.value;
+});
 
 // --- ÉVÉNEMENTS SOURIS (DRAG, RESIZE, ROTATE) ---
 slide.addEventListener("mousedown", (e) => {
@@ -141,8 +168,7 @@ slide.addEventListener("mousedown", (e) => {
         return;
     }
 
-    // SAUVEGARDE AVANT TOUTE ACTION
-    saveState();
+    saveState(); // Capture l'état AVANT le mouvement
 
     if (e.target.classList.contains("resize-handle")) {
         resizing = item;
@@ -200,7 +226,7 @@ window.addEventListener("mouseup", () => {
     dragging = null; resizing = null; rotating = null;
 });
 
-// --- ATTACHEMENT DES ÉVÉNEMENTS AUX BOXES ---
+// --- ATTACHEMENT DES ÉVÉNEMENTS ---
 function attachItemEvents(div) {
     const delBtn = div.querySelector(".delete-btn");
     if (delBtn) {
@@ -213,27 +239,20 @@ function attachItemEvents(div) {
             state.activeItem = null;
         };
     }
-
-    if (div.classList.contains('link-button')) {
-        div.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            saveState();
-            div.classList.toggle('square');
-            div.classList.toggle('round');
-        });
-    }
 }
 
 function reattachEventListeners() {
-    slide.querySelectorAll(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button").forEach(attachItemEvents);
+    slide.querySelectorAll(".item-box").forEach(attachItemEvents);
 }
 
 // --- TEXTE ET BULLES ---
 addTextBtn.addEventListener("click", () => createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box"));
 
-addBubbleBtn.addEventListener("click", () => {
+addBubbleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
     addBubbleMode = !addBubbleMode;
     addBubbleBtn.classList.toggle("active", addBubbleMode);
+    addBubbleBtn.textContent = addBubbleMode ? "Cliquez sur la slide..." : "Bulle";
 });
 
 slide.addEventListener("click", (e) => {
@@ -242,6 +261,7 @@ slide.addEventListener("click", (e) => {
         createBubble((e.clientX - rect.left) / editorZoom, (e.clientY - rect.top) / editorZoom);
         addBubbleMode = false;
         addBubbleBtn.classList.remove("active");
+        addBubbleBtn.textContent = "Bulle";
     }
 });
 
@@ -266,41 +286,21 @@ function renumberBubbles() {
     });
 }
 
-// --- FORMATAGE ET COULEURS ---
-textColor.addEventListener("input", (e) => {
-    if (!state.activeItem) return;
-    saveState();
-    if (state.activeItem.classList.contains("text-box")) {
-        state.activeItem.querySelector(".content").style.color = e.target.value;
-    } else if (state.activeItem.querySelector(".shape-content")) {
-        state.activeItem.querySelector(".shape-content").style.backgroundColor = e.target.value;
-    } else if (state.activeItem.classList.contains("bubble-box")) {
-        state.activeItem.style.backgroundColor = e.target.value;
-    }
-});
-
-// --- RACCOURCIS ET BOUTONS ---
+// --- RACCOURCIS ---
 document.getElementById("undoBtn").onclick = undo;
 document.getElementById("redoBtn").onclick = redo;
 
 window.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key === "z") { e.preventDefault(); undo(); }
     if (e.ctrlKey && e.key === "y") { e.preventDefault(); redo(); }
-    if ((e.key === "Delete" || e.key === "Backspace") && state.activeItem) {
-        if (document.activeElement.isContentEditable) return;
-        saveState();
-        if (state.activeItem.classList.contains('link-button')) handleLinkDelete(state.activeItem);
-        state.activeItem.remove();
-        state.activeItem = null;
-    }
 });
 
 // --- ZOOM ---
 function applyZoom() { 
-    if (slideZoomWrapper) slideZoomWrapper.style.transform = `scale(${editorZoom})`; 
+    const wrapper = document.getElementById("slideZoomWrapper");
+    if (wrapper) wrapper.style.transform = `scale(${editorZoom})`; 
     const z = document.getElementById("editor-zoom-text");
     if(z) z.textContent = Math.round(editorZoom*100)+"%";
 }
 function zoomIn() { editorZoom = Math.min(3, editorZoom + 0.1); applyZoom(); }
 function zoomOut() { editorZoom = Math.max(0.3, editorZoom - 0.1); applyZoom(); }
-function resetZoom() { editorZoom = 1; applyZoom(); }
