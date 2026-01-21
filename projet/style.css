@@ -207,7 +207,7 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .image-box { z-index: 1; }
 .image-box img { width: 100%; height: 100%; display: block; border-radius: 4px; pointer-events: none; }
 .shape-box { width: 100px; height: 100px; z-index: 2; }
-.shape-content { width: 100%; height: 100%; background-color: #8d6e63; transition: background-color 0.2s; border: 2px solid #5d4037; box-sizing: border-box; }
+.shape-content { width: 100%; height: 100%; background-color: #8d6e63; transition: background-color 0.2s; ; box-sizing: border-box; }
 .circle .shape-content { border-radius: 50%; }
 .triangle .shape-content { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border: none; filter: drop-shadow(2px 0 0 #5d4037) drop-shadow(-2px 0 0 #5d4037) drop-shadow(0 2px 0 #5d4037) drop-shadow(0 -2px 0 #5d4037); }
 .bubble-box { width: 36px; height: 36px; border-radius: 50%; background: #a1887f; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; user-select: none; z-index: 4; padding: 0; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 2px solid #fff; }

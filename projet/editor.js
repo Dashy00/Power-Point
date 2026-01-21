@@ -503,7 +503,29 @@ if (highlightBtn) highlightBtn.onclick = () => formatText("hiliteColor", highlig
 if (fontFamily) fontFamily.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontFamily = e.target.value; });
 if (fontSize) fontSize.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontSize = e.target.value; });
 if (textColor) textColor.addEventListener("input", (e) => formatText("foreColor", e.target.value));
-function addEditorShape(type) { addShape(type); }
+// Liaison des boutons de formes par ID
+const btnSquare = document.getElementById("addSquare");
+const btnCircle = document.getElementById("addCircle");
+const btnTriangle = document.getElementById("addTriangle");
+
+if(btnSquare) btnSquare.onclick = () => addEditorShape('square');
+if(btnCircle) btnCircle.onclick = () => addEditorShape('circle');
+if(btnTriangle) btnTriangle.onclick = () => addEditorShape('triangle');
+function addEditorShape(type) {
+    saveState(); // Pour pouvoir annuler l'action
+    let content = "";
+    let className = `shape-box ${type}`;
+    
+    if (type === 'square') {
+        content = `<div class="shape-content" style="background:#3498db; width:100%; height:100%;"></div>`;
+    } else if (type === 'circle') {
+        content = `<div class="shape-content" style="background:#e74c3c; width:100%; height:100%; border-radius:50%;"></div>`;
+    } else if (type === 'triangle') {
+        content = `<div class="shape-content" style="background:#2ecc71; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
+    }
+    
+    createItem(content, className, 100, 100);
+}
 let historyStack = []; let redoStack = [];
 function saveState() { historyStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); redoStack = []; }
 function undo() { if (historyStack.length === 0) return; redoStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); const s = historyStack.pop(); slide.innerHTML = s.innerHTML; slide.style.backgroundColor = s.bg; slide.style.backgroundImage = s.img; reattachEventListeners(); }
@@ -558,6 +580,7 @@ function handleLinkDelete(btn) {
         conn.type = 'simple';
     }
 }
+
 
 // Init
 reattachEventListeners();
