@@ -111,8 +111,8 @@ if (slideNumberInput) {
             return; 
         } else {
             // Tout est bon : on remet le style normal
-            slideNumberInput.style.border = "1px solid #4b5563";
-            slideNumberInput.style.color = "white";
+            slideNumberInput.style.border = "1px solid #dcd7c9";
+            slideNumberInput.style.color = "#000000";
             
             // On sauvegarde
             state.slidesContent[currentId].slideNum = newVal;
