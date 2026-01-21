@@ -12,7 +12,7 @@
        
         <div class="sidebar">
             <div class="sidebar-header">
-                <img src="images/logo_avec_fond_blanc.png" alt="Logo" class="sidebar-logo">
+                <img src="images/newlogo.png" alt="NodeFlow" class="sidebar-logo" style="height: 50px; margin: auto; display: block; mix-blend-mode: multiply;">
             </div>
            
             <div class="sidebar-item" id="btn-new-slide">
@@ -31,7 +31,7 @@
             </div>
 
             <div class="sidebar-item set-start" id="btn-set-start">
-                <span class="icon-text">🚩</span>
+                <span class="icon-text">🏴</span>
                 <span class="label">Définir comme<br>Début</span>
             </div>
            
@@ -116,9 +116,10 @@
                
                 <h4>Formes</h4>
                 <div class="shape-grid">
-                    <button class="overlay-btn shape-btn" id="addSquare" title="Carré">▢</button>
-                    <button class="overlay-btn shape-btn" id="addCircle" title="Cercle">○</button>
-                    <button class="overlay-btn shape-btn" id="addTriangle" title="Triangle">△</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('square')" title="Carré">▢</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('circle')" title="Cercle">○</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('triangle')" title="Triangle">△</button>
+                    <button class="overlay-btn shape-btn" onclick="addEditorShape('arrow')" title="Flèche">➔</button>
                 </div>
  
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #dcd7c9;">
