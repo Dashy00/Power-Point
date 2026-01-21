@@ -1,5 +1,5 @@
 // =================================================================
-// GESTION DU GRAPHE (ZOOM, PAN, SLIDES, FLÈCHES)
+// GESTION DU GRAPHE (ZOOM, PAN, SLIDES, FLÈCHES, SAUVEGARDE)
 // =================================================================
 
 // --- 1. ZOOM & PAN ---
@@ -75,25 +75,28 @@ document.getElementById("btn-set-start").onclick = () => {
         alert("Veuillez sélectionner une diapositive d'abord.");
         return;
     }
-    const newStartId = state.selectedSlide.id;
-    if (state.startSlideId === newStartId) return;
+    setAsStartNode(state.selectedSlide.id);
+};
 
+function setAsStartNode(id) {
     if (state.startSlideId) {
-        const oldStartSlide = document.getElementById(state.startSlideId);
-        if (oldStartSlide) {
-            oldStartSlide.classList.remove("start-node");
-            const oldFlag = oldStartSlide.querySelector(".start-flag-icon");
+        const oldStart = document.getElementById(state.startSlideId);
+        if (oldStart) {
+            oldStart.classList.remove("start-node");
+            const oldFlag = oldStart.querySelector(".start-flag-icon");
             if (oldFlag) oldFlag.remove();
         }
     }
-
-    state.startSlideId = newStartId;
-    state.selectedSlide.classList.add("start-node");
-    const flag = document.createElement("div");
-    flag.className = "start-flag-icon";
-    flag.innerText = "🚩";
-    state.selectedSlide.appendChild(flag);
-};
+    state.startSlideId = id;
+    const newStart = document.getElementById(id);
+    if(newStart) {
+        newStart.classList.add("start-node");
+        const flag = document.createElement("div");
+        flag.className = "start-flag-icon";
+        flag.innerText = "🚩";
+        newStart.appendChild(flag);
+    }
+}
 
 // --- GESTION DE LA SÉLECTION ---
 function deselectAll() {
@@ -165,18 +168,24 @@ function getNextAvailableNumber() {
 }
 
 // --- CREATION SLIDES ---
-function createSlide(type) {
-  state.slideCount++;
-  const id = `slide-${state.slideCount}`;
-  const autoNum = getNextAvailableNumber();
+function createSlide(type, savedId = null, savedPos = null, savedNum = null) {
+  if(!savedId) state.slideCount++;
   
-  state.slidesContent[id] = { 
-      html: "", 
-      bg: "#ffffff", 
-      bgImg: "none", 
-      slideNum: autoNum,
-      requiredSlides: [] // Initialisation pour les conditions
-  };
+  const id = savedId || `slide-${state.slideCount}`;
+  const autoNum = savedNum || getNextAvailableNumber();
+  
+  if (!state.slidesContent[id]) {
+      state.slidesContent[id] = { 
+          html: "", 
+          bg: "#ffffff", 
+          bgImg: "none", 
+          slideNum: autoNum,
+          requiredSlides: [],
+          type: type // Sauvegarde du type pour l'export
+      };
+  } else {
+      state.slidesContent[id].type = type; // Mise à jour si existe
+  }
 
   const slide = document.createElement("div");
   slide.className = `slide ${type}`;
@@ -186,32 +195,29 @@ function createSlide(type) {
   previewWrapper.className = "slide-preview-wrapper";
   previewWrapper.id = `preview-${id}`;
 
-const infoOverlay = document.createElement("div");
+  const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
   
-  let prefix = "";
-  // --- MODIFICATION ICI ---
   if(type === "condition") {
-      // Pour la condition, on affiche juste un gros point d'interrogation et le numéro
       infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${autoNum}</span>`;
-  }
-  else if(type === "fin") {
-      prefix = "🏁 ";
-      infoOverlay.innerHTML = prefix + autoNum;
-  }
-  else {
+  } else if(type === "fin") {
+      infoOverlay.innerHTML = "🏁 " + autoNum;
+  } else {
       infoOverlay.innerHTML = autoNum;
   }
-  
-  infoOverlay.innerHTML = prefix + autoNum;
 
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
   
-  const centerX = 2500 - state.pointX / state.scale;
-  const centerY = 2500 - state.pointY / state.scale;
-  slide.style.left = centerX - 80 + "px";
-  slide.style.top = centerY - 45 + "px";
+  if (savedPos) {
+      slide.style.left = savedPos.left;
+      slide.style.top = savedPos.top;
+  } else {
+      const centerX = 2500 - state.pointX / state.scale;
+      const centerY = 2500 - state.pointY / state.scale;
+      slide.style.left = centerX - 80 + "px";
+      slide.style.top = centerY - 45 + "px";
+  }
 
   slide.addEventListener("mousedown", (e) => {
     if (e.target.classList.contains("port")) return;
@@ -222,14 +228,11 @@ const infoOverlay = document.createElement("div");
     state.dragOffset.y = e.offsetY;
   });
 
-  // --- MODIFICATION DOUBLE CLIC ---
   slide.addEventListener("dblclick", (e) => {
     e.stopPropagation();
     if (slide.classList.contains("condition")) {
-        // Si c'est une condition, on ouvre la modale de configuration
         openConditionModal(id);
     } else {
-        // Sinon, on ouvre l'éditeur visuel
         openEditor(id);
     }
   });
@@ -245,13 +248,8 @@ const infoOverlay = document.createElement("div");
   canvas.appendChild(slide);
   updateNodePreview(id);
 
-  if (state.startSlideId === null && type !== 'condition') {
-      state.startSlideId = id;
-      slide.classList.add("start-node");
-      const flag = document.createElement("div");
-      flag.className = "start-flag-icon";
-      flag.innerText = "🚩";
-      slide.appendChild(flag);
+  if (state.startSlideId === null && type !== 'condition' && !savedId) {
+      setAsStartNode(id);
   }
 }
 
@@ -296,21 +294,32 @@ function endConnection(e, id, port) {
       state.tempLine.setAttribute("x2", end.x);
       state.tempLine.setAttribute("y2", end.y);
 
-      const connectionObj = {
-        line: state.tempLine,
-        fromId: state.connectionStart.id,
-        toId: id,
-        fromPort: state.connectionStart.port,
-        toPort: port,
-        type: 'simple'
-      };
+      createConnectionObject(state.tempLine, state.connectionStart.id, id, state.connectionStart.port, port, 'simple');
+      addLinkButtonToSlide(state.connectionStart.id, id);
+      state.tempLine = null;
+    } else {
+      state.tempLine.remove();
+    }
+    state.isConnecting = false;
+  }
+}
 
-      state.tempLine.addEventListener("click", function(evt) {
-          evt.stopPropagation();
-          selectConnection(connectionObj);
-      });
+function createConnectionObject(lineElement, fromId, toId, fromPort, toPort, type) {
+    const connectionObj = {
+        line: lineElement,
+        fromId: fromId,
+        toId: toId,
+        fromPort: fromPort,
+        toPort: toPort,
+        type: type
+    };
 
-      state.tempLine.addEventListener("dblclick", function (evt) {
+    lineElement.addEventListener("click", function(evt) {
+        evt.stopPropagation();
+        selectConnection(connectionObj);
+    });
+
+    lineElement.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
         
@@ -323,16 +332,9 @@ function endConnection(e, id, port) {
             connectionObj.type = 'double';
             addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
         }
-      });
+    });
 
-      state.connections.push(connectionObj);
-      addLinkButtonToSlide(state.connectionStart.id, id);
-      state.tempLine = null;
-    } else {
-      state.tempLine.remove();
-    }
-    state.isConnecting = false;
-  }
+    state.connections.push(connectionObj);
 }
 
 function getPortCenter(port) {
@@ -394,10 +396,9 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
 }
 
 // =================================================================
-// --- GESTION DES MODALES (CONDITIONS & ERREURS) ---
+// --- GESTION DES MODALES (CONDITIONS) ---
 // =================================================================
 
-// 1. CONFIGURATION CONDITION
 const conditionOverlay = document.getElementById('condition-overlay');
 const conditionList = document.getElementById('condition-list');
 let currentConditionId = null;
@@ -408,13 +409,10 @@ function openConditionModal(slideId) {
     
     const savedReqs = state.slidesContent[slideId].requiredSlides || [];
 
-    // Création de la liste des slides disponibles
     Object.keys(state.slidesContent).forEach(otherId => {
         if (otherId === slideId) return;
-
         const data = state.slidesContent[otherId];
         const labelText = `Diapo ${data.slideNum || "?"} `; 
-
         const div = document.createElement("div");
         div.className = "condition-item";
         div.innerHTML = `
@@ -443,16 +441,12 @@ if(btnSaveCondition) {
         const checkboxes = conditionList.querySelectorAll('input[type="checkbox"]:checked');
         const requiredIds = Array.from(checkboxes).map(cb => cb.value);
         
-        if (!state.slidesContent[currentConditionId]) {
-            state.slidesContent[currentConditionId] = {};
-        }
         state.slidesContent[currentConditionId].requiredSlides = requiredIds;
         
-        // Mise à jour visuelle du label sur le graphe
         const slideNode = document.getElementById(currentConditionId);
         if(slideNode) {
             const info = slideNode.querySelector('.slide-info-overlay');
-            if(info) info.innerText = `❓ ${state.slidesContent[currentConditionId].slideNum} (${requiredIds.length})`;
+            if(info) info.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${state.slidesContent[currentConditionId].slideNum} (${requiredIds.length})</span>`;
         }
 
         conditionOverlay.style.display = "none";
@@ -460,41 +454,106 @@ if(btnSaveCondition) {
     };
 }
 
-// 2. POPUP ACCÈS REFUSÉ
-const errorOverlay = document.getElementById('access-denied-overlay');
-const missingListUl = document.getElementById('missing-list');
-const btnCloseError = document.getElementById('btn-close-error');
+// =================================================================
+// --- LOGIQUE SAUVEGARDE & CHARGEMENT ---
+// =================================================================
 
-function showAccessDenied(missingIds) {
-    missingListUl.innerHTML = "";
+document.getElementById('btn-load').onclick = () => {
+    document.getElementById('file-upload').click();
+};
 
-    missingIds.forEach(id => {
-        const data = state.slidesContent[id];
-        const label = data && data.slideNum ? `Diapositive N° ${data.slideNum}` : "Diapositive inconnue";
-        
-        const li = document.createElement("li");
-        li.innerHTML = `❌ ${label}`;
-        missingListUl.appendChild(li);
-    });
+document.getElementById('file-upload').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if(errorOverlay) errorOverlay.style.display = "flex";
-}
-
-if(btnCloseError) {
-    btnCloseError.onclick = () => {
-        errorOverlay.style.display = "none";
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        loadProjectFromHTML(event.target.result);
     };
+    reader.readAsText(file);
+    e.target.value = ''; 
+};
+
+function loadProjectFromHTML(htmlContent) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const script = doc.getElementById('project-data');
+
+    if (!script) {
+        alert("Fichier projet invalide.");
+        return;
+    }
+
+    try {
+        const projectData = JSON.parse(script.textContent);
+        
+        document.querySelectorAll('.slide').forEach(el => el.remove());
+        while (connectionsLayer.lastChild) {
+            if (connectionsLayer.lastChild.tagName === 'line') connectionsLayer.lastChild.remove();
+            else break; 
+        }
+        state.connections = [];
+        state.startSlideId = null;
+
+        state.slidesContent = projectData.slides;
+        state.slideCount = projectData.slideCount;
+        state.startSlideId = projectData.startId;
+
+        Object.keys(projectData.positions).forEach(id => {
+            const pos = projectData.positions[id];
+            const content = state.slidesContent[id];
+            // Utilisation du type stocké, sinon default
+            const type = content.type || (content.html.includes("❓") ? "condition" : "default");
+            
+            createSlide(type, id, pos, content.slideNum);
+        });
+
+        setTimeout(() => {
+            projectData.connections.forEach(conn => {
+                const fromSlide = document.getElementById(conn.from);
+                const toSlide = document.getElementById(conn.to);
+                
+                if (fromSlide && toSlide) {
+                    const fromPort = fromSlide.querySelector('.port.right') || fromSlide.querySelector('.port');
+                    const toPort = toSlide.querySelector('.port.left') || toSlide.querySelector('.port');
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("stroke", "#333");
+                    line.setAttribute("stroke-width", "2");
+                    line.setAttribute("marker-end", "url(#arrow-end)");
+                    if(conn.type === 'double') line.setAttribute("marker-start", "url(#arrow-start)");
+
+                    const start = getPortCenter(fromPort);
+                    const end = getPortCenter(toPort);
+                    line.setAttribute("x1", start.x);
+                    line.setAttribute("y1", start.y);
+                    line.setAttribute("x2", end.x);
+                    line.setAttribute("y2", end.y);
+
+                    connectionsLayer.appendChild(line);
+                    createConnectionObject(line, conn.from, conn.to, fromPort, toPort, conn.type);
+                }
+            });
+
+            if(state.startSlideId) setAsStartNode(state.startSlideId);
+
+        }, 50);
+
+        alert("Projet chargé !");
+
+    } catch (e) {
+        console.error(e);
+        alert("Erreur de chargement.");
+    }
 }
 
-// =================================================================
+// -----------------------------------------------------------------
 // --- LOGIQUE DU LECTEUR (MODE AFFICHER & GÉNÉRER) ---
-// =================================================================
+// -----------------------------------------------------------------
 
 const playerOverlay = document.getElementById('presentation-overlay');
 const playerStage = document.getElementById('player-stage');
 const btnClosePlayer = document.getElementById('btn-close-player');
-
-// Historique de session
 let visitedSlides = new Set(); 
 
 // --- AFFICHER ---
@@ -530,7 +589,6 @@ function exitHandler() {
         playerOverlay.style.display = 'none';
         playerStage.innerHTML = '';
         playerStage.style.transform = 'scale(1)';
-        if(errorOverlay) errorOverlay.style.display = 'none';
     }
 }
 
@@ -544,13 +602,12 @@ btnClosePlayer.onclick = () => {
 };
 
 function fitStageToScreen() {
-    const margin = 40;
-    const availableWidth = window.innerWidth - margin;
-    const availableHeight = window.innerHeight - margin;
-    
+    const margin = 0; // Plein écran pur
+    const availableWidth = window.innerWidth;
+    const availableHeight = window.innerHeight;
     const scaleX = availableWidth / 960;
     const scaleY = availableHeight / 540;
-    const scale = Math.min(scaleX, scaleY, 1.5); 
+    const scale = Math.min(scaleX, scaleY); 
     
     playerStage.style.transform = `scale(${scale})`;
 }
@@ -559,75 +616,61 @@ window.addEventListener('resize', () => {
     if(playerOverlay.style.display === 'flex') fitStageToScreen();
 });
 
-// --- MOTEUR DE JEU (LOAD SLIDE) ---
-
+// --- MOTEUR DE NAVIGATION INTELLIGENT ---
 function loadSlideInPlayer(slideId) {
     const data = state.slidesContent[slideId];
     if (!data) return;
 
-    // Ajoute la slide actuelle à l'historique des visités
     visitedSlides.add(slideId);
 
-    // Rendu visuel de la slide
+    // Rendu visuel
     playerStage.innerHTML = data.html;
     playerStage.style.backgroundColor = data.bg || '#ffffff';
     playerStage.style.backgroundImage = data.bgImg || 'none';
     playerStage.style.backgroundSize = 'cover';
 
-    // Gestion des boutons de lien
+    // 1. DÉSACTIVATION DES BOUTONS NON VALIDES
     const links = playerStage.querySelectorAll('.link-button');
+    links.forEach(link => {
+        const targetId = link.dataset.target;
+        const targetNodeElement = document.getElementById(targetId);
+        
+        // Si la cible est une condition
+        if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
+            const targetData = state.slidesContent[targetId];
+            const requiredIds = targetData.requiredSlides || [];
+            
+            // Vérifier si toutes les slides requises ont été visitées
+            const missing = requiredIds.filter(reqId => !visitedSlides.has(reqId));
+            
+            if (missing.length > 0) {
+                // Condition non remplie : On désactive le bouton
+                link.classList.add('disabled');
+            }
+        }
+    });
+
+    // 2. GESTION DU CLIC
     links.forEach(link => {
         link.onclick = (e) => {
             e.stopPropagation();
             
+            if (link.classList.contains('disabled')) return; // Sécurité
+
             const targetId = link.dataset.target;
-            const targetData = state.slidesContent[targetId];
-            
-            // On récupère l'élément DOM du graphe pour voir ses classes (ex: "condition")
             const targetNodeElement = document.getElementById(targetId);
 
-            // =========================================================
-            // CAS 1 : LA CIBLE EST UN BLOC "CONDITION"
-            // =========================================================
+            // Si on clique vers une condition (qui est donc valide car bouton actif)
             if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
-                
-                // 1. Vérification des prérequis définis dans le bloc condition
-                const requiredIds = targetData.requiredSlides || [];
-                const missing = requiredIds.filter(reqId => !visitedSlides.has(reqId));
-
-                if (missing.length > 0) {
-                    // -> CONDITION NON RESPECTÉE
-                    // On affiche l'erreur et on RESTE sur la slide actuelle
-                    showAccessDenied(missing);
-                    return; 
+                // On cherche la sortie de la condition
+                const outgoingConn = state.connections.find(c => c.fromId === targetId);
+                if (outgoingConn) {
+                    // SAUT INSTANTANÉ (on ne montre pas la slide jaune)
+                    goToSlideWithTransition(outgoingConn.toId);
                 } else {
-                    // -> CONDITION RESPECTÉE (Succès)
-                    // On ne s'arrête pas sur la condition. On cherche la suite.
-                    // On cherche une connexion qui part DE la condition VERS une autre slide.
-                    const outgoingConn = state.connections.find(c => c.fromId === targetId);
-                    
-                    if (outgoingConn) {
-                        // SAUT AUTOMATIQUE vers la slide suivante
-                        goToSlideWithTransition(outgoingConn.toId);
-                    } else {
-                        console.error("Erreur de configuration : Le bloc condition n'est relié à rien.");
-                        alert("Chemin incomplet après la condition.");
-                    }
-                    return;
+                    alert("Erreur : Condition sans sortie.");
                 }
-            }
-
-            // =========================================================
-            // CAS 2 : LA CIBLE EST UNE SLIDE NORMALE
-            // =========================================================
-            // (Vérification de sécurité au cas où des restrictions sont mises directement sur la slide)
-            if (targetData && targetData.requiredSlides && targetData.requiredSlides.length > 0) {
-                const missing = targetData.requiredSlides.filter(reqId => !visitedSlides.has(reqId));
-                
-                if (missing.length > 0) {
-                    showAccessDenied(missing);
-                    return;
-                }
+                return;
             }
 
             // Navigation standard
@@ -644,19 +687,33 @@ function goToSlideWithTransition(targetId) {
     }, 150);
 }
 
-// --- GÉNÉRER ---
+// --- GÉNÉRER (AVEC SCRIPT INTÉGRÉ) ---
 document.getElementById('btn-generate').onclick = () => {
     if (!state.startSlideId) {
         alert("Impossible de générer : aucune diapositive de départ définie.");
         return;
     }
-
     const htmlContent = generateStandaloneHTML();
     downloadFile("presentation.html", htmlContent);
 };
 
 function generateStandaloneHTML() {
-    const slidesData = JSON.stringify(state.slidesContent);
+    const nodePositions = {};
+    document.querySelectorAll('.slide').forEach(slide => {
+        nodePositions[slide.id] = { left: slide.style.left, top: slide.style.top };
+    });
+
+    const appState = {
+        version: "1.0",
+        slides: state.slidesContent,
+        connections: state.connections.map(c => ({ from: c.fromId, to: c.toId, type: c.type })),
+        positions: nodePositions,
+        startId: state.startSlideId,
+        slideCount: state.slideCount
+    };
+
+    const slidesDataJSON = JSON.stringify(state.slidesContent);
+    const connectionsJSON = JSON.stringify(appState.connections); // Besoin des connexions pour le saut condition
     const startId = state.startSlideId;
 
     return `<!DOCTYPE html>
@@ -667,7 +724,7 @@ function generateStandaloneHTML() {
     <title>Présentation NodeFlow</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; }
-        #stage { width: 960px; height: 540px; background: white; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); transform-origin: center center; transition: opacity 0.15s ease; }
+        #stage { width: 960px; height: 540px; background: white; position: relative; overflow: hidden; box-shadow: 0 0 0 100vw black; transform-origin: center center; transition: opacity 0.15s ease; }
         
         .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; }
         .text-box { z-index: 3; } .image-box { z-index: 1; } .shape-box { z-index: 2; }
@@ -680,7 +737,10 @@ function generateStandaloneHTML() {
         
         .link-button { background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 24px; z-index: 10; cursor: pointer; transition: transform 0.1s; border: 2px solid #a1887f; }
         .link-button:hover { transform: scale(1.1); filter: brightness(1.1); }
+        .link-button:active { transform: scale(0.95); }
         .link-button.square { border-radius: 4px; } .link-button.round { border-radius: 50%; }
+        
+        .link-button.disabled { background-color: #b0bec5 !important; border-color: #90a4ae !important; color: #cfd8dc !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; filter: grayscale(100%); }
 
         .resize-handle, .delete-btn, .rotate-handle { display: none !important; }
         .content { outline: none; }
@@ -688,8 +748,12 @@ function generateStandaloneHTML() {
 </head>
 <body>
     <div id="stage"></div>
+    <script id="project-data" type="application/json">
+        ${JSON.stringify(appState)}
+    <\/script>
     <script>
-        const slides = ${slidesData};
+        const slides = ${slidesDataJSON};
+        const connections = ${connectionsJSON};
         const startId = "${startId}";
         const stage = document.getElementById('stage');
         let visited = new Set(); 
@@ -707,11 +771,34 @@ function generateStandaloneHTML() {
                 stage.style.backgroundImage = data.bgImg || 'none';
                 stage.style.backgroundSize = 'cover';
 
+                // LOGIQUE D'AFFICHAGE INTELLIGENT EXPORTÉE
                 const links = stage.querySelectorAll('.link-button');
                 links.forEach(link => {
+                    const targetId = link.dataset.target;
+                    const targetData = slides[targetId];
+                    
+                    // Vérification Condition (basée sur le type stocké dans slidesContent)
+                    if (targetData && targetData.type === 'condition') {
+                        const requiredIds = targetData.requiredSlides || [];
+                        const missing = requiredIds.filter(reqId => !visited.has(reqId));
+                        
+                        if (missing.length > 0) {
+                            link.classList.add('disabled');
+                        }
+                    }
+
                     link.onclick = (e) => {
-                        const target = link.dataset.target;
-                        goToSlide(target);
+                        e.stopPropagation();
+                        if (link.classList.contains('disabled')) return;
+
+                        if (targetData && targetData.type === 'condition') {
+                            const outgoingConn = connections.find(c => c.from === targetId);
+                            if (outgoingConn) {
+                                goToSlide(outgoingConn.to); // Sauter la condition
+                            }
+                            return;
+                        }
+                        goToSlide(targetId);
                     };
                 });
                 stage.style.opacity = 1;
@@ -719,8 +806,7 @@ function generateStandaloneHTML() {
         }
 
         function resize() {
-            const margin = 20;
-            const ratio = Math.min((window.innerWidth - margin) / 960, (window.innerHeight - margin) / 540);
+            const ratio = Math.min(window.innerWidth / 960, window.innerHeight / 540);
             stage.style.transform = 'scale(' + ratio + ')';
         }
         window.onresize = resize;
@@ -744,7 +830,6 @@ function downloadFile(filename, content) {
     URL.revokeObjectURL(url);
 }
 
-// --- RACCOURCIS ---
 window.addEventListener("keydown", (e) => {
     if (document.getElementById("editor-overlay").style.display === "flex") return;
     if (e.key === "Delete" || e.key === "Backspace") {

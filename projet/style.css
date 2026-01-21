@@ -47,15 +47,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 
 /* --- COULEURS SPÉCIFIQUES DES BOUTONS --- */
 
-/* Supprimer (Rouge/Noir) */
-.sidebar-item.delete { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
-.sidebar-item.delete:hover { background-color: #2c2c2c; color: #ffffff; }
-
-/* Générer (Vert/Noir) */
-.sidebar-item.export { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
-.sidebar-item.export:hover { background-color: #2c2c2c; color: #ffffff; }
-
-/* Définir Début (Or/Marron) */
+/* Bouton Début (Or/Marron) */
 .sidebar-item.set-start {
     background-color: rgba(141, 110, 99, 0.1);
     border-color: #8d6e63;
@@ -65,7 +57,24 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
     background-color: rgba(141, 110, 99, 0.2);
 }
 
-/* NOUVEAU : Afficher (Bleu) */
+/* Bouton Charger (Orange - Dossier) */
+.sidebar-item.load {
+    background-color: rgba(243, 156, 18, 0.1);
+    border: 1px solid #f39c12;
+    color: #e67e22;
+}
+.sidebar-item.load:hover {
+    background-color: rgba(243, 156, 18, 0.2);
+}
+.sidebar-item.load .icon-text {
+    color: #e67e22;
+}
+
+/* Bouton Supprimer (Rouge/Noir) */
+.sidebar-item.delete { background-color: rgba(0, 0, 0, 0.05); color: #000000; border: 1px solid rgba(0,0,0,0.1); }
+.sidebar-item.delete:hover { background-color: #2c2c2c; color: #ffffff; }
+
+/* Bouton Afficher (Bleu) */
 .sidebar-item.play {
     background-color: rgba(52, 152, 219, 0.1);
     border-color: #3498db;
@@ -77,6 +86,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 .sidebar-item.play .icon-text {
     color: #2980b9;
 }
+
+/* Bouton Générer (Gris/Vert) */
+.sidebar-item.export { background-color: rgba(0, 0, 0, 0.05); color: #000000; border-color: rgba(0,0,0,0.1); }
+.sidebar-item.export:hover { background-color: #2c2c2c; color: #ffffff; }
 
 /* CANVAS */
 .main-content { flex: 1; position: relative; background-color: #f9f8f3; overflow: hidden; }
@@ -92,15 +105,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
     transform-origin: 2500px 2500px;
 }
 
-/* FLÈCHES */
-#connections-layer { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    pointer-events: none; z-index: 1; overflow: visible; 
-}
-line { 
-    stroke: #a1887f; stroke-width: 3; 
-    pointer-events: stroke; cursor: pointer; transition: stroke 0.2s; 
-}
+#connections-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
+line { stroke: #a1887f; stroke-width: 3; pointer-events: stroke; cursor: pointer; transition: stroke 0.2s; }
 line:hover { stroke: #795548; stroke-width: 5; }
 line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 
@@ -113,50 +119,40 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     overflow: hidden; user-select: none; z-index: 1;
 }
 .slide.selected { outline: 2px solid #8d6e63; box-shadow: 0 0 15px rgba(141, 110, 99, 0.4); }
-.slide.condition { background: #a1887f; color: white; border: none; }
 .slide.fin { border-color: #3e2723; color: #3e2723; background-color: #efebe9; }
 
-/* STYLE DIAPOSITIVE DE DÉPART */
-.slide.start-node {
-    border: 3px solid #fbc02d !important;
-    box-shadow: 0 0 20px rgba(251, 192, 45, 0.5);
-    z-index: 5;
+/* Bloc Condition */
+.slide.condition {
+    width: 100px; height: 80px;
+    background: #fff3e0; border: 2px dashed #f39c12; border-radius: 15px;  
+    color: #e67e22; font-weight: bold; font-size: 14px;
+    box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+    z-index: 2;
 }
-.start-flag-icon {
-    position: absolute; top: -15px; left: -10px; font-size: 24px;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); z-index: 100;
+.slide.condition .slide-preview-wrapper { display: none; }
+.slide.condition .slide-info-overlay {
+    background: transparent; border: none; font-size: 16px;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 100%; text-align: center;
 }
+.slide.condition:hover { background: #ffe0b2; border-color: #d35400; }
+
+.slide.start-node { border: 3px solid #fbc02d !important; box-shadow: 0 0 20px rgba(251, 192, 45, 0.5); z-index: 5; }
+.start-flag-icon { position: absolute; top: -15px; left: -10px; font-size: 24px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); z-index: 100; }
 
 .slide-preview-wrapper { width: 960px; height: 540px; transform: scale(0.1667); transform-origin: top left; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-.slide-info-overlay { 
-    position: absolute; z-index: 10; 
-    background: rgba(255, 255, 255, 0.85); 
-    padding: 2px 5px; border-radius: 4px; pointer-events: none;
-    color: #3e2723; border: 1px solid #d7ccc8;
-}
+.slide-info-overlay { position: absolute; z-index: 10; background: rgba(255, 255, 255, 0.85); padding: 2px 5px; border-radius: 4px; pointer-events: none; color: #3e2723; border: 1px solid #d7ccc8; }
 
 /* PORTS */
-.port { 
-    position: absolute; 
-    width: 20px; 
-    height: 20px; 
-    background-color: #8d6e63; 
-    border: 2px solid white; 
-    border-radius: 50%; 
-    cursor: crosshair; 
-    z-index: 10; 
-    opacity: 0; 
-    transition: opacity 0.2s, transform 0.1s; 
-}
+.port { position: absolute; width: 20px; height: 20px; background-color: #8d6e63; border: 2px solid white; border-radius: 50%; cursor: crosshair; z-index: 10; opacity: 0; transition: opacity 0.2s, transform 0.1s; }
 .slide:hover .port { opacity: 1; }
 .port:hover { transform: scale(1.2); background-color: #5d4037; }
-
 .port.top { top: -10px; left: 50%; transform: translateX(-50%); }
 .port.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); }
 .port.left { left: -10px; top: 50%; transform: translateY(-50%); }
 .port.right { right: -10px; top: 50%; transform: translateY(-50%); }
 
-/* BOUTON DE LIEN */
+/* BOUTONS DE LIEN (Flèches vertes) */
 .link-button {
     background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center;
     font-weight: bold; font-size: 24px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -166,14 +162,18 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .link-button.round { border-radius: 50%; }
 .link-button:hover { transform: scale(1.05); background-color: #6d4c41; }
 
-/* ZOOM & OVERLAY */
-.zoom-controls { position: absolute; top: 20px; right: 20px; background-color: #fdfbf7; color: #5d4037; padding: 5px 10px; border-radius: 30px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border: 1px solid #dcd7c9; z-index: 100; }
-.zoom-btn { background: transparent; border: none; color: #795548; font-size: 18px; font-weight: bold; cursor: pointer; padding: 0 5px; }
-.zoom-btn:hover { color: #4e342e; }
-#zoom-text { font-size: 14px; min-width: 50px; text-align: center; }
-.reset-btn { background: transparent; border: 1px solid #bcaaa4; color: #795548; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+/* NOUVEAU : STYLE DÉSACTIVÉ (Condition non remplie) */
+.link-button.disabled {
+    background-color: #b0bec5 !important;
+    border-color: #90a4ae !important;
+    color: #cfd8dc !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important; /* Empêche le clic */
+    opacity: 0.6;
+    filter: grayscale(100%);
+}
 
-/* EDITEUR OVERLAY */
+/* EDITEUR OVERLAY & ITEMS */
 .editor-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f5f0; z-index: 2000; display: flex; flex-direction: column; }
 .overlay-header { height: 50px; background: #e8e4d9; display: flex; align-items: center; padding: 0 20px; color: #4e342e; gap: 15px; border-bottom: 1px solid #dcd7c9; }
 .zoom-controls-editor { margin-left: auto; display: flex; align-items: center; gap: 8px; background: #d7ccc8; padding: 4px 10px; border-radius: 20px; }
@@ -189,17 +189,21 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .top-tool-btn:hover { background: #e0e0e0; }
 .back-btn { padding: 6px 15px; background: #dcd7c9; color: #3e2723; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
 .back-btn:hover { background: #c7bba8; }
+
 .overlay-body { display: flex; flex: 1; }
 .overlay-sidebar { width: 200px; background: #e8e4d9; color: #4a4a4a; padding: 20px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #dcd7c9; }
 .overlay-sidebar h4 { margin-bottom: 5px; font-size: 14px; color: #795548; }
 .overlay-btn { padding: 10px; background: #8d6e63; color: white; border: none; border-radius: 5px; cursor: pointer; text-align: center; font-weight: bold; width: 100%; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .overlay-btn:hover { background: #6d4c41; }
+
 .shape-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
 .shape-btn { padding: 10px; font-size: 18px; background: transparent; border: 1px solid #dcd7c9; color: #5d4037; }
 .shape-btn:hover { background: rgba(255, 255, 255, 0.5); border-color: #8d6e63; }
+
 .overlay-workspace { flex: 1; display: flex; justify-content: center; align-items: center; background: #eceae4; overflow: auto; position: relative; padding: 40px; }
 .slide-zoom-wrapper { display: flex; justify-content: center; align-items: center; transition: transform 0.1s ease-out; transform-origin: center center; }
 .overlay-slide { width: 960px; height: 540px; background: white; position: relative; box-shadow: 0 5px 20px rgba(93, 64, 55, 0.15); overflow: hidden; background-size: cover; background-position: center; flex-shrink: 0; }
+
 .floating-toolbar { position: absolute; display: none; align-items: center; gap: 5px; padding: 8px 12px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); z-index: 2100; border: 1px solid #dcd7c9; }
 .floating-toolbar.visible { display: flex; }
 .floating-toolbar select { padding: 4px 8px; border: 1px solid #dcd7c9; border-radius: 4px; background: #fdfbf7; color: #4e342e; font-size: 13px; cursor: pointer; }
@@ -219,9 +223,9 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .image-box { z-index: 1; }
 .image-box img { width: 100%; height: 100%; display: block; border-radius: 4px; pointer-events: none; }
 .shape-box { width: 100px; height: 100px; z-index: 2; }
-.shape-content { width: 100%; height: 100%; background-color: #8d6e63; transition: background-color 0.2s; ; box-sizing: border-box; }
+.shape-content { width: 100%; height: 100%; background-color: #8d6e63; transition: background-color 0.2s; box-sizing: border-box; }
 .circle .shape-content { border-radius: 50%; }
-.triangle .shape-content { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border: none; filter: drop-shadow(2px 0 0 #5d4037) drop-shadow(-2px 0 0 #5d4037) drop-shadow(0 2px 0 #5d4037) drop-shadow(0 -2px 0 #5d4037); }
+.triangle .shape-content { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border: none; }
 .bubble-box { width: 36px; height: 36px; border-radius: 50%; background: #a1887f; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; user-select: none; z-index: 4; padding: 0; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 2px solid #fff; }
 .bubble-box::after { content: attr(data-desc); position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%); background: rgba(62, 39, 35, 0.95); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; white-space: pre-line; text-align: left; opacity: 0; pointer-events: none; transition: 0.2s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 9999; line-height: 1.6; width: max-content; max-width: 400px; }
 .bubble-box:hover::after { opacity: 1; }
@@ -237,90 +241,14 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
 .selected { outline: 2px solid #8d6e63; outline-offset: 4px; }
 
-/* --- LECTEUR (MODE PRÉSENTATION & EXPORT) --- */
-.player-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: black; z-index: 5000;
-    display: flex; justify-content: center; align-items: center;
-    overflow: hidden;
-}
-
-/* Bouton quitter discret */
-.player-close-btn {
-    position: absolute; top: 20px; right: 20px;
-    background: rgba(0, 0, 0, 0.5); color: rgba(255,255,255,0.7);
-    border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 4px;
-    cursor: pointer; font-size: 12px; z-index: 5001;
-    transition: all 0.2s;
-}
+/* LECTEUR */
+.player-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: black; z-index: 5000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+.player-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.5); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; z-index: 5001; transition: all 0.2s; }
 .player-close-btn:hover { background: red; color: white; border-color: red; }
 
-.player-stage {
-    width: 960px; height: 540px;
-    background: white;
-    position: relative;
-    /* Ombre très large pour cacher le reste si nécessaire et garantir le fond noir */
-    box-shadow: 0 0 0 100vw black; 
-    overflow: hidden;
-    transform-origin: center center;
-}
+.player-stage { width: 960px; height: 540px; background: white; position: relative; box-shadow: 0 0 0 100vw black; overflow: hidden; transform-origin: center center; }
+.player-stage .resize-handle, .player-stage .delete-btn, .player-stage .rotate-handle, .player-stage .shape-box .delete-btn, .player-stage .link-button .resize-handle, .player-stage .link-button .rotate-handle, .player-stage .link-button .delete-btn { display: none !important; }
 
-/* Cacher les outils d'édition en lecture */
-.player-stage .resize-handle,
-.player-stage .delete-btn,
-.player-stage .rotate-handle,
-.player-stage .shape-box .delete-btn,
-.player-stage .link-button .resize-handle,
-.player-stage .link-button .rotate-handle,
-.player-stage .link-button .delete-btn {
-    display: none !important;
-}
-
-/* Rendre les boutons interactifs */
-.player-stage .link-button {
-    cursor: pointer;
-    transition: transform 0.1s, filter 0.1s;
-}
-.player-stage .link-button:hover {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-}
-.player-stage .link-button:active {
-    transform: scale(0.95);
-}
-/* --- STYLE DU BLOC CONDITION --- */
-.slide.condition {
-    width: 100px;         /* Plus petit qu'une slide normale */
-    height: 80px;
-    background: #fff3e0;  /* Fond orange clair */
-    border: 2px dashed #f39c12; /* Bordure pointillée orange */
-    border-radius: 15px;  /* Bords arrondis */
-    color: #e67e22;
-    font-weight: bold;
-    font-size: 14px;
-    box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
-    z-index: 2;
-}
-
-/* On cache la prévisualisation HTML pour les conditions car c'est juste de la logique */
-.slide.condition .slide-preview-wrapper {
-    display: none;
-}
-
-/* L'overlay d'info (le numéro) pour la condition */
-.slide.condition .slide-info-overlay {
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    text-align: center;
-}
-
-/* Icône spécifique au survol ou sélection */
-.slide.condition:hover {
-    background: #ffe0b2;
-    border-color: #d35400;
-}
+.player-stage .link-button { cursor: pointer; transition: transform 0.1s, filter 0.1s; }
+.player-stage .link-button:hover { transform: scale(1.05); filter: brightness(1.1); }
+.player-stage .link-button:active { transform: scale(0.95); }
