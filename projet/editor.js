@@ -425,6 +425,8 @@ imageInput.addEventListener('change', (e) => {
         };
         reader.readAsDataURL(file);
     }
+    // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
+    imageInput.value = '';
 });
 
 // --- GESTION DU FOND (ARRIÈRE-PLAN) ---
