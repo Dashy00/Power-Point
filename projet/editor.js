@@ -450,6 +450,8 @@ bgImageInput.addEventListener("change", () => {
         slide.style.backgroundSize = "cover";
     };
     reader.readAsDataURL(file);
+    // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
+    bgImageInput.value = '';
 });
 
 document.getElementById("undoBtn").onclick = undo;
