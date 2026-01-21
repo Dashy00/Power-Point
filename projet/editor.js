@@ -66,7 +66,7 @@ imageInput.addEventListener("change", () => {
 });
 
 function createImageBox(src) {
-    createItem(`<img src="${src}"><div class="resize-handle"></div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`, "image-box", 260, 180);
+    createItem(`<img src="${src}">`, "image-box", 260, 180);
 }
 
 function addEditorShape(type) {
@@ -152,8 +152,30 @@ function setupDeleteBtn(box) {
   }
 }
 
+function setupRotateHandle(box) {
+    const handle = box.querySelector(".rotate-handle");
+    if (!handle) return;
+    
+    handle.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        rotating = box;
+        state.activeItem = box;
+        
+        const rect = box.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        
+        const transform = box.style.transform;
+        const match = transform.match(/rotate\((-?\d+\.?\d*)deg\)/);
+        currentRotation = match ? parseFloat(match[1]) : 0;
+    });
+}
+
 function attachItemEvents(div) {
     setupDeleteBtn(div);
+    setupRotateHandle(div);
     
     // GESTION DOUBLE CLIC BOUTON LIEN
     if (div.classList.contains('link-button')) {
@@ -252,8 +274,12 @@ function createBubble(x, y) {
   const del = document.createElement("div");
   del.className = "delete-btn";
   del.textContent = "✕";
+  const rotate = document.createElement("div");
+  rotate.className = "rotate-handle";
+  rotate.textContent = "↻";
   bubble.appendChild(num);
   bubble.appendChild(del);
+  bubble.appendChild(rotate);
   bubble.style.left = `${x - 18}px`;
   bubble.style.top  = `${y - 18}px`;
   slide.appendChild(bubble);
@@ -469,40 +495,39 @@ document.getElementById("topTextColor").addEventListener("input", (e) => {
     } else if (state.activeItem && state.activeItem.classList.contains("bubble-box")) {
         saveState();
         state.activeItem.style.backgroundColor = e.target.value;
-    } else {
-        formatText("foreColor", e.target.value);
-    }
-});
-document.getElementById("topBoldBtn").onclick = () => formatText("bold");
-document.getElementById("topItalicBtn").onclick = () => formatText("italic");
-document.getElementById("topUnderlineBtn").onclick = () => formatText("underline");
-document.getElementById("topHighlightColor").addEventListener("input", (e) => { document.getElementById("highlightColor").value = e.target.value; });
-document.getElementById("topHighlightBtn").onclick = () => formatText("hiliteColor", document.getElementById("topHighlightColor").value);
-document.getElementById("topFontFamily").addEventListener("change", (e) => {
-    if (state.activeItem && state.activeItem.classList.contains("text-box")) {
+    } else if (state.activeItem && state.activeItem.classList.contains("text-box")) {
+        // Appliquer la couleur à tout le contenu de la zone de texte
         saveState();
-        state.activeItem.querySelector(".content").style.fontFamily = e.target.value;
+        state.activeItem.querySelector(".content").style.color = e.target.value;
     } else {
-        formatText("fontName", e.target.value);
+        // Essayer execCommand pour le texte sélectionné
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0 && sel.toString().length > 0) {
+            saveState();
+            document.execCommand("foreColor", false, e.target.value);
+        }
     }
 });
-document.getElementById("topFontSize").addEventListener("change", (e) => {
-    if (state.activeItem && state.activeItem.classList.contains("text-box")) {
-        saveState();
-        state.activeItem.querySelector(".content").style.fontSize = e.target.value;
-    } else {
-        document.execCommand("fontSize", false, "7");
-        const fontElements = document.querySelectorAll("font[size='7']");
-        fontElements.forEach(el => { el.removeAttribute("size"); el.style.fontSize = e.target.value; });
-    }
-});
+// Boutons de formatage supprimés de la barre fixe - fonctionnalités disponibles dans la barre flottante
 if (boldBtn) boldBtn.onclick = () => formatText("bold");
 if (italicBtn) italicBtn.onclick = () => formatText("italic");
 if (underlineBtn) underlineBtn.onclick = () => formatText("underline");
 if (highlightBtn) highlightBtn.onclick = () => formatText("hiliteColor", highlightColor ? highlightColor.value : "#ffff00");
 if (fontFamily) fontFamily.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontFamily = e.target.value; });
 if (fontSize) fontSize.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontSize = e.target.value; });
-if (textColor) textColor.addEventListener("input", (e) => formatText("foreColor", e.target.value));
+if (textColor) textColor.addEventListener("input", (e) => {
+    // Appliquer la couleur à la zone de texte active
+    if (state.activeItem && state.activeItem.classList.contains("text-box")) {
+        saveState();
+        state.activeItem.querySelector(".content").style.color = e.target.value;
+    } else if (state.activeItem && state.activeItem.classList.contains("shape-box")) {
+        saveState();
+        state.activeItem.querySelector(".shape-content").style.backgroundColor = e.target.value;
+    } else if (state.activeItem && state.activeItem.classList.contains("bubble-box")) {
+        saveState();
+        state.activeItem.style.backgroundColor = e.target.value;
+    }
+});
 // Liaison des boutons de formes par ID
 const btnSquare = document.getElementById("addSquare");
 const btnCircle = document.getElementById("addCircle");
