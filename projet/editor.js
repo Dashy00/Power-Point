@@ -17,6 +17,7 @@ const boldBtn = document.getElementById("boldBtn");
 const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
+const shapeColorPicker = document.getElementById("shapeColorPicker");
  
 // Variables d'état pour les manipulations
 let dragging = null, resizing = null, rotating = null;
@@ -396,15 +397,25 @@ highlightColor.addEventListener("input", () => {
     document.execCommand("backColor", false, highlightColor.value);
 });
 
-// Utiliser la couleur du texte depuis le top toolbar
-document.getElementById("topTextColor").addEventListener("input", (e) => {
-    if (!activeTextBox) return;
-    saveState();
-    const content = activeTextBox.querySelector(".content");
-    if (content) {
-        content.style.color = e.target.value;
-    }
-});
+// Gestionnaire pour la couleur des formes dans la barre latérale
+if (shapeColorPicker) {
+    shapeColorPicker.addEventListener("input", (e) => {
+        saveState();
+        
+        // Changer la couleur de la forme sélectionnée
+        if (state.activeItem) {
+            // Pour les formes (carrés, cercles, etc.)
+            const shapeContent = state.activeItem.querySelector(".shape-content");
+            if (shapeContent) {
+                shapeContent.style.backgroundColor = e.target.value;
+            }
+            // Pour les bulles
+            else if (state.activeItem.classList.contains("bubble-box")) {
+                state.activeItem.style.backgroundColor = e.target.value;
+            }
+        }
+    });
+}
 
  
 // --- RACCOURCIS ET BOUTONS ---

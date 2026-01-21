@@ -93,10 +93,6 @@
                 <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #dcd7c9; background: #fdfbf7; color: #4e342e; font-size: 14px;">
             </div>
 
-            <div class="toolbar-group">
-                <input type="color" id="topTextColor" value="#333333" title="Couleur du texte">
-            </div>
-
             <div class="toolbar-group" style="border-right: none;">
                 <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">↩️</button>
                 <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
@@ -127,6 +123,8 @@
                     <button class="overlay-btn shape-btn" onclick="addEditorShape('triangle')" title="Triangle">△</button>
                     <button class="overlay-btn shape-btn" onclick="addEditorShape('arrow')" title="Flèche">➔</button>
                 </div>
+                <label style="font-size: 12px; display: block; margin-top: 10px;">Couleur :</label>
+                <input type="color" id="shapeColorPicker" value="#8d6e63" style="width: 100%; cursor: pointer; height: 35px;">
  
                 <hr style="margin: 10px 0; border: 0; border-top: 1px solid #dcd7c9;">
                
