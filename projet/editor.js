@@ -56,7 +56,10 @@ addTextBtn.addEventListener("click", () => {
     createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box");
 });
 
-addImageBtn.addEventListener("click", () => imageInput.click());
+addImageBtn.addEventListener("click", () => {
+    imageInput.value = ""; // Réinitialiser pour permettre de resélectionner la même image
+    imageInput.click();
+});
 imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     if (!file) return;
@@ -471,7 +474,10 @@ bgColorPicker.addEventListener("input", (e) => {
     slide.style.backgroundImage = "none";
     slide.style.backgroundColor = e.target.value;
 });
-bgImageBtn.addEventListener("click", () => bgImageInput.click());
+bgImageBtn.addEventListener("click", () => {
+    bgImageInput.value = ""; // Réinitialiser pour permettre de resélectionner la même image
+    bgImageInput.click();
+});
 bgImageInput.addEventListener("change", () => {
     const file = bgImageInput.files[0];
     if (!file) return;
