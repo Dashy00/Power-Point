@@ -49,10 +49,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #f5f
 
 /* Couleurs spécifiques (Adaptées au thème marron/noir du code 2) */
 .sidebar-item.delete { background-color: rgba(0, 0, 0, 0.05); color: #000000; border: 1px solid rgba(0,0,0,0.1); }
-.sidebar-item.delete:hover { background-color: #2c2c2c; color: #ffffff; }
+.sidebar-item.delete:hover { background-color: #af9286; color: #ffffff; }
 
 .sidebar-item.export { background-color: rgba(0, 0, 0, 0.05); color: #000000; border: 1px solid rgba(0,0,0,0.1); }
-.sidebar-item.export:hover { background-color: #2c2c2c; color: #ffffff; }
+.sidebar-item.export:hover { background-color:  #af9286; color: #ffffff; }
 
 /* Bouton Définir Début (Adapté pour être cohérent : Or/Marron) */
 .sidebar-item.set-start {
