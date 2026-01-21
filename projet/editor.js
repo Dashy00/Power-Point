@@ -8,7 +8,7 @@ const bgImageBtn = document.getElementById("bgImageBtn");
 const bgImageInput = document.getElementById("bgImageInput");
 const floatingToolbar = document.getElementById("floatingToolbar");
 const slideNumberInput = document.getElementById("slideNumber");
-
+ 
 const fontFamily = document.getElementById("fontFamily");
 const fontSize = document.getElementById("fontSize");
 const textColor = document.getElementById("textColor");
@@ -17,7 +17,8 @@ const boldBtn = document.getElementById("boldBtn");
 const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
-
+const shapeColorPicker = document.getElementById("shapeColorPicker");
+ 
 // Variables d'état pour les manipulations
 let dragging = null,
   resizing = null,
@@ -35,25 +36,23 @@ let addMode = false;
 let addBubbleMode = false;
 let activeTextBox = null;
 let addBubbleBtn = document.getElementById("addBubbleBtn");
-
-// --- AJOUT : COPY / PASTE (CTRL+C / CTRL+V) ---
-let itemClipboard = null; // mémoire locale
+ 
+// --- COPY / PASTE (CTRL+C / CTRL+V / CTRL+X) ---
+let itemClipboard = null; // presse-papiers interne (items)
 const PASTE_OFFSET = 20;
-
+ 
 function isEditingText() {
-  // Si on est en train d’éditer du texte (contenteditable / input / textarea), on ne doit pas intercepter
   const ae = document.activeElement;
   if (!ae) return false;
   if (ae.isContentEditable) return true;
   const tag = ae.tagName ? ae.tagName.toLowerCase() : "";
   return tag === "input" || tag === "textarea";
 }
-
+ 
 function ensureHandlesIfNeeded(div) {
-  // votre createItem n’ajoute pas de handles aux link-button
+  // Les link-button n'ont volontairement pas de handles chez vous
   if (div.classList.contains("link-button")) return;
-
-  // Si l'élément collé n'a pas les poignées (au cas où), on les ajoute
+ 
   if (!div.querySelector(".resize-handle")) {
     const rh = document.createElement("div");
     rh.className = "resize-handle";
@@ -72,75 +71,66 @@ function ensureHandlesIfNeeded(div) {
     div.appendChild(rot);
   }
 }
-
+ 
 function getItemSnapshot(el) {
-  // on capture ce qu'il faut pour reconstruire l'élément
   const style = window.getComputedStyle(el);
-
-  // on privilégie les styles inline si présents, sinon computed
+ 
   const left = el.style.left || style.left || "0px";
   const top = el.style.top || style.top || "0px";
   const width = el.style.width || style.width || "150px";
   const height = el.style.height || style.height || "50px";
   const transform = el.style.transform || style.transform || "";
-
-  // dataset (bulle etc.)
+ 
   const dataset = {};
   Object.keys(el.dataset || {}).forEach((k) => (dataset[k] = el.dataset[k]));
-
+ 
   return {
-    className: el.className, // inclut item-box + type
+    className: el.className, // "item-box ..." etc.
     innerHTML: el.innerHTML,
     style: { left, top, width, height, transform },
     dataset,
   };
 }
-
+ 
 function pasteSnapshot(snapshot) {
   if (!snapshot) return;
-
+ 
   saveState();
-
+ 
   const div = document.createElement("div");
   div.className = snapshot.className;
-
-  // Reconstitue le contenu
   div.innerHTML = snapshot.innerHTML;
-
-  // Styles
+ 
   div.style.width = snapshot.style.width;
   div.style.height = snapshot.style.height;
   div.style.transform = snapshot.style.transform;
-
-  // Position (décalage)
+ 
   const leftNum = parseFloat(snapshot.style.left) || 0;
   const topNum = parseFloat(snapshot.style.top) || 0;
   div.style.left = `${leftNum + PASTE_OFFSET}px`;
   div.style.top = `${topNum + PASTE_OFFSET}px`;
-
-  // Dataset
+ 
   Object.keys(snapshot.dataset || {}).forEach((k) => {
     div.dataset[k] = snapshot.dataset[k];
   });
-
-  // Au cas où (handles manquants)
+ 
   ensureHandlesIfNeeded(div);
-
+ 
   slide.appendChild(div);
   attachItemEvents(div);
-
-  // Sélectionner l'élément collé
+ 
+  // sélectionner l'item collé
   document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
   div.classList.add("selected");
   state.activeItem = div;
-
+ 
   renumberBubbles();
 }
-
+ 
 // --- SYSTÈME UNDO / REDO ---
 let historyStack = [];
 let redoStack = [];
-
+ 
 function saveState() {
   // On enregistre l'état actuel avant modification
   historyStack.push({
@@ -152,7 +142,7 @@ function saveState() {
   if (historyStack.length > 40) historyStack.shift();
   redoStack = []; // On vide le redo car une nouvelle action est faite
 }
-
+ 
 function undo() {
   if (historyStack.length === 0) return;
   redoStack.push({
@@ -163,7 +153,7 @@ function undo() {
   const stateData = historyStack.pop();
   applyState(stateData);
 }
-
+ 
 function redo() {
   if (redoStack.length === 0) return;
   historyStack.push({
@@ -174,7 +164,7 @@ function redo() {
   const stateData = redoStack.pop();
   applyState(stateData);
 }
-
+ 
 function applyState(stateData) {
   slide.innerHTML = stateData.innerHTML;
   slide.style.backgroundColor = stateData.bg;
@@ -182,7 +172,7 @@ function applyState(stateData) {
   reattachEventListeners();
   renumberBubbles();
 }
-
+ 
 // --- OUVERTURE / FERMETURE ---
 function openEditor(slideId) {
   state.currentEditingId = slideId;
@@ -192,14 +182,14 @@ function openEditor(slideId) {
   slide.style.backgroundImage = data.bgImg || "";
   bgColorPicker.value = data.bg || "#ffffff";
   if (slideNumberInput) slideNumberInput.value = data.slideNum || "";
-
+ 
   historyStack = []; // Reset l'historique pour cette slide
   redoStack = [];
-
+ 
   reattachEventListeners();
   editorOverlay.style.display = "flex";
 }
-
+ 
 document.getElementById("btn-close-editor").onclick = () => {
   if (state.currentEditingId) {
     state.slidesContent[state.currentEditingId] = {
@@ -213,7 +203,7 @@ document.getElementById("btn-close-editor").onclick = () => {
   editorOverlay.style.display = "none";
   state.currentEditingId = null;
 };
-
+ 
 // --- GESTION DES ITEMS ---
 function createItem(html, className, w = 150, h = 50) {
   saveState();
@@ -231,7 +221,7 @@ function createItem(html, className, w = 150, h = 50) {
   slide.appendChild(div);
   attachItemEvents(div);
 }
-
+ 
 function addEditorShape(type) {
   let content = "";
   if (type === "square")
@@ -242,24 +232,24 @@ function addEditorShape(type) {
     content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
   else if (type === "arrow")
     content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);"></div>`;
-
+ 
   createItem(content, `shape-box ${type}`, 100, 100);
 }
-
+ 
 // --- ÉVÉNEMENTS SOURIS (DRAG, RESIZE, ROTATE) ---
 slide.addEventListener("mousedown", (e) => {
   const item = e.target.closest(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button");
   const handle = e.target.closest(".resize-handle, .rotate-handle");
-
+ 
   if (!item && !handle) {
     document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
     state.activeItem = null;
     return;
   }
-
+ 
   // SAUVEGARDE AVANT TOUTE ACTION
   saveState();
-
+ 
   if (e.target.classList.contains("resize-handle")) {
     resizing = item;
     const rect = resizing.getBoundingClientRect();
@@ -290,7 +280,7 @@ slide.addEventListener("mousedown", (e) => {
     e.preventDefault();
   }
 });
-
+ 
 window.addEventListener("mousemove", (e) => {
   if (resizing) {
     const dx = (e.clientX - startMouseX) / editorZoom;
@@ -311,13 +301,13 @@ window.addEventListener("mousemove", (e) => {
     if (dragging === activeTextBox) showToolbar(dragging);
   }
 });
-
+ 
 window.addEventListener("mouseup", () => {
   dragging = null;
   resizing = null;
   rotating = null;
 });
-
+ 
 // --- ATTACHEMENT DES ÉVÉNEMENTS AUX BOXES ---
 function attachItemEvents(div) {
   const delBtn = div.querySelector(".delete-btn");
@@ -331,7 +321,7 @@ function attachItemEvents(div) {
       state.activeItem = null;
     };
   }
-
+ 
   if (div.classList.contains("link-button")) {
     div.addEventListener("dblclick", (e) => {
       e.stopPropagation();
@@ -341,18 +331,16 @@ function attachItemEvents(div) {
     });
   }
 }
-
+ 
 function reattachEventListeners() {
   slide
     .querySelectorAll(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button")
     .forEach(attachItemEvents);
 }
-
+ 
 // --- TEXTE ET BULLES ---
-addTextBtn.addEventListener("click", () =>
-  createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box")
-);
-
+addTextBtn.addEventListener("click", () => createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box"));
+ 
 // Gestion du double-clic sur le texte pour afficher la barre d'outils
 slide.addEventListener("dblclick", (e) => {
   const textBox = e.target.closest(".text-box");
@@ -364,7 +352,7 @@ slide.addEventListener("dblclick", (e) => {
     }
   }
 });
-
+ 
 function activateTextBox(box, content) {
   if (activeTextBox && activeTextBox !== box) {
     activeTextBox.querySelector(".content").contentEditable = "false";
@@ -375,29 +363,26 @@ function activateTextBox(box, content) {
   content.focus();
   showToolbar(box);
 }
-
+ 
 function showToolbar(box) {
-  // Afficher la barre d'outils
   floatingToolbar.classList.add("visible");
-
-  // Positionner la barre relative à la zone de travail
+ 
   const boxRect = box.getBoundingClientRect();
   const slideRect = document.querySelector(".overlay-workspace").getBoundingClientRect();
-
+ 
   let left = boxRect.left - slideRect.left;
   let top = boxRect.top - slideRect.top - 50;
-
-  // Vérifier que la barre n'est pas hors limites
+ 
   if (left + floatingToolbar.offsetWidth > slideRect.width) {
     left = slideRect.width - floatingToolbar.offsetWidth - 10;
   }
   if (left < 0) left = 10;
   if (top < 0) top = boxRect.top - slideRect.top + boxRect.height + 10;
-
+ 
   floatingToolbar.style.left = `${left}px`;
   floatingToolbar.style.top = `${top}px`;
 }
-
+ 
 function hideToolbar() {
   floatingToolbar.classList.remove("visible");
   if (activeTextBox) {
@@ -405,12 +390,11 @@ function hideToolbar() {
     activeTextBox = null;
   }
 }
-
+ 
 // Fermer la barre d'outils quand on clique ailleurs
 document.addEventListener(
   "mousedown",
   (e) => {
-    // Ne pas fermer si on clique sur la barre d'outils, une boîte texte, ou les poignées
     if (
       !e.target.closest(".text-box") &&
       !e.target.closest(".floating-toolbar") &&
@@ -422,12 +406,12 @@ document.addEventListener(
   },
   true
 );
-
+ 
 addBubbleBtn.addEventListener("click", () => {
   addBubbleMode = !addBubbleMode;
   addBubbleBtn.classList.toggle("active", addBubbleMode);
 });
-
+ 
 slide.addEventListener("click", (e) => {
   if (addBubbleMode && e.target === slide) {
     const rect = slide.getBoundingClientRect();
@@ -435,12 +419,11 @@ slide.addEventListener("click", (e) => {
     addBubbleMode = false;
     addBubbleBtn.classList.remove("active");
   }
-  // Fermer la barre d'outils si on clique en dehors d'une boîte texte
   if (!e.target.closest(".text-box") && !e.target.closest(".floating-toolbar")) {
     hideToolbar();
   }
 });
-
+ 
 function createBubble(x, y) {
   saveState();
   const desc = prompt("Texte de la bulle :") || "";
@@ -454,14 +437,14 @@ function createBubble(x, y) {
   attachItemEvents(bubble);
   renumberBubbles();
 }
-
+ 
 function renumberBubbles() {
   slide.querySelectorAll(".bubble-box").forEach((b, i) => {
     const n = b.querySelector(".bubble-num");
-    if (n) n.textContent = i + 1;
+    if (n) n.textContent = i + + 1;
   });
 }
-
+ 
 // --- FORMATAGE ET COULEURS ---
 textColor.addEventListener("input", (e) => {
   if (!activeTextBox) return;
@@ -471,7 +454,7 @@ textColor.addEventListener("input", (e) => {
     content.style.color = e.target.value;
   }
 });
-
+ 
 fontFamily.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
@@ -480,7 +463,7 @@ fontFamily.addEventListener("change", (e) => {
     content.style.fontFamily = e.target.value;
   }
 });
-
+ 
 fontSize.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
@@ -489,57 +472,63 @@ fontSize.addEventListener("change", (e) => {
     content.style.fontSize = e.target.value;
   }
 });
-
+ 
 boldBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("bold", false);
   boldBtn.classList.toggle("active");
 });
-
+ 
 italicBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("italic", false);
   italicBtn.classList.toggle("active");
 });
-
+ 
 underlineBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("underline", false);
   underlineBtn.classList.toggle("active");
 });
-
+ 
 highlightBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("backColor", false, highlightColor.value);
 });
-
+ 
 highlightColor.addEventListener("input", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("backColor", false, highlightColor.value);
 });
-
-// Utiliser la couleur du texte depuis le top toolbar
-document.getElementById("topTextColor").addEventListener("input", (e) => {
-  if (!activeTextBox) return;
-  saveState();
-  const content = activeTextBox.querySelector(".content");
-  if (content) {
-    content.style.color = e.target.value;
-  }
-});
-
+ 
+// Gestionnaire pour la couleur des formes dans la barre latérale
+if (shapeColorPicker) {
+  shapeColorPicker.addEventListener("input", (e) => {
+    saveState();
+ 
+    if (state.activeItem) {
+      const shapeContent = state.activeItem.querySelector(".shape-content");
+      if (shapeContent) {
+        shapeContent.style.backgroundColor = e.target.value;
+      } else if (state.activeItem.classList.contains("bubble-box")) {
+        state.activeItem.style.backgroundColor = e.target.value;
+      }
+    }
+  });
+}
+ 
 // --- RACCOURCIS ET BOUTONS ---
-
+ 
 // Gérer l'ajout d'images
 addImageBtn.addEventListener("click", () => {
   imageInput.click();
 });
-
+ 
 imageInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -551,21 +540,20 @@ imageInput.addEventListener("change", (e) => {
     };
     reader.readAsDataURL(file);
   }
-  // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
   imageInput.value = "";
 });
-
+ 
 // --- GESTION DU FOND (ARRIÈRE-PLAN) ---
 bgColorPicker.addEventListener("input", (e) => {
   saveState();
   slide.style.backgroundImage = "none";
   slide.style.backgroundColor = e.target.value;
 });
-
+ 
 bgImageBtn.addEventListener("click", () => {
   bgImageInput.click();
 });
-
+ 
 bgImageInput.addEventListener("change", () => {
   const file = bgImageInput.files[0];
   if (!file) return;
@@ -576,36 +564,24 @@ bgImageInput.addEventListener("change", () => {
     slide.style.backgroundSize = "cover";
   };
   reader.readAsDataURL(file);
-  // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
   bgImageInput.value = "";
 });
-
+ 
 document.getElementById("undoBtn").onclick = undo;
 document.getElementById("redoBtn").onclick = redo;
-
+ 
 window.addEventListener("keydown", (e) => {
-  // --- AJOUT : CTRL+C / CTRL+V / CTRL+X pour les items ---
-  // On ne touche pas au copier/coller normal si on est en train d’éditer du texte
+  // --- COPY / PASTE ITEMS ---
+  // Ctrl+C : copie l’item sélectionné si on n'est pas en édition texte
   if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
     if (!isEditingText() && state.activeItem) {
       e.preventDefault();
       itemClipboard = getItemSnapshot(state.activeItem);
+      return;
     }
   }
-
- if (e.ctrlKey && (e.key === "v" || e.key === "V")) {
-  // Si on a un item en clipboard, on colle l'item en priorité
-  if (itemClipboard) {
-    e.preventDefault(); // empêche de coller le texte (ex: code) dans la zone texte
-    pasteSnapshot(itemClipboard);
-    return;
-  }
-  // Sinon, on laisse le collage normal (dans une zone texte notamment)
-}
-
-
-
-  // Optionnel mais pratique : Ctrl+X coupe (copie + supprime)
+ 
+  // Ctrl+X : coupe l’item (copie + supprime)
   if (e.ctrlKey && (e.key === "x" || e.key === "X")) {
     if (!isEditingText() && state.activeItem) {
       e.preventDefault();
@@ -615,9 +591,20 @@ window.addEventListener("keydown", (e) => {
       state.activeItem.remove();
       state.activeItem = null;
       renumberBubbles();
+      return;
     }
   }
-
+ 
+  // Ctrl+V : si un item est en clipboard, on le colle en priorité (même si un texte est actif)
+  if (e.ctrlKey && (e.key === "v" || e.key === "V")) {
+    if (itemClipboard) {
+      e.preventDefault(); // évite de coller du "code" dans une boîte texte
+      pasteSnapshot(itemClipboard);
+      return;
+    }
+    // sinon on laisse le collage normal (dans les zones texte)
+  }
+ 
   // --- vos raccourcis existants ---
   if (e.ctrlKey && e.key === "z") {
     e.preventDefault();
@@ -627,8 +614,9 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     redo();
   }
+ 
   if ((e.key === "Delete" || e.key === "Backspace") && state.activeItem) {
-    if (document.activeElement.isContentEditable) return;
+    if (document.activeElement && document.activeElement.isContentEditable) return;
     saveState();
     if (state.activeItem.classList.contains("link-button")) handleLinkDelete(state.activeItem);
     state.activeItem.remove();
@@ -636,7 +624,7 @@ window.addEventListener("keydown", (e) => {
     renumberBubbles();
   }
 });
-
+ 
 // --- ZOOM ---
 function applyZoom() {
   if (slideZoomWrapper) slideZoomWrapper.style.transform = `scale(${editorZoom})`;
@@ -655,3 +643,5 @@ function resetZoom() {
   editorZoom = 1;
   applyZoom();
 }
+ 
+ 
