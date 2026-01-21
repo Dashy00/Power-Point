@@ -111,57 +111,75 @@ document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
 
 // --- SUPPRESSION INTELLIGENTE (BOUTONS VERTS + LIGNES) ---
 document.getElementById("btn-delete").onclick = () => {
-  // CAS 1 : Suppression d'une Slide
-  if (state.selectedSlide) {
-    const deletedId = state.selectedSlide.id;
+    // ---------------------------------------------------------
+    // CAS 1 : SUPPRESSION D'UNE DIAPOSITIVE (SLIDE)
+    // ---------------------------------------------------------
+    if (state.selectedSlide) {
+        const deletedId = state.selectedSlide.id;
 
-    // On parcourt toutes les connexions pour nettoyer celles liées à cette slide
-    state.connections = state.connections.filter(c => {
-        // Si la connexion part ou arrive à la slide supprimée
-        if (c.fromId === deletedId || c.toId === deletedId) {
-            
-            // A. On supprime la ligne visuelle
-            c.line.remove(); 
-            
-            // B. On supprime les boutons verts dans les AUTRES slides
-            
-            // Si la slide supprimée était la destination (A -> [Deleted]), 
-            // il faut aller dans A (fromId) et supprimer le bouton qui menait vers [Deleted]
-            if (c.toId === deletedId) {
-                removeLinkButtonFromSlide(c.fromId, deletedId);
-            }
-            
-            // Si la slide supprimée était la source ( [Deleted] <-> B ) en double sens,
-            // il faut aller dans B (toId) et supprimer le bouton retour vers [Deleted]
-            if (c.fromId === deletedId && c.type === 'double') {
-                removeLinkButtonFromSlide(c.toId, deletedId);
-            }
-
-            return false; // On retire la connexion de la liste
+        // 1. Gestion du "Début" : Si c'était la slide de départ, on reset la variable
+        if (state.startSlideId === deletedId) {
+            state.startSlideId = null;
         }
-        return true; // On garde les autres connexions intactes
-    });
 
-    state.selectedSlide.remove();
-    state.selectedSlide = null;
-  } 
-  // CAS 2 : Suppression d'une Flèche seule
-  else if (state.selectedConnection) {
-    const conn = state.selectedConnection;
+        // 2. Nettoyage des connexions (Lignes et Boutons)
+        state.connections = state.connections.filter(c => {
+            // Vérifie si la connexion touche la slide supprimée (départ ou arrivée)
+            if (c.fromId === deletedId || c.toId === deletedId) {
+                
+                // A. Supprimer la ligne SVG visuelle
+                c.line.remove(); 
+                
+                // B. Supprimer les boutons verts dans les AUTRES slides
+                
+                // Scénario : Une autre slide (A) pointait vers celle supprimée (Deleted).
+                // On va dans A (fromId) et on retire le bouton qui ciblait Deleted.
+                if (c.toId === deletedId) {
+                    removeLinkButtonFromSlide(c.fromId, deletedId);
+                }
+                
+                // Scénario : La slide supprimée (Deleted) avait une liaison DOUBLE vers B.
+                // Il faut aller dans B (toId) et retirer le bouton "retour" vers Deleted.
+                if (c.fromId === deletedId && c.type === 'double') {
+                    removeLinkButtonFromSlide(c.toId, deletedId);
+                }
 
-    // 1. Supprimer le bouton aller (A -> B)
-    removeLinkButtonFromSlide(conn.fromId, conn.toId);
+                return false; // On retire cette connexion de la liste state.connections
+            }
+            return true; // On garde les connexions qui n'ont rien à voir
+        });
 
-    // 2. Si c'était double, supprimer le bouton retour (B -> A)
-    if (conn.type === 'double') {
-        removeLinkButtonFromSlide(conn.toId, conn.fromId);
+        // 3. Nettoyage des données de contenu (Mémoire)
+        if (state.slidesContent[deletedId]) {
+            delete state.slidesContent[deletedId];
+        }
+
+        // 4. Suppression visuelle de la slide
+        state.selectedSlide.remove();
+        state.selectedSlide = null;
+    } 
+    
+    // ---------------------------------------------------------
+    // CAS 2 : SUPPRESSION D'UNE CONNEXION SEULE (FLÈCHE)
+    // ---------------------------------------------------------
+    else if (state.selectedConnection) {
+        const conn = state.selectedConnection;
+
+        // 1. Supprimer le bouton aller (Source -> Cible)
+        removeLinkButtonFromSlide(conn.fromId, conn.toId);
+
+        // 2. Si c'était une liaison double, supprimer le bouton retour (Cible -> Source)
+        if (conn.type === 'double') {
+            removeLinkButtonFromSlide(conn.toId, conn.fromId);
+        }
+
+        // 3. Supprimer la ligne SVG
+        conn.line.remove();
+
+        // 4. Mettre à jour la liste des connexions
+        state.connections = state.connections.filter(c => c !== conn);
+        state.selectedConnection = null;
     }
-
-    // 3. Supprimer la ligne
-    conn.line.remove();
-    state.connections = state.connections.filter(c => c !== conn);
-    state.selectedConnection = null;
-  }
 };
 
 function getNextAvailableNumber() {
@@ -320,6 +338,46 @@ function endConnection(e, id, port) {
     state.isConnecting = false;
   }
 }
+
+// --- GESTION DU BOUTON "DÉFINIR COMME DÉBUT" ---
+document.getElementById("btn-set-start").onclick = () => {
+    // 1. Vérifier qu'une slide est bien sélectionnée
+    if (!state.selectedSlide) {
+        alert("Veuillez sélectionner une diapositive d'abord.");
+        return;
+    }
+
+    const newStartId = state.selectedSlide.id;
+
+    // 2. Si c'est déjà la slide de début, on ne fait rien
+    if (state.startSlideId === newStartId) return;
+
+    // --- NETTOYAGE DE L'ANCIEN DÉBUT (Unicité) ---
+    // Si une slide de début existait déjà, on lui retire son statut
+    if (state.startSlideId) {
+        const oldStartSlide = document.getElementById(state.startSlideId);
+        if (oldStartSlide) {
+            // On retire la classe CSS
+            oldStartSlide.classList.remove("start-node");
+            // On retire le petit drapeau visuel s'il existe
+            const oldFlag = oldStartSlide.querySelector(".start-flag-icon");
+            if (oldFlag) oldFlag.remove();
+        }
+    }
+
+    // --- ATTRIBUTION DU NOUVEAU DÉBUT ---
+    // 1. Mettre à jour l'état global
+    state.startSlideId = newStartId;
+
+    // 2. Ajouter la classe CSS à la nouvelle slide
+    state.selectedSlide.classList.add("start-node");
+
+    // 3. Ajouter le petit drapeau visuel
+    const flag = document.createElement("div");
+    flag.className = "start-flag-icon";
+    flag.innerText = "🚩"; // Le drapeau
+    state.selectedSlide.appendChild(flag);
+};
 
 function getPortCenter(port) {
   const rect = port.getBoundingClientRect();
