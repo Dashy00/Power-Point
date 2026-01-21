@@ -181,10 +181,10 @@ function createSlide(type, savedId = null, savedPos = null, savedNum = null) {
           bgImg: "none", 
           slideNum: autoNum,
           requiredSlides: [],
-          type: type // Sauvegarde du type pour l'export
+          type: type 
       };
   } else {
-      state.slidesContent[id].type = type; // Mise à jour si existe
+      state.slidesContent[id].type = type; 
   }
 
   const slide = document.createElement("div");
@@ -396,7 +396,7 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
 }
 
 // =================================================================
-// --- GESTION DES MODALES (CONDITIONS) ---
+// --- GESTION DES MODALES ---
 // =================================================================
 
 const conditionOverlay = document.getElementById('condition-overlay');
@@ -455,7 +455,7 @@ if(btnSaveCondition) {
 }
 
 // =================================================================
-// --- LOGIQUE SAUVEGARDE & CHARGEMENT ---
+// --- SAUVEGARDE ET CHARGEMENT ---
 // =================================================================
 
 document.getElementById('btn-load').onclick = () => {
@@ -502,7 +502,6 @@ function loadProjectFromHTML(htmlContent) {
         Object.keys(projectData.positions).forEach(id => {
             const pos = projectData.positions[id];
             const content = state.slidesContent[id];
-            // Utilisation du type stocké, sinon default
             const type = content.type || (content.html.includes("❓") ? "condition" : "default");
             
             createSlide(type, id, pos, content.slideNum);
@@ -602,7 +601,7 @@ btnClosePlayer.onclick = () => {
 };
 
 function fitStageToScreen() {
-    const margin = 0; // Plein écran pur
+    const margin = 0; 
     const availableWidth = window.innerWidth;
     const availableHeight = window.innerHeight;
     const scaleX = availableWidth / 960;
@@ -629,6 +628,10 @@ function loadSlideInPlayer(slideId) {
     playerStage.style.backgroundImage = data.bgImg || 'none';
     playerStage.style.backgroundSize = 'cover';
 
+    // *** MODIF : DESACTIVER L'EDITION ***
+    playerStage.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    playerStage.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+
     // 1. DÉSACTIVATION DES BOUTONS NON VALIDES
     const links = playerStage.querySelectorAll('.link-button');
     links.forEach(link => {
@@ -640,7 +643,7 @@ function loadSlideInPlayer(slideId) {
             const targetData = state.slidesContent[targetId];
             const requiredIds = targetData.requiredSlides || [];
             
-            // Vérifier si toutes les slides requises ont été visitées
+            // Vérifier si conditions remplies
             const missing = requiredIds.filter(reqId => !visitedSlides.has(reqId));
             
             if (missing.length > 0) {
@@ -655,17 +658,16 @@ function loadSlideInPlayer(slideId) {
         link.onclick = (e) => {
             e.stopPropagation();
             
-            if (link.classList.contains('disabled')) return; // Sécurité
+            if (link.classList.contains('disabled')) return; // Inactif, pas d'alerte
 
             const targetId = link.dataset.target;
             const targetNodeElement = document.getElementById(targetId);
 
-            // Si on clique vers une condition (qui est donc valide car bouton actif)
+            // Si on clique vers une condition (valide)
             if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
-                // On cherche la sortie de la condition
+                // SAUT DE LA SLIDE CONDITION
                 const outgoingConn = state.connections.find(c => c.fromId === targetId);
                 if (outgoingConn) {
-                    // SAUT INSTANTANÉ (on ne montre pas la slide jaune)
                     goToSlideWithTransition(outgoingConn.toId);
                 } else {
                     alert("Erreur : Condition sans sortie.");
@@ -687,7 +689,7 @@ function goToSlideWithTransition(targetId) {
     }, 150);
 }
 
-// --- GÉNÉRER (AVEC SCRIPT INTÉGRÉ) ---
+// --- GÉNÉRER ---
 document.getElementById('btn-generate').onclick = () => {
     if (!state.startSlideId) {
         alert("Impossible de générer : aucune diapositive de départ définie.");
@@ -713,7 +715,7 @@ function generateStandaloneHTML() {
     };
 
     const slidesDataJSON = JSON.stringify(state.slidesContent);
-    const connectionsJSON = JSON.stringify(appState.connections); // Besoin des connexions pour le saut condition
+    const connectionsJSON = JSON.stringify(appState.connections);
     const startId = state.startSlideId;
 
     return `<!DOCTYPE html>
@@ -726,7 +728,7 @@ function generateStandaloneHTML() {
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; }
         #stage { width: 960px; height: 540px; background: white; position: relative; overflow: hidden; box-shadow: 0 0 0 100vw black; transform-origin: center center; transition: opacity 0.15s ease; }
         
-        .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; }
+        .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; cursor: default; }
         .text-box { z-index: 3; } .image-box { z-index: 1; } .shape-box { z-index: 2; }
         .image-box img { width: 100%; height: 100%; display: block; }
         .shape-content { width: 100%; height: 100%; box-sizing: border-box; }
@@ -771,13 +773,16 @@ function generateStandaloneHTML() {
                 stage.style.backgroundImage = data.bgImg || 'none';
                 stage.style.backgroundSize = 'cover';
 
-                // LOGIQUE D'AFFICHAGE INTELLIGENT EXPORTÉE
+                // DESACTIVER L'EDITION ICI AUSSI
+                stage.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+                stage.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+
                 const links = stage.querySelectorAll('.link-button');
                 links.forEach(link => {
                     const targetId = link.dataset.target;
                     const targetData = slides[targetId];
                     
-                    // Vérification Condition (basée sur le type stocké dans slidesContent)
+                    // Vérification Condition
                     if (targetData && targetData.type === 'condition') {
                         const requiredIds = targetData.requiredSlides || [];
                         const missing = requiredIds.filter(reqId => !visited.has(reqId));
@@ -830,6 +835,7 @@ function downloadFile(filename, content) {
     URL.revokeObjectURL(url);
 }
 
+// --- RACCOURCIS ---
 window.addEventListener("keydown", (e) => {
     if (document.getElementById("editor-overlay").style.display === "flex") return;
     if (e.key === "Delete" || e.key === "Backspace") {
