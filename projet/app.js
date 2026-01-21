@@ -104,31 +104,60 @@ function selectConnection(connObj) {
     connObj.line.classList.add('selected');
 }
 
-// --- BOUTONS D'ACTION (MODIFIÉ : Plus de btn-info-bulle) ---
+// --- BOUTONS D'ACTION ---
 document.getElementById("btn-new-slide").onclick = () => createSlide("default");
-// document.getElementById("btn-info-bulle").onclick SUPPRIMÉ
 document.getElementById("btn-condition").onclick = () => createSlide("condition");
 document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
 
-// --- SUPPRESSION INTELLIGENTE ---
+// --- SUPPRESSION INTELLIGENTE (BOUTONS VERTS + LIGNES) ---
 document.getElementById("btn-delete").onclick = () => {
+  // CAS 1 : Suppression d'une Slide
   if (state.selectedSlide) {
+    const deletedId = state.selectedSlide.id;
+
+    // On parcourt toutes les connexions pour nettoyer celles liées à cette slide
     state.connections = state.connections.filter(c => {
-        if (c.fromId === state.selectedSlide.id || c.toId === state.selectedSlide.id) {
+        // Si la connexion part ou arrive à la slide supprimée
+        if (c.fromId === deletedId || c.toId === deletedId) {
+            
+            // A. On supprime la ligne visuelle
             c.line.remove(); 
-            return false;
+            
+            // B. On supprime les boutons verts dans les AUTRES slides
+            
+            // Si la slide supprimée était la destination (A -> [Deleted]), 
+            // il faut aller dans A (fromId) et supprimer le bouton qui menait vers [Deleted]
+            if (c.toId === deletedId) {
+                removeLinkButtonFromSlide(c.fromId, deletedId);
+            }
+            
+            // Si la slide supprimée était la source ( [Deleted] <-> B ) en double sens,
+            // il faut aller dans B (toId) et supprimer le bouton retour vers [Deleted]
+            if (c.fromId === deletedId && c.type === 'double') {
+                removeLinkButtonFromSlide(c.toId, deletedId);
+            }
+
+            return false; // On retire la connexion de la liste
         }
-        return true;
+        return true; // On garde les autres connexions intactes
     });
+
     state.selectedSlide.remove();
     state.selectedSlide = null;
   } 
+  // CAS 2 : Suppression d'une Flèche seule
   else if (state.selectedConnection) {
     const conn = state.selectedConnection;
+
+    // 1. Supprimer le bouton aller (A -> B)
     removeLinkButtonFromSlide(conn.fromId, conn.toId);
+
+    // 2. Si c'était double, supprimer le bouton retour (B -> A)
     if (conn.type === 'double') {
         removeLinkButtonFromSlide(conn.toId, conn.fromId);
     }
+
+    // 3. Supprimer la ligne
     conn.line.remove();
     state.connections = state.connections.filter(c => c !== conn);
     state.selectedConnection = null;
@@ -151,7 +180,6 @@ function createSlide(type) {
 
   const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
-  // MODIFIÉ ICI : Retrait de la condition 'info'
   infoOverlay.innerHTML = (type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + state.slideCount;
 
   slide.appendChild(previewWrapper);
@@ -318,6 +346,7 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = slideData.html;
     
+    // On cherche le bouton qui pointe vers targetId
     const btn = tempDiv.querySelector(`.link-button[data-target="${targetId}"]`);
     if (btn) {
         btn.remove();
@@ -326,24 +355,15 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
     }
 }
 
-
 // --- RACCOURCI CLAVIER : SUPPRESSION DANS LE GRAPHE ---
 window.addEventListener("keydown", (e) => {
-    // 1. Si l'éditeur est ouvert, on ne fait rien ici (c'est editor.js qui gère)
     if (document.getElementById("editor-overlay").style.display === "flex") return;
 
-    // 2. Si on appuie sur Suppr (Delete) ou Retour Arrière (Backspace)
     if (e.key === "Delete" || e.key === "Backspace") {
-        // On vérifie qu'on ne supprime pas par erreur si on tape dans un champ (peu probable ici mais bonne pratique)
         if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-
-        // 3. On déclenche le clic du bouton supprimer existant
-        // Cela réutilise toute notre logique parfaite (suppression boutons verts, liens, etc.)
         document.getElementById("btn-delete").click();
     }
 });
 
-// Init
-setTransform();
 // Init
 setTransform();
