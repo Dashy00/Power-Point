@@ -584,3 +584,4 @@ function handleLinkDelete(btn) {
  
 // Init
 reattachEventListeners();
+ 
