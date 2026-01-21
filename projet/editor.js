@@ -87,12 +87,30 @@ function createItem(html, className, w=150, h=50) {
     attachItemEvents(div);
 }
 
-// --- FONCTIONS CENTRALES (Attachement événements) ---
+// --- SETUP DES ÉVÉNEMENTS ---
+function setupDeleteBtn(box) {
+  const btn = box.querySelector(".delete-btn");
+  if(btn) {
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        
+        // >>> MODIFICATION : GESTION DE LA SUPPRESSION DE LIEN <<<
+        if(box.classList.contains('link-button')) {
+            handleLinkDelete(box);
+        }
+        
+        saveState();
+        box.remove();
+        renumberBubbles();
+        if (state.activeItem === box) state.activeItem = null;
+      };
+  }
+}
+
 function attachItemEvents(div) {
-    const delBtn = div.querySelector(".delete-btn");
-    if(delBtn) delBtn.onclick = (e) => { e.stopPropagation(); div.remove(); };
+    setupDeleteBtn(div);
     
-    // Changement de forme bouton lien (Double Clic)
+    // GESTION DOUBLE CLIC BOUTON LIEN
     if (div.classList.contains('link-button')) {
         div.addEventListener('dblclick', (e) => {
             e.stopPropagation();
@@ -101,161 +119,50 @@ function attachItemEvents(div) {
             else div.classList.replace('round', 'square');
         });
     }
+
+    // DRAG
+    div.onmousedown = (e) => {
+        if(e.target.getAttribute("contenteditable")) return;
+        e.stopPropagation();
+        
+        document.querySelectorAll(".item-box").forEach(i => i.classList.remove("selected"));
+        div.classList.add("selected");
+        state.activeItem = div;
+
+        const startX = e.clientX; const startY = e.clientY;
+        const startW = div.offsetWidth; const startH = div.offsetHeight;
+        const startL = div.offsetLeft; const startT = div.offsetTop;
+
+        // Resize
+        if(e.target.classList.contains("resize-handle")) {
+            function onMove(ev) {
+                const dx = (ev.clientX - startX) / editorZoom;
+                const dy = (ev.clientY - startY) / editorZoom;
+                div.style.width = Math.max(30, startW + dx) + "px";
+                div.style.height = Math.max(30, startH + dy) + "px";
+            }
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", () => window.removeEventListener("mousemove", onMove), {once:true});
+            return;
+        }
+        
+        // Drag
+        function onDrag(ev) {
+            const dx = (ev.clientX - startX) / editorZoom;
+            const dy = (ev.clientY - startY) / editorZoom;
+            div.style.left = (startL + dx) + "px";
+            div.style.top = (startT + dy) + "px";
+        }
+        window.addEventListener("mousemove", onDrag);
+        window.addEventListener("mouseup", () => window.removeEventListener("mousemove", onDrag), {once:true});
+    };
 }
 
-// Réattache les événements à TOUS les éléments (y compris link-button)
 function reattachEventListeners() {
     document.querySelectorAll(".text-box, .image-box, .shape-box, .bubble-box, .link-button").forEach(attachItemEvents);
 }
 
-// --- VARIABLES GLOBALES ---
-let addMode = false;
-let activeTextBox = null;
-let dragging = null;
-let resizing = null;
-let rotating = null;
-let offsetX = 0, offsetY = 0;
-let startW = 0, startH = 0;
-let startMouseX = 0, startMouseY = 0;
-let startAngle = 0;
-let currentRotation = 0;
-
-// --- GESTION DES CLICS (SÉLECTION) ---
-slide.addEventListener("click", (e) => {
-    // IMPORTANT : .link-button ajouté ici
-    const obj = e.target.closest(".text-box, .image-box, .shape-box, .bubble-box, .link-button");
- 
-    document.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
- 
-    if (obj) {
-        state.activeItem = obj;
-        obj.classList.add("selected");
-        if (!obj.classList.contains("text-box")) slide.appendChild(obj);
-        return;
-    }
- 
-    state.activeItem = null;
- 
-    // Création Bulle
-    if (addBubbleMode && e.target === slide) {
-        const rect = slide.getBoundingClientRect();
-        createBubble((e.clientX - rect.left) / editorZoom, (e.clientY - rect.top) / editorZoom);
-        addBubbleMode = false;
-        addBubbleBtn.classList.remove("active");
-        addBubbleBtn.textContent = "Ajouter une bulle";
-        return;
-    }
- 
-    // Création Texte
-    if (addMode && e.target === slide) {
-        saveState();
-        const rect = slide.getBoundingClientRect();
-        const box = document.createElement("div");
-        box.className = "text-box";
-        box.innerHTML = `<div class="content" contenteditable="false">Double-cliquez pour modifier</div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`;
-        
-        box.style.left = `${(e.clientX - rect.left) / editorZoom - 75}px`;
-        box.style.top = `${(e.clientY - rect.top) / editorZoom - 20}px`;
-       
-        slide.appendChild(box);
-        attachItemEvents(box);
-        state.activeItem = box;
-        addMode = false;
-        addTextBtn.textContent = "Ajouter un texte";
-        addTextBtn.classList.remove("active");
-    }
-});
-
-// --- GESTION DÉPLACEMENT (DRAG) ---
-slide.addEventListener("mousedown", (e) => {
-    // 1) RESIZE
-    const handle = e.target.closest(".resize-handle");
-    if (handle) {
-        resizing = handle.parentElement;
-        const rect = resizing.getBoundingClientRect();
-        startW = rect.width / editorZoom;
-        startH = rect.height / editorZoom;
-        startMouseX = e.clientX;
-        startMouseY = e.clientY;
-        e.preventDefault();
-        return;
-    }
- 
-    // 2) ROTATION
-    const rotateHandle = e.target.closest(".rotate-handle");
-    if (rotateHandle) {
-        rotating = rotateHandle.parentElement;
-        state.activeItem = rotating;
-        const rect = rotating.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-        const transform = rotating.style.transform;
-        const match = transform.match(/rotate\((-?\d+\.?\d*)deg\)/);
-        currentRotation = match ? parseFloat(match[1]) : 0;
-        e.preventDefault();
-        return;
-    }
- 
-    // 3) DRAG - AJOUT DE .link-button ICI
-    const target = e.target.closest(".text-box, .image-box, .shape-box, .bubble-box, .link-button");
- 
-    if (!target || (e.target.classList.contains("content") && e.target.isContentEditable)) return;
- 
-    dragging = target;
-    state.activeItem = target;
-    const rect = dragging.getBoundingClientRect();
-    
-    // Calcul offset
-    offsetX = (e.clientX - rect.left) / editorZoom;
-    offsetY = (e.clientY - rect.top) / editorZoom;
-    e.preventDefault();
-});
-
-// --- MOUVEMENT SOURIS ---
-window.addEventListener("mousemove", (e) => {
-    // RESIZE
-    if (resizing) {
-        const dx = (e.clientX - startMouseX) / editorZoom;
-        const dy = (e.clientY - startMouseY) / editorZoom;
-        resizing.style.width = `${Math.max(30, startW + dx)}px`;
-        resizing.style.height = `${Math.max(30, startH + dy)}px`;
-        return;
-    }
- 
-    // ROTATION
-    if (rotating) {
-        const rect = rotating.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const newAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-        const angleDiff = (newAngle - startAngle) * (180 / Math.PI);
-        const finalRotation = currentRotation + angleDiff;
-        rotating.style.transform = `rotate(${finalRotation}deg)`;
-        return;
-    }
- 
-    // DRAG
-    if (dragging) {
-        const slideRect = slide.getBoundingClientRect();
-        let newLeft = (e.clientX - slideRect.left) / editorZoom - offsetX;
-        let newTop = (e.clientY - slideRect.top) / editorZoom - offsetY;
-        dragging.style.left = `${newLeft}px`;
-        dragging.style.top = `${newTop}px`;
-        if (dragging === activeTextBox) showToolbar(dragging);
-    }
-});
- 
-window.addEventListener("mouseup", () => {
-    if (rotating || resizing || dragging) {
-        saveState();
-    }
-    dragging = null;
-    resizing = null;
-    rotating = null;
-});
-
-// --- BULLES & DOUBLE CLIC ---
+// --- DOUBLE CLIC (BULLES & TEXTE) ---
 slide.addEventListener("dblclick", (e) => {
   const bubble = e.target.closest(".bubble-box");
   if (bubble) {
@@ -268,7 +175,6 @@ slide.addEventListener("dblclick", (e) => {
       }
       return;
   }
-  
   const content = e.target.closest(".content");
   if (content) {
       const parentBox = content.closest(".text-box");
@@ -319,12 +225,67 @@ function renumberBubbles() {
   });
 }
 
+// --- VARIABLES GLOBALES ---
+let addMode = false;
+let activeTextBox = null;
+let dragging = null;
+let resizing = null;
+let rotating = null;
+let offsetX = 0, offsetY = 0;
+let startW = 0, startH = 0;
+let startMouseX = 0, startMouseY = 0;
+let startAngle = 0;
+let currentRotation = 0;
+ 
+slide.addEventListener("click", (e) => {
+    const obj = e.target.closest(".text-box, .image-box, .shape-box, .bubble-box, .link-button");
+    document.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+    if (obj) {
+        state.activeItem = obj;
+        obj.classList.add("selected");
+        if (!obj.classList.contains("text-box")) slide.appendChild(obj);
+        return;
+    }
+    state.activeItem = null;
+    
+    // Création
+    if (addBubbleMode && e.target === slide) {
+        const rect = slide.getBoundingClientRect();
+        createBubble((e.clientX - rect.left) / editorZoom, (e.clientY - rect.top) / editorZoom);
+        addBubbleMode = false;
+        addBubbleBtn.classList.remove("active");
+        addBubbleBtn.textContent = "Ajouter une bulle";
+        return;
+    }
+    if (addMode && e.target === slide) {
+        saveState();
+        const rect = slide.getBoundingClientRect();
+        const box = document.createElement("div");
+        box.className = "text-box";
+        box.innerHTML = `<div class="content" contenteditable="false">Double-cliquez pour modifier</div><div class="delete-btn">✕</div><div class="rotate-handle">↻</div>`;
+        box.style.left = `${(e.clientX - rect.left) / editorZoom - 75}px`;
+        box.style.top = `${(e.clientY - rect.top) / editorZoom - 20}px`;
+        slide.appendChild(box);
+        attachItemEvents(box);
+        state.activeItem = box;
+        addMode = false;
+        addTextBtn.textContent = "Ajouter un texte";
+        addTextBtn.classList.remove("active");
+    }
+});
+
 // --- SUPPRESSION CLAVIER ---
 window.addEventListener("keydown", (e) => {
     if (!state.activeItem) return;
     if (e.key === "Delete" || e.key === "Backspace") {
         const isEditing = document.activeElement && document.activeElement.classList.contains("content") && document.activeElement.isContentEditable;
         if (isEditing) return;
+ 
+        // >>> MODIFICATION : GESTION LIEN CLAVIER <<<
+        if(state.activeItem.classList.contains('link-button')) {
+            handleLinkDelete(state.activeItem);
+        }
+
         saveState();
         state.activeItem.remove();
         renumberBubbles();
@@ -334,16 +295,88 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-function activateTextBox(box, content) {
-    if (activeTextBox && activeTextBox !== box) {
-        activeTextBox.querySelector(".content").contentEditable = "false";
+// ... (Le reste du code drag/resize/formatage reste inchangé) ...
+slide.addEventListener("mousedown", (e) => {
+    // RESIZE
+    const handle = e.target.closest(".resize-handle");
+    if (handle) {
+        resizing = handle.parentElement;
+        const rect = resizing.getBoundingClientRect();
+        startW = rect.width / editorZoom;
+        startH = rect.height / editorZoom;
+        startMouseX = e.clientX;
+        startMouseY = e.clientY;
+        e.preventDefault();
+        return;
     }
+ 
+    // ROTATION
+    const rotateHandle = e.target.closest(".rotate-handle");
+    if (rotateHandle) {
+        rotating = rotateHandle.parentElement;
+        state.activeItem = rotating;
+        const rect = rotating.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const transform = rotating.style.transform;
+        const match = transform.match(/rotate\((-?\d+\.?\d*)deg\)/);
+        currentRotation = match ? parseFloat(match[1]) : 0;
+        e.preventDefault();
+        return;
+    }
+ 
+    // DRAG
+    const target = e.target.closest(".text-box, .image-box, .shape-box, .bubble-box, .link-button");
+    if (!target || (e.target.classList.contains("content") && e.target.isContentEditable)) return;
+ 
+    dragging = target;
+    state.activeItem = target;
+    const rect = dragging.getBoundingClientRect();
+    offsetX = (e.clientX - rect.left) / editorZoom;
+    offsetY = (e.clientY - rect.top) / editorZoom;
+    e.preventDefault();
+});
+
+window.addEventListener("mousemove", (e) => {
+    if (resizing) {
+        const dx = (e.clientX - startMouseX) / editorZoom;
+        const dy = (e.clientY - startMouseY) / editorZoom;
+        resizing.style.width = `${Math.max(30, startW + dx)}px`;
+        resizing.style.height = `${Math.max(30, startH + dy)}px`;
+        return;
+    }
+    if (rotating) {
+        const rect = rotating.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const newAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const angleDiff = (newAngle - startAngle) * (180 / Math.PI);
+        const finalRotation = currentRotation + angleDiff;
+        rotating.style.transform = `rotate(${finalRotation}deg)`;
+        return;
+    }
+    if (dragging) {
+        const slideRect = slide.getBoundingClientRect();
+        let newLeft = (e.clientX - slideRect.left) / editorZoom - offsetX;
+        let newTop = (e.clientY - slideRect.top) / editorZoom - offsetY;
+        dragging.style.left = `${newLeft}px`;
+        dragging.style.top = `${newTop}px`;
+        if (dragging === activeTextBox) showToolbar(dragging);
+    }
+});
+window.addEventListener("mouseup", () => {
+    if (rotating || resizing || dragging) saveState();
+    dragging = null; resizing = null; rotating = null;
+});
+
+function activateTextBox(box, content) {
+    if (activeTextBox && activeTextBox !== box) activeTextBox.querySelector(".content").contentEditable = "false";
     activeTextBox = box;
     content.contentEditable = "true";
     content.focus();
     showToolbar(box);
 }
- 
 function showToolbar(box) {
     if (!floatingToolbar) return;
     const boxRect = box.getBoundingClientRect();
@@ -352,7 +385,6 @@ function showToolbar(box) {
     floatingToolbar.style.top = `${boxRect.top - workspaceRect.top - 60}px`;
     floatingToolbar.classList.add("visible");
 }
- 
 function hideToolbar() {
     floatingToolbar.classList.remove("visible");
     if (activeTextBox) {
@@ -360,14 +392,9 @@ function hideToolbar() {
         activeTextBox = null;
     }
 }
- 
 document.addEventListener("mousedown", (e) => {
-    if (!e.target.closest(".text-box") && !e.target.closest(".floating-toolbar") && !e.target.closest(".top-toolbar")) {
-        hideToolbar();
-    }
+    if (!e.target.closest(".text-box") && !e.target.closest(".floating-toolbar") && !e.target.closest(".top-toolbar")) hideToolbar();
 });
- 
-// --- BACKGROUNDS & FORMATAGE ---
 bgColorPicker.addEventListener("input", (e) => {
     saveState();
     slide.style.backgroundImage = "none";
@@ -378,14 +405,9 @@ bgImageInput.addEventListener("change", () => {
     const file = bgImageInput.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-        saveState();
-        slide.style.backgroundImage = `url(${reader.result})`;
-        slide.style.backgroundSize = "cover";
-    };
+    reader.onload = () => { saveState(); slide.style.backgroundImage = `url(${reader.result})`; slide.style.backgroundSize = "cover"; };
     reader.readAsDataURL(file);
 });
-
 function formatText(cmd, val = null) {
     if (state.activeItem && state.activeItem.classList.contains("shape-box") && cmd === "foreColor") {
         saveState();
@@ -395,8 +417,6 @@ function formatText(cmd, val = null) {
         document.execCommand(cmd, false, val);
     }
 }
-
-// Listeners Formatage
 document.getElementById("topTextColor").addEventListener("input", (e) => {
     if (state.activeItem && state.activeItem.classList.contains("shape-box")) {
         saveState();
@@ -411,9 +431,7 @@ document.getElementById("topTextColor").addEventListener("input", (e) => {
 document.getElementById("topBoldBtn").onclick = () => formatText("bold");
 document.getElementById("topItalicBtn").onclick = () => formatText("italic");
 document.getElementById("topUnderlineBtn").onclick = () => formatText("underline");
-document.getElementById("topHighlightColor").addEventListener("input", (e) => {
-    document.getElementById("highlightColor").value = e.target.value;
-});
+document.getElementById("topHighlightColor").addEventListener("input", (e) => { document.getElementById("highlightColor").value = e.target.value; });
 document.getElementById("topHighlightBtn").onclick = () => formatText("hiliteColor", document.getElementById("topHighlightColor").value);
 document.getElementById("topFontFamily").addEventListener("change", (e) => {
     if (state.activeItem && state.activeItem.classList.contains("text-box")) {
@@ -430,108 +448,71 @@ document.getElementById("topFontSize").addEventListener("change", (e) => {
     } else {
         document.execCommand("fontSize", false, "7");
         const fontElements = document.querySelectorAll("font[size='7']");
-        fontElements.forEach(el => {
-            el.removeAttribute("size");
-            el.style.fontSize = e.target.value;
-        });
+        fontElements.forEach(el => { el.removeAttribute("size"); el.style.fontSize = e.target.value; });
     }
 });
-
-// Barre Flottante
 if (boldBtn) boldBtn.onclick = () => formatText("bold");
 if (italicBtn) italicBtn.onclick = () => formatText("italic");
 if (underlineBtn) underlineBtn.onclick = () => formatText("underline");
 if (highlightBtn) highlightBtn.onclick = () => formatText("hiliteColor", highlightColor ? highlightColor.value : "#ffff00");
-if (fontFamily) fontFamily.addEventListener("change", (e) => {
-    if (activeTextBox) activeTextBox.querySelector(".content").style.fontFamily = e.target.value;
-});
-if (fontSize) fontSize.addEventListener("change", (e) => {
-    if (activeTextBox) activeTextBox.querySelector(".content").style.fontSize = e.target.value;
-});
+if (fontFamily) fontFamily.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontFamily = e.target.value; });
+if (fontSize) fontSize.addEventListener("change", (e) => { if (activeTextBox) activeTextBox.querySelector(".content").style.fontSize = e.target.value; });
 if (textColor) textColor.addEventListener("input", (e) => formatText("foreColor", e.target.value));
-
-function addEditorShape(type) {
-    addShape(type);
-}
-
-// --- HISTORIQUE ---
-let historyStack = [];
-let redoStack = [];
-
-function saveState() {
-    historyStack.push({
-        innerHTML: slide.innerHTML,
-        bg: slide.style.backgroundColor,
-        img: slide.style.backgroundImage
-    });
-    redoStack = [];
-}
-
-function undo() {
-    if (historyStack.length === 0) return;
-    redoStack.push({
-        innerHTML: slide.innerHTML,
-        bg: slide.style.backgroundColor,
-        img: slide.style.backgroundImage
-    });
-    const state = historyStack.pop();
-    slide.innerHTML = state.innerHTML;
-    slide.style.backgroundColor = state.bg;
-    slide.style.backgroundImage = state.img;
-    reattachEventListeners();
-}
-
-function redo() {
-    if (redoStack.length === 0) return;
-    historyStack.push({
-        innerHTML: slide.innerHTML,
-        bg: slide.style.backgroundColor,
-        img: slide.style.backgroundImage
-    });
-    const state = redoStack.pop();
-    slide.innerHTML = state.innerHTML;
-    slide.style.backgroundColor = state.bg;
-    slide.style.backgroundImage = state.img;
-    reattachEventListeners();
-}
-
+function addEditorShape(type) { addShape(type); }
+let historyStack = []; let redoStack = [];
+function saveState() { historyStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); redoStack = []; }
+function undo() { if (historyStack.length === 0) return; redoStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); const s = historyStack.pop(); slide.innerHTML = s.innerHTML; slide.style.backgroundColor = s.bg; slide.style.backgroundImage = s.img; reattachEventListeners(); }
+function redo() { if (redoStack.length === 0) return; historyStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); const s = redoStack.pop(); slide.innerHTML = s.innerHTML; slide.style.backgroundColor = s.bg; slide.style.backgroundImage = s.img; reattachEventListeners(); }
 document.getElementById("undoBtn").addEventListener("click", undo);
 document.getElementById("redoBtn").addEventListener("click", redo);
-
 document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "z") {
-        e.preventDefault();
-        undo();
-    }
-    if (e.ctrlKey && e.key === "y") {
-        e.preventDefault();
-        redo();
-    }
+    if (e.ctrlKey && e.key === "z") { e.preventDefault(); undo(); }
+    if (e.ctrlKey && e.key === "y") { e.preventDefault(); redo(); }
 });
-
-// --- ZOOM EDITOR ---
-let editorZoom = 1;
-const MIN_ZOOM = 0.3;
-const MAX_ZOOM = 3;
-
+let editorZoom = 1; const MIN_ZOOM = 0.3; const MAX_ZOOM = 3;
 const overlayWorkspace = document.querySelector(".overlay-workspace");
 const slideZoomWrapper = document.getElementById("slideZoomWrapper");
-
-function applyZoom() {
-  if (slideZoomWrapper) slideZoomWrapper.style.transform = `scale(${editorZoom})`;
-  updateZoomDisplay();
-}
-
-if (overlayWorkspace) {
-  overlayWorkspace.addEventListener("wheel", (e) => {
-    if (e.ctrlKey) { e.preventDefault(); editorZoom = Math.max(0.3, Math.min(3, editorZoom + (e.deltaY > 0 ? -0.1 : 0.1))); applyZoom(); }
-  }, { passive: false });
-}
-
-function zoomIn() { editorZoom = Math.min(3, editorZoom + 0.1); applyZoom(); }
-function zoomOut() { editorZoom = Math.max(0.3, editorZoom - 0.1); applyZoom(); }
+function applyZoom() { if (slideZoomWrapper) slideZoomWrapper.style.transform = `scale(${editorZoom})`; updateZoomDisplay(); }
+if (overlayWorkspace) { overlayWorkspace.addEventListener("wheel", (e) => { if (e.ctrlKey) { e.preventDefault(); editorZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, editorZoom + (e.deltaY > 0 ? -0.1 : 0.1))); applyZoom(); } }, { passive: false }); }
+function zoomIn() { editorZoom = Math.min(MAX_ZOOM, editorZoom + 0.1); applyZoom(); }
+function zoomOut() { editorZoom = Math.max(MIN_ZOOM, editorZoom - 0.1); applyZoom(); }
 function resetZoom() { editorZoom = 1; applyZoom(); }
 function updateZoomDisplay() { const z = document.getElementById("editor-zoom-text"); if(z) z.textContent = Math.round(editorZoom*100)+"%"; }
+
+// --- NOUVELLE FONCTION : GESTION SYNCHRO SUPPRESSION ---
+function handleLinkDelete(btn) {
+    const targetId = btn.dataset.target;
+    const myId = state.currentEditingId;
+
+    // Trouver la connexion associée dans le graphe
+    const connIndex = state.connections.findIndex(c => 
+        (c.fromId === myId && c.toId === targetId) || 
+        (c.fromId === targetId && c.toId === myId)
+    );
+
+    if (connIndex === -1) return;
+
+    const conn = state.connections[connIndex];
+
+    // CAS 1 : Je suis le départ (A -> B), je supprime le lien vers B
+    if (conn.fromId === myId && conn.toId === targetId) {
+        if (conn.type === 'double') {
+            // C'était double, ça devient simple (sens inverse B->A reste)
+            conn.line.removeAttribute('marker-end'); // Retire flèche bout
+            conn.type = 'simple';
+        } else {
+            // C'était simple, tout disparaît
+            conn.line.remove();
+            state.connections.splice(connIndex, 1);
+        }
+    }
+    // CAS 2 : Je suis l'arrivée (B -> A), je supprime le bouton retour
+    else if (conn.fromId === targetId && conn.toId === myId && conn.type === 'double') {
+        // C'était double, ça devient simple (sens aller A->B reste)
+        conn.line.removeAttribute('marker-start'); // Retire flèche début
+        conn.type = 'simple';
+    }
+}
 
 // Init
 reattachEventListeners();

@@ -104,21 +104,18 @@ function selectConnection(connObj) {
     connObj.line.classList.add('selected');
 }
 
-// --- BOUTONS D'ACTION ---
+// --- BOUTONS D'ACTION (MODIFIÉ : Plus de btn-info-bulle) ---
 document.getElementById("btn-new-slide").onclick = () => createSlide("default");
-document.getElementById("btn-info-bulle").onclick = () => createSlide("info");
+// document.getElementById("btn-info-bulle").onclick SUPPRIMÉ
 document.getElementById("btn-condition").onclick = () => createSlide("condition");
 document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
 
 // --- SUPPRESSION INTELLIGENTE ---
 document.getElementById("btn-delete").onclick = () => {
   if (state.selectedSlide) {
-    // Si on supprime une slide, on supprime les connexions associées
     state.connections = state.connections.filter(c => {
         if (c.fromId === state.selectedSlide.id || c.toId === state.selectedSlide.id) {
             c.line.remove(); 
-            // NOTE : Idéalement, il faudrait aussi nettoyer les boutons dans les autres slides
-            // mais c'est complexe sans parcourir tout le contenu. Pour l'instant on garde ça simple.
             return false;
         }
         return true;
@@ -128,16 +125,10 @@ document.getElementById("btn-delete").onclick = () => {
   } 
   else if (state.selectedConnection) {
     const conn = state.selectedConnection;
-
-    // 1. Toujours supprimer le bouton de l'aller (A -> B)
     removeLinkButtonFromSlide(conn.fromId, conn.toId);
-
-    // 2. Si c'était une flèche double, supprimer le bouton retour (B -> A)
     if (conn.type === 'double') {
         removeLinkButtonFromSlide(conn.toId, conn.fromId);
     }
-
-    // 3. Supprimer la ligne visuelle et de la mémoire
     conn.line.remove();
     state.connections = state.connections.filter(c => c !== conn);
     state.selectedConnection = null;
@@ -160,7 +151,8 @@ function createSlide(type) {
 
   const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
-  infoOverlay.innerHTML = (type === "info" ? "ℹ️" : type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + state.slideCount;
+  // MODIFIÉ ICI : Retrait de la condition 'info'
+  infoOverlay.innerHTML = (type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + state.slideCount;
 
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
@@ -237,47 +229,37 @@ function endConnection(e, id, port) {
       state.tempLine.setAttribute("x2", end.x);
       state.tempLine.setAttribute("y2", end.y);
 
-      // Objet Connexion avec TYPE (simple/double)
       const connectionObj = {
         line: state.tempLine,
         fromId: state.connectionStart.id,
         toId: id,
         fromPort: state.connectionStart.port,
         toPort: port,
-        type: 'simple' // Par défaut
+        type: 'simple'
       };
 
-      // Clic simple : Sélection
       state.tempLine.addEventListener("click", function(evt) {
           evt.stopPropagation();
           selectConnection(connectionObj);
       });
 
-      // --- DOUBLE CLIC : GESTION DU DOUBLE SENS (Boutons) ---
       state.tempLine.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
         
         if (start) {
-            // C'était double -> devient simple
             this.removeAttribute("marker-start");
             connectionObj.type = 'simple';
-            // On enlève le bouton retour (B -> A)
             removeLinkButtonFromSlide(connectionObj.toId, connectionObj.fromId);
         } else {
-            // C'était simple -> devient double
             this.setAttribute("marker-start", "url(#arrow-start)");
             connectionObj.type = 'double';
-            // On ajoute le bouton retour (B -> A)
             addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
         }
       });
 
       state.connections.push(connectionObj);
-      
-      // Création initiale du bouton aller (A -> B)
       addLinkButtonToSlide(state.connectionStart.id, id);
-      
       state.tempLine = null;
     } else {
       state.tempLine.remove();
@@ -307,17 +289,14 @@ function updateConnections() {
 }
 
 // --- FONCTIONS GESTION DES BOUTONS DE LIEN ---
-
 function addLinkButtonToSlide(sourceId, targetId) {
     let slideData = state.slidesContent[sourceId];
-    // Création des données si elles n'existent pas encore
     if (!slideData) {
         slideData = { html: "", bg: "#ffffff", bgImg: "", slideNum: "" };
         state.slidesContent[sourceId] = slideData;
     }
 
     const btnId = `link-${sourceId}-${targetId}`;
-    // Vérifier si le bouton existe déjà pour éviter les doublons
     if (slideData.html.includes(btnId)) return;
 
     const btnHtml = `
@@ -339,7 +318,6 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = slideData.html;
     
-    // Recherche par data-target
     const btn = tempDiv.querySelector(`.link-button[data-target="${targetId}"]`);
     if (btn) {
         btn.remove();
@@ -348,5 +326,24 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
     }
 }
 
+
+// --- RACCOURCI CLAVIER : SUPPRESSION DANS LE GRAPHE ---
+window.addEventListener("keydown", (e) => {
+    // 1. Si l'éditeur est ouvert, on ne fait rien ici (c'est editor.js qui gère)
+    if (document.getElementById("editor-overlay").style.display === "flex") return;
+
+    // 2. Si on appuie sur Suppr (Delete) ou Retour Arrière (Backspace)
+    if (e.key === "Delete" || e.key === "Backspace") {
+        // On vérifie qu'on ne supprime pas par erreur si on tape dans un champ (peu probable ici mais bonne pratique)
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+        // 3. On déclenche le clic du bouton supprimer existant
+        // Cela réutilise toute notre logique parfaite (suppression boutons verts, liens, etc.)
+        document.getElementById("btn-delete").click();
+    }
+});
+
+// Init
+setTransform();
 // Init
 setTransform();
