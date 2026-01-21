@@ -19,24 +19,24 @@
                 <img src="images/add_diapo.png" class="icon" alt="+">
                 <span class="label">Nouvelle<br>diapositive</span>
             </div>
-            
+           
             <div class="sidebar-item" id="btn-condition">
                 <img src="images/condition.png" class="icon" alt="Condition">
                 <span class="label">Condition</span>
             </div>
-            
+           
             <div class="sidebar-item" id="btn-bloc-fin">
                 <img src="images/add_end.png" class="icon" alt="Fin">
                 <span class="label">Bloc Fin</span>
             </div>
-
+ 
             <div class="sidebar-item set-start" id="btn-set-start">
                 <span class="icon-text">🏴</span>
                 <span class="label">Définir comme<br>Début</span>
             </div>
            
             <div class="sidebar-spacer"></div>
-
+ 
             <div class="sidebar-item load" id="btn-load">
                 <span class="icon-text">📂</span>
                 <span class="label">Charger Projet</span>
@@ -47,12 +47,12 @@
                 <img src="images/logo_poubelle.png" class="icon" alt="Supprimer">
                 <span class="label">Supprimer</span>
             </button>
-            
+           
             <button id="btn-play" class="sidebar-item play">
                 <span class="icon-text">▶️</span>
                 <span class="label">Afficher</span>
             </button>
-
+ 
             <button id="btn-generate" class="sidebar-item export">
                 <img src="images/logo_telecharger.png" class="icon" alt="Générer">
                 <span class="label">Générer</span>
@@ -83,7 +83,7 @@
             </div>
         </div>
     </div>
-
+ 
     <div id="editor-overlay" class="editor-overlay" style="display: none;">
         <div class="overlay-header">
             <button id="btn-close-editor" class="back-btn">← Retour au Graphe</button>
@@ -92,7 +92,11 @@
                 <label style="color: #4e342e; font-size: 12px; margin-right: 5px;">N°</label>
                 <input type="text" id="slideNumber" placeholder="1.1" title="Numéro de la diapositive" style="width: 60px; padding: 4px 8px; border-radius: 4px; border: 1px solid #dcd7c9; background: #fdfbf7; color: #4e342e; font-size: 14px;">
             </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 3134f30ed11e95212a67faddd08d7cdf66a3c955
             <div class="toolbar-group" style="border-right: none;">
                 <button class="top-tool-btn" id="undoBtn" title="Annuler (Ctrl+Z)">↩️</button>
                 <button class="top-tool-btn" id="redoBtn" title="Rétablir (Ctrl+Y)">↪️</button>
@@ -173,21 +177,21 @@
     </div>
     <div id="condition-overlay" class="editor-overlay" style="display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
     <div class="condition-modal" style="width: 500px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Segoe UI', sans-serif;">
-        
+       
         <div style="background: #34495e; padding: 15px; text-align: center; border-bottom: 3px solid #f1c40f;">
             <h2 style="color: #f1c40f; margin: 0; font-weight: normal; letter-spacing: 1px;">Condition</h2>
         </div>
-
+ 
         <div style="padding: 20px; background: #2c3e50;">
             <div style="display: flex; justify-content: space-between; align-items: center; background: #5d6d7e; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
                 <span style="color: white; font-weight: bold;">Avoir visité :</span>
                 <span style="color: #d5d8dc; font-size: 14px;">Cochez les diapositives requises</span>
                 <span style="color: white;">▼</span>
             </div>
-
+ 
             <div id="condition-list" style="max-height: 250px; overflow-y: auto; background: #34495e; padding: 5px; border-radius: 4px;">
                 </div>
-
+ 
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
                 <button id="btn-cancel-condition" style="background: #c0392b; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
                     ↩ Retour
@@ -201,7 +205,7 @@
 </div>
     <div id="presentation-overlay" class="player-overlay" style="display: none;">
         <button id="btn-close-player" class="player-close-btn">✕ Quitter</button>
-        
+       
         <div id="player-stage" class="player-stage">
             </div>
     </div>
@@ -211,3 +215,4 @@
     <script src="app.js"></script>
 </body>
 </html>
+ 
