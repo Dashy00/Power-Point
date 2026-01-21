@@ -507,11 +507,7 @@ if (textColor) textColor.addEventListener("input", (e) => formatText("foreColor"
 const btnSquare = document.getElementById("addSquare");
 const btnCircle = document.getElementById("addCircle");
 const btnTriangle = document.getElementById("addTriangle");
-<<<<<<< HEAD
-
-=======
  
->>>>>>> 64d263770ab950e2b36faa38c3dd89d2a2f37d6c
 if(btnSquare) btnSquare.onclick = () => addEditorShape('square');
 if(btnCircle) btnCircle.onclick = () => addEditorShape('circle');
 if(btnTriangle) btnTriangle.onclick = () => addEditorShape('triangle');
@@ -519,11 +515,7 @@ function addEditorShape(type) {
     saveState(); // Pour pouvoir annuler l'action
     let content = "";
     let className = `shape-box ${type}`;
-<<<<<<< HEAD
-    
-=======
    
->>>>>>> 64d263770ab950e2b36faa38c3dd89d2a2f37d6c
     if (type === 'square') {
         content = `<div class="shape-content" style="background:#3498db; width:100%; height:100%;"></div>`;
     } else if (type === 'circle') {
@@ -531,11 +523,7 @@ function addEditorShape(type) {
     } else if (type === 'triangle') {
         content = `<div class="shape-content" style="background:#2ecc71; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
     }
-<<<<<<< HEAD
-    
-=======
    
->>>>>>> 64d263770ab950e2b36faa38c3dd89d2a2f37d6c
     createItem(content, className, 100, 100);
 }
 let historyStack = []; let redoStack = [];
@@ -592,12 +580,8 @@ function handleLinkDelete(btn) {
         conn.type = 'simple';
     }
 }
-<<<<<<< HEAD
-
-
-=======
  
  
->>>>>>> 64d263770ab950e2b36faa38c3dd89d2a2f37d6c
 // Init
 reattachEventListeners();
+ 
