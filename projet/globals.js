@@ -16,16 +16,17 @@ const state = {
     // Slides & Connexions
     slideCount: 0,
     selectedSlide: null,
+    startSlideId: null, // <--- NOUVEAU : Stocke l'ID de la slide de départ
     isDraggingSlide: false,
     dragOffset: { x: 0, y: 0 },
     
     isConnecting: false,
     connectionStart: null,
     tempLine: null,
-    connections: [], // Liste des liens
+    connections: [], 
     
     // Données Contenu
-    slidesContent: {}, // { "slide-1": { html: "...", bg: "..." } }
+    slidesContent: {}, 
     
     // Éditeur Overlay
     currentEditingId: null,

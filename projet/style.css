@@ -157,3 +157,30 @@ line.selected { stroke: #e74c3c !important; stroke-width: 5 !important; }
 .link-button.square { border-radius: 4px; }
 .link-button.round { border-radius: 50%; }
 .link-button:hover { transform: scale(1.05); background-color: #2ecc71; }
+/* ... (Code existant des slides) ... */
+
+/* STYLE DIAPOSITIVE DE DÉPART */
+.slide.start-node {
+    border: 3px solid #f1c40f !important; /* Bordure Or */
+    box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+    z-index: 5; /* Un peu au-dessus des autres */
+}
+
+/* Indicateur Drapeau */
+.start-flag-icon {
+    position: absolute;
+    top: -15px;
+    left: -10px;
+    font-size: 24px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+    z-index: 100;
+}
+
+/* Bouton Sidebar spécifique */
+.sidebar-item.set-start {
+    background-color: rgba(241, 196, 15, 0.2);
+    border: 1px solid #f39c12;
+}
+.sidebar-item.set-start:hover {
+    background-color: rgba(241, 196, 15, 0.4);
+}
