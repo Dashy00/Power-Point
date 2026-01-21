@@ -537,19 +537,25 @@ if(btnSquare) btnSquare.onclick = () => addEditorShape('square');
 if(btnCircle) btnCircle.onclick = () => addEditorShape('circle');
 if(btnTriangle) btnTriangle.onclick = () => addEditorShape('triangle');
 function addEditorShape(type) {
-    saveState(); // Pour pouvoir annuler l'action
+    saveState();
     let content = "";
-    let className = `shape-box ${type}`;
     
-    if (type === 'square') {
-        content = `<div class="shape-content" style="background:#3498db; width:100%; height:100%;"></div>`;
-    } else if (type === 'circle') {
-        content = `<div class="shape-content" style="background:#e74c3c; width:100%; height:100%; border-radius:50%;"></div>`;
-    } else if (type === 'triangle') {
-        content = `<div class="shape-content" style="background:#2ecc71; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
+    // Définition du contenu selon le type
+    if(type === 'square') {
+        content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%;"></div>`;
+    } 
+    else if(type === 'circle') {
+        content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; border-radius:50%;"></div>`;
+    } 
+    else if(type === 'triangle') {
+        content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
     }
-    
-    createItem(content, className, 100, 100);
+    // AJOUT DE LA LOGIQUE POUR LA FLÈCHE
+    else if(type === 'arrow') {
+        content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%;"></div>`;
+    }
+
+    createItem(content, `shape-box ${type}`, 100, 100);
 }
 let historyStack = []; let redoStack = [];
 function saveState() { historyStack.push({ innerHTML: slide.innerHTML, bg: slide.style.backgroundColor, img: slide.style.backgroundImage }); redoStack = []; }

@@ -223,3 +223,10 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .text-box:hover .rotate-handle, .image-box:hover .rotate-handle, .shape-box:hover .rotate-handle, .bubble-box:hover .rotate-handle, .link-button:hover .rotate-handle { opacity: 1; }
 
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
+/* Style pour la forme Flèche */
+.arrow .shape-content { 
+    background-color: #8d6e63;
+    /* Dessine une flèche pointant vers la droite */
+    clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);
+    border: none;
+}
