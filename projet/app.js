@@ -164,11 +164,32 @@ document.getElementById("btn-delete").onclick = () => {
   }
 };
 
+function getNextAvailableNumber() {
+    const existingNumbers = new Set();
+    
+    // On récupère tous les numéros actuellement utilisés
+    Object.values(state.slidesContent).forEach(slide => {
+        if (slide.slideNum) existingNumbers.add(parseInt(slide.slideNum));
+    });
+
+    // On cherche le premier entier positif (1, 2, 3...) qui n'est pas dans la liste
+    let num = 1;
+    while (existingNumbers.has(num)) {
+        num++;
+    }
+    return num.toString();
+}
+
 // --- SLIDES ---
 function createSlide(type) {
   state.slideCount++;
   const id = `slide-${state.slideCount}`;
-  state.slidesContent[id] = { html: "", bg: "#ffffff", bgImg: "none" };
+  
+  // >>> MODIFICATION ICI : On calcule le numéro automatiquement
+  const autoNum = getNextAvailableNumber();
+  
+  // On l'enregistre tout de suite dans les données
+  state.slidesContent[id] = { html: "", bg: "#ffffff", bgImg: "none", slideNum: autoNum };
 
   const slide = document.createElement("div");
   slide.className = `slide ${type}`;
@@ -180,11 +201,14 @@ function createSlide(type) {
 
   const infoOverlay = document.createElement("div");
   infoOverlay.className = "slide-info-overlay";
-  infoOverlay.innerHTML = (type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + state.slideCount;
+  
+  // >>> MODIFICATION ICI : On affiche le numéro calculé (autoNum) au lieu de state.slideCount
+  infoOverlay.innerHTML = (type === "condition" ? "❓" : type === "fin" ? "🏁" : "") + " " + autoNum;
 
+  // ... (Le reste de la fonction createSlide reste inchangé : positions, événements, etc.)
   slide.appendChild(previewWrapper);
   slide.appendChild(infoOverlay);
-
+  
   const centerX = 2500 - state.pointX / state.scale;
   const centerY = 2500 - state.pointY / state.scale;
   slide.style.left = centerX - 80 + "px";
@@ -203,7 +227,8 @@ function createSlide(type) {
     e.stopPropagation();
     openEditor(id);
   });
-
+  
+  // ... (Suite du code createSlide avec les ports...)
   ["top", "right", "bottom", "left"].forEach((pos) => {
     const port = document.createElement("div");
     port.className = `port ${pos}`;

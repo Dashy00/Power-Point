@@ -87,6 +87,51 @@ function createItem(html, className, w=150, h=50) {
     attachItemEvents(div);
 }
 
+// Dans editor.js (à la place du code précédent pour slideNumber)
+
+const slideNumberInput = document.getElementById("slideNumber");
+
+if (slideNumberInput) {
+    slideNumberInput.addEventListener("input", (e) => {
+        const newVal = e.target.value.trim();
+        const currentId = state.currentEditingId;
+
+        if (!currentId) return;
+
+        // Vérifier si ce numéro est déjà pris par une AUTRE slide
+        const isDuplicate = Object.entries(state.slidesContent).some(([id, data]) => {
+            return id !== currentId && data.slideNum === newVal;
+        });
+
+        if (isDuplicate) {
+            // ALERTE VISUELLE : Bordure rouge si doublon
+            slideNumberInput.style.border = "2px solid #e74c3c";
+            slideNumberInput.style.color = "#e74c3c";
+            // On n'enregistre PAS dans le state tant que c'est un doublon
+            return; 
+        } else {
+            // Tout est bon : on remet le style normal
+            slideNumberInput.style.border = "1px solid #4b5563";
+            slideNumberInput.style.color = "white";
+            
+            // On sauvegarde
+            state.slidesContent[currentId].slideNum = newVal;
+
+            // Mise à jour visuelle sur le graphe
+            const slideNode = document.getElementById(currentId);
+            if (slideNode) {
+                const overlay = slideNode.querySelector(".slide-info-overlay");
+                if (overlay) {
+                    let prefix = "";
+                    if (slideNode.classList.contains("condition")) prefix = "❓ ";
+                    else if (slideNode.classList.contains("fin")) prefix = "🏁 ";
+                    overlay.textContent = prefix + newVal;
+                }
+            }
+        }
+    });
+}
+
 // --- SETUP DES ÉVÉNEMENTS ---
 function setupDeleteBtn(box) {
   const btn = box.querySelector(".delete-btn");
