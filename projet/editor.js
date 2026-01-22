@@ -8,7 +8,7 @@ const bgImageBtn = document.getElementById("bgImageBtn");
 const bgImageInput = document.getElementById("bgImageInput");
 const floatingToolbar = document.getElementById("floatingToolbar");
 const slideNumberInput = document.getElementById("slideNumber");
- 
+
 const fontFamily = document.getElementById("fontFamily");
 const fontSize = document.getElementById("fontSize");
 const textColor = document.getElementById("textColor");
@@ -18,7 +18,7 @@ const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
 const shapeColorPicker = document.getElementById("shapeColorPicker");
- 
+
 // Variables d'état pour les manipulations
 let dragging = null,
   resizing = null,
@@ -36,11 +36,147 @@ let addMode = false;
 let addBubbleMode = false;
 let activeTextBox = null;
 let addBubbleBtn = document.getElementById("addBubbleBtn");
- 
+
+// --- ZOOM : UNIQUEMENT LA PAGE (DIAPO) ---
+// IMPORTANT : on va WRAPPER la slide dans un conteneur qui sera scalé,
+// sans scaler toute la page/overlay.
+let slideZoomWrapper = null;
+const overlayWorkspace = document.querySelector(".overlay-workspace") || slide?.parentElement || document.body;
+
+function clampZoom(z) {
+  return Math.max(0.3, Math.min(3, z));
+}
+
+function initSlideZoomWrapper() {
+  if (!slide) return;
+
+  // si déjà wrappée
+  if (slide.parentElement && slide.parentElement.id === "slideZoomWrapper") {
+    slideZoomWrapper = slide.parentElement;
+  } else {
+    // créer wrapper
+    slideZoomWrapper = document.createElement("div");
+    slideZoomWrapper.id = "slideZoomWrapper";
+
+    // Style inline minimal (sans toucher votre CSS)
+    slideZoomWrapper.style.display = "inline-block";
+    slideZoomWrapper.style.transformOrigin = "top left";
+    slideZoomWrapper.style.position = "relative";
+
+    // insérer wrapper à la place de la slide
+    const parent = slide.parentElement;
+    if (parent) {
+      parent.insertBefore(slideZoomWrapper, slide);
+      slideZoomWrapper.appendChild(slide);
+    }
+  }
+
+  // s'assurer que le workspace peut scroller si on zoom
+  if (overlayWorkspace) {
+    const wsStyle = window.getComputedStyle(overlayWorkspace);
+    if (wsStyle.overflow === "visible") {
+      overlayWorkspace.style.overflow = "auto";
+    }
+  }
+
+  applyZoom(false);
+}
+
+
+
+// Zoom au scroll Ctrl + molette : uniquement quand le curseur est sur l'espace diapo
+function attachWheelZoom() {
+  if (!overlayWorkspace) return;
+
+  overlayWorkspace.addEventListener(
+    "wheel",
+    (e) => {
+      // si l'utilisateur fait Ctrl+molette (ou trackpad pinch qui remonte comme ctrlKey)
+      // on empêche le zoom navigateur et on zoom uniquement la slide
+      if (!e.ctrlKey) return;
+
+      // IMPORTANT : ne pas bloquer le zoom navigateur si on n'est PAS dans l'éditeur
+      // (si vous avez un overlay editorOverlay, on vérifie son affichage)
+      if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "none") return;
+
+      e.preventDefault();
+
+      const prevZoom = editorZoom;
+      const delta = e.deltaY < 0 ? 0.1 : -0.1;
+      editorZoom = clampZoom(editorZoom + delta);
+
+      applyZoom(true, {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        prevZoom: prevZoom,
+      });
+    },
+    { passive: false }
+  );
+}
+
+// Appliquer le zoom au wrapper (et garder le point sous la souris stable si demandé)
+function applyZoom(keepPoint = false, anchor = null) {
+  if (!slideZoomWrapper) return;
+
+  // ancrage (pour garder le point stable)
+  let before = null;
+  if (keepPoint && anchor && overlayWorkspace) {
+    const wsRect = overlayWorkspace.getBoundingClientRect();
+    const xInWs = anchor.clientX - wsRect.left + overlayWorkspace.scrollLeft;
+    const yInWs = anchor.clientY - wsRect.top + overlayWorkspace.scrollTop;
+
+    before = { xInWs, yInWs, prevZoom: anchor.prevZoom || editorZoom };
+  }
+
+  slideZoomWrapper.style.transform = `scale(${editorZoom})`;
+
+  // mise à jour du texte %
+  const z = document.getElementById("editor-zoom-text");
+  if (z) z.textContent = Math.round(editorZoom * 100) + "%";
+
+  // garder le point sous la souris stable
+  if (before && overlayWorkspace) {
+    const ratio = editorZoom / before.prevZoom;
+    overlayWorkspace.scrollLeft = before.xInWs * ratio - (anchor.clientX - overlayWorkspace.getBoundingClientRect().left);
+    overlayWorkspace.scrollTop = before.yInWs * ratio - (anchor.clientY - overlayWorkspace.getBoundingClientRect().top);
+  }
+}
+
+function zoomIn() {
+  const prevZoom = editorZoom;
+  editorZoom = clampZoom(editorZoom + 0.1);
+  applyZoom(false, { prevZoom });
+}
+
+function zoomOut() {
+  const prevZoom = editorZoom;
+  editorZoom = clampZoom(editorZoom - 0.1);
+  applyZoom(false, { prevZoom });
+}
+
+function resetZoom() {
+  const prevZoom = editorZoom;
+  editorZoom = 1;
+  applyZoom(false, { prevZoom });
+}
+
+// Hook optionnel si vous avez des boutons (ne casse rien si absents)
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const resetZoomBtn = document.getElementById("resetZoomBtn");
+if (zoomInBtn) zoomInBtn.addEventListener("click", zoomIn);
+if (zoomOutBtn) zoomOutBtn.addEventListener("click", zoomOut);
+if (resetZoomBtn) resetZoomBtn.addEventListener("click", resetZoom);
+
+// Init wrapper + molette
+initSlideZoomWrapper();
+attachWheelZoom();
+
 // --- COPY / PASTE (CTRL+C / CTRL+V / CTRL+X) ---
 let itemClipboard = null; // presse-papiers interne (items)
 const PASTE_OFFSET = 20;
- 
+
 function isEditingText() {
   const ae = document.activeElement;
   if (!ae) return false;
@@ -48,11 +184,11 @@ function isEditingText() {
   const tag = ae.tagName ? ae.tagName.toLowerCase() : "";
   return tag === "input" || tag === "textarea";
 }
- 
+
 function ensureHandlesIfNeeded(div) {
   // Les link-button n'ont volontairement pas de handles chez vous
   if (div.classList.contains("link-button")) return;
- 
+
   if (!div.querySelector(".resize-handle")) {
     const rh = document.createElement("div");
     rh.className = "resize-handle";
@@ -71,19 +207,19 @@ function ensureHandlesIfNeeded(div) {
     div.appendChild(rot);
   }
 }
- 
+
 function getItemSnapshot(el) {
   const style = window.getComputedStyle(el);
- 
+
   const left = el.style.left || style.left || "0px";
   const top = el.style.top || style.top || "0px";
   const width = el.style.width || style.width || "150px";
   const height = el.style.height || style.height || "50px";
   const transform = el.style.transform || style.transform || "";
- 
+
   const dataset = {};
   Object.keys(el.dataset || {}).forEach((k) => (dataset[k] = el.dataset[k]));
- 
+
   return {
     className: el.className, // "item-box ..." etc.
     innerHTML: el.innerHTML,
@@ -91,46 +227,46 @@ function getItemSnapshot(el) {
     dataset,
   };
 }
- 
+
 function pasteSnapshot(snapshot) {
   if (!snapshot) return;
- 
+
   saveState();
- 
+
   const div = document.createElement("div");
   div.className = snapshot.className;
   div.innerHTML = snapshot.innerHTML;
- 
+
   div.style.width = snapshot.style.width;
   div.style.height = snapshot.style.height;
   div.style.transform = snapshot.style.transform;
- 
+
   const leftNum = parseFloat(snapshot.style.left) || 0;
   const topNum = parseFloat(snapshot.style.top) || 0;
   div.style.left = `${leftNum + PASTE_OFFSET}px`;
   div.style.top = `${topNum + PASTE_OFFSET}px`;
- 
+
   Object.keys(snapshot.dataset || {}).forEach((k) => {
     div.dataset[k] = snapshot.dataset[k];
   });
- 
+
   ensureHandlesIfNeeded(div);
- 
+
   slide.appendChild(div);
   attachItemEvents(div);
- 
+
   // sélectionner l'item collé
   document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
   div.classList.add("selected");
   state.activeItem = div;
- 
+
   renumberBubbles();
 }
- 
+
 // --- SYSTÈME UNDO / REDO ---
 let historyStack = [];
 let redoStack = [];
- 
+
 function saveState() {
   // On enregistre l'état actuel avant modification
   historyStack.push({
@@ -142,7 +278,7 @@ function saveState() {
   if (historyStack.length > 40) historyStack.shift();
   redoStack = []; // On vide le redo car une nouvelle action est faite
 }
- 
+
 function undo() {
   if (historyStack.length === 0) return;
   redoStack.push({
@@ -153,7 +289,7 @@ function undo() {
   const stateData = historyStack.pop();
   applyState(stateData);
 }
- 
+
 function redo() {
   if (redoStack.length === 0) return;
   historyStack.push({
@@ -164,7 +300,7 @@ function redo() {
   const stateData = redoStack.pop();
   applyState(stateData);
 }
- 
+
 function applyState(stateData) {
   slide.innerHTML = stateData.innerHTML;
   slide.style.backgroundColor = stateData.bg;
@@ -172,7 +308,7 @@ function applyState(stateData) {
   reattachEventListeners();
   renumberBubbles();
 }
- 
+
 // --- OUVERTURE / FERMETURE ---
 function openEditor(slideId) {
   state.currentEditingId = slideId;
@@ -182,14 +318,17 @@ function openEditor(slideId) {
   slide.style.backgroundImage = data.bgImg || "";
   bgColorPicker.value = data.bg || "#ffffff";
   if (slideNumberInput) slideNumberInput.value = data.slideNum || "";
- 
+
   historyStack = []; // Reset l'historique pour cette slide
   redoStack = [];
- 
+
   reattachEventListeners();
+
+  // IMPORTANT : wrapper zoom au moment où l'éditeur s'ouvre
+  initSlideZoomWrapper();
   editorOverlay.style.display = "flex";
 }
- 
+
 document.getElementById("btn-close-editor").onclick = () => {
   if (state.currentEditingId) {
     state.slidesContent[state.currentEditingId] = {
@@ -203,7 +342,7 @@ document.getElementById("btn-close-editor").onclick = () => {
   editorOverlay.style.display = "none";
   state.currentEditingId = null;
 };
- 
+
 // --- GESTION DES ITEMS ---
 function createItem(html, className, w = 150, h = 50) {
   saveState();
@@ -221,7 +360,7 @@ function createItem(html, className, w = 150, h = 50) {
   slide.appendChild(div);
   attachItemEvents(div);
 }
- 
+
 function addEditorShape(type) {
   let content = "";
   if (type === "square")
@@ -232,24 +371,24 @@ function addEditorShape(type) {
     content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
   else if (type === "arrow")
     content = `<div class="shape-content" style="background:#8d6e63; width:100%; height:100%; clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);"></div>`;
- 
+
   createItem(content, `shape-box ${type}`, 100, 100);
 }
- 
+
 // --- ÉVÉNEMENTS SOURIS (DRAG, RESIZE, ROTATE) ---
 slide.addEventListener("mousedown", (e) => {
   const item = e.target.closest(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button");
   const handle = e.target.closest(".resize-handle, .rotate-handle");
- 
+
   if (!item && !handle) {
     document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
     state.activeItem = null;
     return;
   }
- 
+
   // SAUVEGARDE AVANT TOUTE ACTION
   saveState();
- 
+
   if (e.target.classList.contains("resize-handle")) {
     resizing = item;
     const rect = resizing.getBoundingClientRect();
@@ -280,7 +419,7 @@ slide.addEventListener("mousedown", (e) => {
     e.preventDefault();
   }
 });
- 
+
 window.addEventListener("mousemove", (e) => {
   if (resizing) {
     const dx = (e.clientX - startMouseX) / editorZoom;
@@ -301,13 +440,13 @@ window.addEventListener("mousemove", (e) => {
     if (dragging === activeTextBox) showToolbar(dragging);
   }
 });
- 
+
 window.addEventListener("mouseup", () => {
   dragging = null;
   resizing = null;
   rotating = null;
 });
- 
+
 // --- ATTACHEMENT DES ÉVÉNEMENTS AUX BOXES ---
 function attachItemEvents(div) {
   const delBtn = div.querySelector(".delete-btn");
@@ -321,7 +460,7 @@ function attachItemEvents(div) {
       state.activeItem = null;
     };
   }
- 
+
   if (div.classList.contains("link-button")) {
     div.addEventListener("dblclick", (e) => {
       e.stopPropagation();
@@ -331,16 +470,18 @@ function attachItemEvents(div) {
     });
   }
 }
- 
+
 function reattachEventListeners() {
   slide
     .querySelectorAll(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button")
     .forEach(attachItemEvents);
 }
- 
+
 // --- TEXTE ET BULLES ---
-addTextBtn.addEventListener("click", () => createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box"));
- 
+addTextBtn.addEventListener("click", () =>
+  createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box")
+);
+
 // Gestion du double-clic sur le texte pour afficher la barre d'outils
 slide.addEventListener("dblclick", (e) => {
   const textBox = e.target.closest(".text-box");
@@ -352,7 +493,7 @@ slide.addEventListener("dblclick", (e) => {
     }
   }
 });
- 
+
 function activateTextBox(box, content) {
   if (activeTextBox && activeTextBox !== box) {
     activeTextBox.querySelector(".content").contentEditable = "false";
@@ -363,26 +504,26 @@ function activateTextBox(box, content) {
   content.focus();
   showToolbar(box);
 }
- 
+
 function showToolbar(box) {
   floatingToolbar.classList.add("visible");
- 
+
   const boxRect = box.getBoundingClientRect();
   const slideRect = document.querySelector(".overlay-workspace").getBoundingClientRect();
- 
+
   let left = boxRect.left - slideRect.left;
   let top = boxRect.top - slideRect.top - 50;
- 
+
   if (left + floatingToolbar.offsetWidth > slideRect.width) {
     left = slideRect.width - floatingToolbar.offsetWidth - 10;
   }
   if (left < 0) left = 10;
   if (top < 0) top = boxRect.top - slideRect.top + boxRect.height + 10;
- 
+
   floatingToolbar.style.left = `${left}px`;
   floatingToolbar.style.top = `${top}px`;
 }
- 
+
 function hideToolbar() {
   floatingToolbar.classList.remove("visible");
   if (activeTextBox) {
@@ -390,7 +531,7 @@ function hideToolbar() {
     activeTextBox = null;
   }
 }
- 
+
 // Fermer la barre d'outils quand on clique ailleurs
 document.addEventListener(
   "mousedown",
@@ -406,12 +547,12 @@ document.addEventListener(
   },
   true
 );
- 
+
 addBubbleBtn.addEventListener("click", () => {
   addBubbleMode = !addBubbleMode;
   addBubbleBtn.classList.toggle("active", addBubbleMode);
 });
- 
+
 slide.addEventListener("click", (e) => {
   if (addBubbleMode && e.target === slide) {
     const rect = slide.getBoundingClientRect();
@@ -423,7 +564,7 @@ slide.addEventListener("click", (e) => {
     hideToolbar();
   }
 });
- 
+
 function createBubble(x, y) {
   saveState();
   const desc = prompt("Texte de la bulle :") || "";
@@ -437,14 +578,14 @@ function createBubble(x, y) {
   attachItemEvents(bubble);
   renumberBubbles();
 }
- 
+
 function renumberBubbles() {
   slide.querySelectorAll(".bubble-box").forEach((b, i) => {
     const n = b.querySelector(".bubble-num");
-    if (n) n.textContent = i + + 1;
+    if (n) n.textContent = i + 1; // correction (i + + 1 => bug)
   });
 }
- 
+
 // --- FORMATAGE ET COULEURS ---
 textColor.addEventListener("input", (e) => {
   if (!activeTextBox) return;
@@ -454,7 +595,7 @@ textColor.addEventListener("input", (e) => {
     content.style.color = e.target.value;
   }
 });
- 
+
 fontFamily.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
@@ -463,7 +604,7 @@ fontFamily.addEventListener("change", (e) => {
     content.style.fontFamily = e.target.value;
   }
 });
- 
+
 fontSize.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
@@ -472,45 +613,45 @@ fontSize.addEventListener("change", (e) => {
     content.style.fontSize = e.target.value;
   }
 });
- 
+
 boldBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("bold", false);
   boldBtn.classList.toggle("active");
 });
- 
+
 italicBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("italic", false);
   italicBtn.classList.toggle("active");
 });
- 
+
 underlineBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("underline", false);
   underlineBtn.classList.toggle("active");
 });
- 
+
 highlightBtn.addEventListener("click", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("backColor", false, highlightColor.value);
 });
- 
+
 highlightColor.addEventListener("input", () => {
   if (!activeTextBox) return;
   saveState();
   document.execCommand("backColor", false, highlightColor.value);
 });
- 
+
 // Gestionnaire pour la couleur des formes dans la barre latérale
 if (shapeColorPicker) {
   shapeColorPicker.addEventListener("input", (e) => {
     saveState();
- 
+
     if (state.activeItem) {
       const shapeContent = state.activeItem.querySelector(".shape-content");
       if (shapeContent) {
@@ -521,14 +662,14 @@ if (shapeColorPicker) {
     }
   });
 }
- 
+
 // --- RACCOURCIS ET BOUTONS ---
- 
+
 // Gérer l'ajout d'images
 addImageBtn.addEventListener("click", () => {
   imageInput.click();
 });
- 
+
 imageInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -542,18 +683,18 @@ imageInput.addEventListener("change", (e) => {
   }
   imageInput.value = "";
 });
- 
+
 // --- GESTION DU FOND (ARRIÈRE-PLAN) ---
 bgColorPicker.addEventListener("input", (e) => {
   saveState();
   slide.style.backgroundImage = "none";
   slide.style.backgroundColor = e.target.value;
 });
- 
+
 bgImageBtn.addEventListener("click", () => {
   bgImageInput.click();
 });
- 
+
 bgImageInput.addEventListener("change", () => {
   const file = bgImageInput.files[0];
   if (!file) return;
@@ -566,13 +707,12 @@ bgImageInput.addEventListener("change", () => {
   reader.readAsDataURL(file);
   bgImageInput.value = "";
 });
- 
+
 document.getElementById("undoBtn").onclick = undo;
 document.getElementById("redoBtn").onclick = redo;
- 
+
 window.addEventListener("keydown", (e) => {
   // --- COPY / PASTE ITEMS ---
-  // Ctrl+C : copie l’item sélectionné si on n'est pas en édition texte
   if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
     if (!isEditingText() && state.activeItem) {
       e.preventDefault();
@@ -580,8 +720,7 @@ window.addEventListener("keydown", (e) => {
       return;
     }
   }
- 
-  // Ctrl+X : coupe l’item (copie + supprime)
+
   if (e.ctrlKey && (e.key === "x" || e.key === "X")) {
     if (!isEditingText() && state.activeItem) {
       e.preventDefault();
@@ -594,17 +733,17 @@ window.addEventListener("keydown", (e) => {
       return;
     }
   }
- 
+
   // Ctrl+V : si un item est en clipboard, on le colle en priorité (même si un texte est actif)
   if (e.ctrlKey && (e.key === "v" || e.key === "V")) {
     if (itemClipboard) {
-      e.preventDefault(); // évite de coller du "code" dans une boîte texte
+      e.preventDefault();
       pasteSnapshot(itemClipboard);
       return;
     }
-    // sinon on laisse le collage normal (dans les zones texte)
+    // sinon collage normal (zones texte)
   }
- 
+
   // --- vos raccourcis existants ---
   if (e.ctrlKey && e.key === "z") {
     e.preventDefault();
@@ -614,7 +753,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     redo();
   }
- 
+
   if ((e.key === "Delete" || e.key === "Backspace") && state.activeItem) {
     if (document.activeElement && document.activeElement.isContentEditable) return;
     saveState();
@@ -623,25 +762,27 @@ window.addEventListener("keydown", (e) => {
     state.activeItem = null;
     renumberBubbles();
   }
+
+  // Optionnel : Ctrl + + / Ctrl + - pour zoom slide (sans zoom navigateur) quand éditeur ouvert
+  if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
+    if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "flex") {
+      e.preventDefault();
+      zoomIn();
+    }
+  }
+  if (e.ctrlKey && (e.key === "-" || e.key === "_")) {
+    if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "flex") {
+      e.preventDefault();
+      zoomOut();
+    }
+  }
+  if (e.ctrlKey && (e.key === "0")) {
+    if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "flex") {
+      e.preventDefault();
+      resetZoom();
+    }
+  }
 });
- 
-// --- ZOOM ---
-function applyZoom() {
-  if (slideZoomWrapper) slideZoomWrapper.style.transform = `scale(${editorZoom})`;
-  const z = document.getElementById("editor-zoom-text");
-  if (z) z.textContent = Math.round(editorZoom * 100) + "%";
-}
-function zoomIn() {
-  editorZoom = Math.min(3, editorZoom + 0.1);
-  applyZoom();
-}
-function zoomOut() {
-  editorZoom = Math.max(0.3, editorZoom - 0.1);
-  applyZoom();
-}
-function resetZoom() {
-  editorZoom = 1;
-  applyZoom();
-}
- 
- 
+
+
+
