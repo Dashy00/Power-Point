@@ -517,10 +517,15 @@ if(btnSaveCondition) {
 }
 
 // =================================================================
-// 4. SAUVEGARDE ET CHARGEMENT
+// 4. SAUVEGARDE ET CHARGEMENT (CORRIGÉ POUR LES PORTS)
 // =================================================================
 
 document.getElementById('btn-load').onclick = () => {
+    // Il est préférable de reset le zoom avant le chargement pour des calculs précis
+    state.scale = 1;
+    state.pointX = 0;
+    state.pointY = 0;
+    setTransform();
     document.getElementById('file-upload').click();
 };
 
@@ -570,14 +575,15 @@ function loadProjectFromHTML(htmlContent) {
             createSlide(type, id, pos, content.slideNum);
         });
 
+        // Modification ICI : Utilisation des classes de port sauvegardées
         setTimeout(() => {
             projectData.connections.forEach(conn => {
                 const fromSlide = document.getElementById(conn.from);
                 const toSlide = document.getElementById(conn.to);
                 
                 if (fromSlide && toSlide) {
-                    const fromPort = fromSlide.querySelector('.port.right') || fromSlide.querySelector('.port');
-                    const toPort = toSlide.querySelector('.port.left') || toSlide.querySelector('.port');
+                    const fromPort = fromSlide.querySelector('.port.' + (conn.fromPortClass || 'right'));
+                    const toPort = toSlide.querySelector('.port.' + (conn.toPortClass || 'left'));
 
                     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     line.setAttribute("stroke", "#333");
@@ -585,21 +591,19 @@ function loadProjectFromHTML(htmlContent) {
                     line.setAttribute("marker-end", "url(#arrow-end)");
                     if(conn.type === 'double') line.setAttribute("marker-start", "url(#arrow-start)");
 
-                    const start = getPortCenter(fromPort);
-                    const end = getPortCenter(toPort);
-                    line.setAttribute("x1", start.x);
-                    line.setAttribute("y1", start.y);
-                    line.setAttribute("x2", end.x);
-                    line.setAttribute("y2", end.y);
-
                     connectionsLayer.appendChild(line);
                     createConnectionObject(line, conn.from, conn.to, fromPort, toPort, conn.type);
                 }
             });
 
+            // Forcer le recalcul visuel une fois que le DOM est stable
+            requestAnimationFrame(() => {
+                updateConnections();
+            });
+
             if(state.startSlideId) setAsStartNode(state.startSlideId);
 
-        }, 50);
+        }, 100);
 
         alert("Projet chargé !");
 
@@ -813,7 +817,7 @@ function goToSlideWithTransition(targetId) {
 }
 
 // =================================================================
-// 6. EXPORT (GÉNÉRER HTML)
+// 6. EXPORT (GÉNÉRER HTML) - CORRIGÉ POUR LES PORTS
 // =================================================================
 
 document.getElementById('btn-generate').onclick = () => {
@@ -831,10 +835,17 @@ function generateStandaloneHTML() {
         nodePositions[slide.id] = { left: slide.style.left, top: slide.style.top };
     });
 
+    // Modification ICI : Sauvegarde des classes de ports spécifiques
     const appState = {
-        version: "1.2",
+        version: "1.3",
         slides: state.slidesContent,
-        connections: state.connections.map(c => ({ from: c.fromId, to: c.toId, type: c.type })),
+        connections: state.connections.map(c => ({ 
+            from: c.fromId, 
+            to: c.toId, 
+            type: c.type,
+            fromPortClass: c.fromPort.classList[1], // ex: 'top', 'right'...
+            toPortClass: c.toPort.classList[1]
+        })),
         positions: nodePositions,
         startId: state.startSlideId,
         slideCount: state.slideCount
