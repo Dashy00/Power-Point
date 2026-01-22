@@ -190,20 +190,86 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 
 .slide.fin { border-color: #3e2723; color: #3e2723; background-color: #efebe9; }
 
+/* --- BLOC CONDITION (NOUVEAU DESIGN) --- */
 .slide.condition {
-    width: 100px; height: 80px;
-    background: #fff3e0; border: 2px dashed #f39c12; border-radius: 15px;  
-    color: #e67e22; font-weight: bold; font-size: 14px;
-    box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+    /* Taille flexible */
+    width: auto;         
+    min-width: 140px;
+    max-width: 200px;
+    height: auto;
+    min-height: 80px;
+    
+    background: #fff8e1;  
+    border: 2px dashed #f39c12; 
+    border-radius: 12px;  
+    color: #e67e22;
+    box-shadow: 0 4px 6px rgba(243, 156, 18, 0.15);
     z-index: 2;
+    
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
 }
+
 .slide.condition .slide-preview-wrapper { display: none; }
+
 .slide.condition .slide-info-overlay {
-    background: transparent; border: none; font-size: 16px;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 100%; text-align: center;
+    position: relative;
+    background: transparent; 
+    border: none; 
+    top: auto; left: auto; 
+    transform: none;
+    width: 100%; 
+    height: 100%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
-.slide.condition:hover { background: #ffe0b2; border-color: #d35400; }
+
+/* Styles internes pour le tableau de bord */
+.cond-header {
+    background: #f39c12;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 4px 8px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cond-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #d35400;
+}
+
+.cond-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.3;
+    text-align: left;
+}
+
+.cond-icon {
+    font-size: 14px;
+    min-width: 18px;
+}
+
+.cond-text {
+    word-break: break-word;
+}
+
+.slide.condition:hover { 
+    background: #fff; 
+    border-color: #e67e22;
+    box-shadow: 0 6px 12px rgba(230, 126, 34, 0.25);
+}
 
 .slide.start-node {
     border: 3px solid #fbc02d !important;

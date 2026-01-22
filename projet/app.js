@@ -481,6 +481,8 @@ if(btnCancelCondition) {
 
 const btnSaveCondition = document.getElementById('btn-save-condition');
 if(btnSaveCondition) {
+    const btnSaveCondition = document.getElementById('btn-save-condition');
+if(btnSaveCondition) {
     btnSaveCondition.onclick = () => {
         if (!currentConditionId) return;
         
@@ -491,6 +493,7 @@ if(btnSaveCondition) {
         const timeDuration = parseInt(timeDurationInput.value) || 0;
         const isOneTime = chkOneTime ? chkOneTime.checked : false;
 
+        // 1. Mise à jour des données (Logique)
         if (!state.slidesContent[currentConditionId]) {
             state.slidesContent[currentConditionId] = {};
         }
@@ -507,20 +510,70 @@ if(btnSaveCondition) {
             delete state.slidesContent[currentConditionId].timeCondition;
         }
         
+        // 2. Génération du HTML Visuel (Tableau de bord)
         const slideNode = document.getElementById(currentConditionId);
         if(slideNode) {
             const info = slideNode.querySelector('.slide-info-overlay');
-            let label = `❓`;
-            if (requiredIds.length > 0) label += ` (V:${requiredIds.length})`;
-            if (timeTarget && timeDuration > 0) label += ` (⏱️)`;
-            if (isOneTime) label += ` (1️⃣)`; 
             
-            if(info) info.innerHTML = `<span style="font-size:18px;">${label}</span>`;
+            // On construit le HTML interne
+            let htmlInner = `<div class="cond-header">Condition</div><div class="cond-body">`;
+            let hasContent = false;
+
+            // A. Règles de Visite
+            if (requiredIds.length > 0) {
+                // On récupère les numéros des diapositives au lieu des IDs
+                const names = requiredIds.map(id => {
+                    const sData = state.slidesContent[id];
+                    return sData ? (sData.slideNum || "Inconnu") : "?";
+                }).join(", ");
+
+                htmlInner += `
+                    <div class="cond-row">
+                        <span class="cond-icon">👁️</span>
+                        <span class="cond-text">Voir : <b>Diapo ${names}</b></span>
+                    </div>`;
+                hasContent = true;
+            }
+
+            // B. Règle de Temps
+            if (timeTarget && timeDuration > 0) {
+                const tData = state.slidesContent[timeTarget];
+                const tNum = tData ? (tData.slideNum || "?") : "?";
+                htmlInner += `
+                    <div class="cond-row">
+                        <span class="cond-icon">⏱️</span>
+                        <span class="cond-text">Diapo <b>${tNum}</b> > ${timeDuration}s</span>
+                    </div>`;
+                hasContent = true;
+            }
+
+            // C. Passage Unique
+            if (isOneTime) {
+                htmlInner += `
+                    <div class="cond-row">
+                        <span class="cond-icon">1️⃣</span>
+                        <span class="cond-text">Passage unique</span>
+                    </div>`;
+                hasContent = true;
+            }
+
+            // D. Si vide (non configuré)
+            if (!hasContent) {
+                htmlInner += `
+                    <div class="cond-row" style="opacity:0.6; font-style:italic;">
+                        <span class="cond-text">Aucune règle</span>
+                    </div>`;
+            }
+
+            htmlInner += `</div>`; // Fin cond-body
+            
+            if(info) info.innerHTML = htmlInner;
         }
 
         conditionOverlay.style.display = "none";
         currentConditionId = null;
     };
+}
 }
 
 // =================================================================
