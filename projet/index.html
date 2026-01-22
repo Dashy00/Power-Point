@@ -31,7 +31,7 @@
             </div>
  
             <div class="sidebar-item set-start" id="btn-set-start">
-                <span class="icon-text">🏴</span>
+                <span class="icon-text">🚩</span>
                 <span class="label">Définir comme<br>Début</span>
             </div>
            
@@ -172,39 +172,56 @@
             </div>
         </div>
     </div>
+   
     <div id="condition-overlay" class="editor-overlay" style="display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
-    <div class="condition-modal" style="width: 500px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Segoe UI', sans-serif;">
-       
-        <div style="background: #34495e; padding: 15px; text-align: center; border-bottom: 3px solid #f1c40f;">
-            <h2 style="color: #f1c40f; margin: 0; font-weight: normal; letter-spacing: 1px;">Condition</h2>
-        </div>
- 
-        <div style="padding: 20px; background: #2c3e50;">
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #5d6d7e; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                <span style="color: white; font-weight: bold;">Avoir visité :</span>
-                <span style="color: #d5d8dc; font-size: 14px;">Cochez les diapositives requises</span>
-                <span style="color: white;">▼</span>
+        <div class="condition-modal" style="width: 500px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Segoe UI', sans-serif;">
+            
+            <div style="background: #34495e; padding: 15px; text-align: center; border-bottom: 3px solid #f1c40f;">
+                <h2 style="color: #f1c40f; margin: 0; font-weight: normal; letter-spacing: 1px;">Configuration Condition</h2>
             </div>
- 
-            <div id="condition-list" style="max-height: 250px; overflow-y: auto; background: #34495e; padding: 5px; border-radius: 4px;">
+
+            <div style="padding: 20px; background: #2c3e50;">
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #f1c40f; margin-bottom: 10px; border-bottom: 1px solid #5d6d7e; padding-bottom: 5px;">1. Diapositives à visiter</h4>
+                    <div id="condition-list" style="max-height: 150px; overflow-y: auto; background: #34495e; padding: 5px; border-radius: 4px; border: 1px solid #5d6d7e;">
+                        </div>
                 </div>
- 
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button id="btn-cancel-condition" style="background: #c0392b; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                    ↩ Retour
-                </button>
-                <button id="btn-save-condition" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                    💾 Sauvegarder
-                </button>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #f1c40f; margin-bottom: 10px; border-bottom: 1px solid #5d6d7e; padding-bottom: 5px;">2. Temps minimum requis</h4>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="time-slide-select" style="flex: 1; padding: 8px; border-radius: 4px; border: none;">
+                            <option value="">-- Aucune contrainte de temps --</option>
+                        </select>
+                        <input type="number" id="time-duration-input" placeholder="Sec." min="0" style="width: 70px; padding: 8px; border-radius: 4px; border: none;">
+                        <span style="color: white;">secondes</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color: #f1c40f; margin-bottom: 10px; border-bottom: 1px solid #5d6d7e; padding-bottom: 5px;">3. Options spéciales</h4>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="chk-one-time" style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="chk-one-time" style="color: white; cursor: pointer;">Passage unique (le bouton disparaît après usage)</label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+                    <button id="btn-cancel-condition" style="background: #c0392b; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Annuler
+                    </button>
+                    <button id="btn-save-condition" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Sauvegarder
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
     <div id="presentation-overlay" class="player-overlay" style="display: none;">
-        <button id="btn-close-player" class="player-close-btn">✕ Quitter</button>
-       
-        <div id="player-stage" class="player-stage">
-            </div>
+        <button id="btn-close-player" class="player-close-btn">Quitter ✕</button>
+        <div id="player-stage" class="player-stage"></div>
     </div>
  
     <script src="globals.js"></script>
@@ -212,4 +229,3 @@
     <script src="app.js"></script>
 </body>
 </html>
- 
