@@ -337,6 +337,26 @@ document.getElementById("btn-close-editor").onclick = () => {
       bgImg: slide.style.backgroundImage,
       slideNum: slideNumberInput ? slideNumberInput.value : "",
     };
+    
+    // Mettre à jour le numéro sur la slide dans la page principale
+    const slideElement = document.getElementById(state.currentEditingId);
+    if (slideElement) {
+      const infoOverlay = slideElement.querySelector(".slide-info-overlay");
+      if (infoOverlay) {
+        const newNum = slideNumberInput ? slideNumberInput.value : "";
+        const type = slideElement.className.includes("condition") ? "condition" : 
+                     slideElement.className.includes("fin") ? "fin" : "normal";
+        
+        if (type === "condition") {
+          infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${newNum}</span>`;
+        } else if (type === "fin") {
+          infoOverlay.innerHTML = "🏁 " + newNum;
+        } else {
+          infoOverlay.innerHTML = newNum;
+        }
+      }
+    }
+    
     if (window.updateNodePreview) window.updateNodePreview(state.currentEditingId);
   }
   editorOverlay.style.display = "none";
