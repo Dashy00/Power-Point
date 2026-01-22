@@ -18,7 +18,7 @@ const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
 const shapeColorPicker = document.getElementById("shapeColorPicker");
-const opacityPicker = document.getElementById("opacityPicker"); // Ajout de la variable pour l'opacité
+const opacityPicker = document.getElementById("opacityPicker");
 
 // Variables d'état pour les manipulations
 let dragging = null,
@@ -193,7 +193,7 @@ function getItemSnapshot(el) {
   const width = el.style.width || style.width || "150px";
   const height = el.style.height || style.height || "50px";
   const transform = el.style.transform || style.transform || "";
-  const opacity = el.style.opacity || style.opacity || "1"; // Snapshot de l'opacité
+  const opacity = el.style.opacity || "1";
 
   const dataset = {};
   Object.keys(el.dataset || {}).forEach((k) => (dataset[k] = el.dataset[k]));
@@ -216,7 +216,7 @@ function pasteSnapshot(snapshot) {
   div.style.width = snapshot.style.width;
   div.style.height = snapshot.style.height;
   div.style.transform = snapshot.style.transform;
-  div.style.opacity = snapshot.style.opacity; // Application de l'opacité
+  div.style.opacity = snapshot.style.opacity;
 
   const leftNum = parseFloat(snapshot.style.left) || 0;
   const topNum = parseFloat(snapshot.style.top) || 0;
@@ -335,7 +335,6 @@ document.getElementById("btn-close-editor").onclick = () => {
 
 // --- LISTE DES DIAPOS LIEES (PANNEAU DROIT) ---
 
-// Fonction récursive pour sauter les conditions et trouver la vraie destination
 function resolveRealTarget(startNodeId, comingFromId) {
     const nodeData = state.slidesContent[startNodeId];
     if (!nodeData) return { id: startNodeId, isThroughCond: false };
@@ -379,11 +378,9 @@ function renderLinkedSlidesPanel() {
         const immediateId = isOutgoing ? connection.toId : connection.fromId;
         const originId = isOutgoing ? connection.fromId : connection.toId;
         
-        // On traverse les conditions pour trouver la destination/source réelle
         const resolved = resolveRealTarget(immediateId, originId);
         const targetData = state.slidesContent[resolved.id] || {};
         
-        // Numérotation basée sur la slide finale
         const displayNum = targetData.slideNum || resolved.id.split('-')[1];
         const isThroughCond = resolved.isThroughCond || (state.slidesContent[immediateId]?.type === 'condition');
         
@@ -401,29 +398,43 @@ function renderLinkedSlidesPanel() {
             </div>
         `;
 
-        card.addEventListener('click', () => {
-            openEditor(resolved.id); // On ouvre la vraie diapositive cible
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditor(resolved.id);
         });
         
         return card;
     };
 
     if (links.outgoing.length > 0) {
-        panel.innerHTML += `<div class="sidebar-section-title">Connexions Sortantes</div>`;
+        const titleOut = document.createElement('div');
+        titleOut.className = 'sidebar-section-title';
+        titleOut.textContent = 'Connexions Sortantes';
+        panel.appendChild(titleOut);
         links.outgoing.forEach(conn => panel.appendChild(createLinkCard(conn, true)));
     }
 
     if (links.incoming.length > 0) {
-        panel.innerHTML += `<div class="sidebar-section-title" style="margin-top:20px;">Connexions Entrantes</div>`;
+        const titleIn = document.createElement('div');
+        titleIn.className = 'sidebar-section-title';
+        titleIn.style.marginTop = "20px";
+        titleIn.textContent = 'Connexions Entrantes';
+        panel.appendChild(titleIn);
         links.incoming.forEach(conn => panel.appendChild(createLinkCard(conn, false)));
     }
 
     if (links.outgoing.length === 0 && links.incoming.length === 0) {
-        panel.innerHTML += `
-            <div style="padding: 20px; text-align: center; border: 2px dashed #dcd7c9; border-radius: 8px; color: #8d6e63;">
-                <span style="font-size: 24px; display:block; margin-bottom:5px;">🔗</span>
-                <span style="font-size: 13px;">Aucune connexion.</span>
-            </div>`;
+        const empty = document.createElement('div');
+        empty.style.padding = "20px";
+        empty.style.textAlign = "center";
+        empty.style.border = "2px dashed #dcd7c9";
+        empty.style.borderRadius = "8px";
+        empty.style.color = "#8d6e63";
+        empty.innerHTML = `
+            <span style="font-size: 24px; display:block; margin-bottom:5px;">🔗</span>
+            <span style="font-size: 13px;">Aucune connexion.</span>
+        `;
+        panel.appendChild(empty);
     }
 }
 
@@ -501,6 +512,10 @@ slide.addEventListener("mousedown", (e) => {
     const rect = dragging.getBoundingClientRect();
     offsetX = (e.clientX - rect.left) / editorZoom;
     offsetY = (e.clientY - rect.top) / editorZoom;
+
+    // MAJ des sliders
+    if (opacityPicker) opacityPicker.value = item.style.opacity || 1;
+
     e.preventDefault();
   }
 });
@@ -741,12 +756,10 @@ const sendToBackBtn = document.getElementById("sendToBackBtn");
 if (bringToFrontBtn) bringToFrontBtn.addEventListener("click", bringToFront);
 if (sendToBackBtn) sendToBackBtn.addEventListener("click", sendToBack);
 
-// --- LOGIQUE COULEUR ET OPACITÉ ---
 if (shapeColorPicker) {
   shapeColorPicker.addEventListener("input", (e) => {
     saveState();
     if (state.activeItem) {
-      // Pour les formes, on cible le contenu, sinon l'élément lui-même (bulle, bouton de lien)
       const shapeContent = state.activeItem.querySelector(".shape-content");
       if (shapeContent) {
         shapeContent.style.backgroundColor = e.target.value;
@@ -757,7 +770,7 @@ if (shapeColorPicker) {
   });
 }
 
-// Nouvel écouteur pour l'opacité
+// Opacité corrigée pour fonctionner sur tout
 if (opacityPicker) {
   opacityPicker.addEventListener("input", (e) => {
     if (state.activeItem) {
