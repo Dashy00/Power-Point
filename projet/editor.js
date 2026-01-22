@@ -18,6 +18,7 @@ const italicBtn = document.getElementById("italicBtn");
 const underlineBtn = document.getElementById("underlineBtn");
 const highlightBtn = document.getElementById("highlightBtn");
 const shapeColorPicker = document.getElementById("shapeColorPicker");
+const opacityPicker = document.getElementById("opacityPicker"); // Ajout de la variable pour l'opacité
 
 // Variables d'état pour les manipulations
 let dragging = null,
@@ -192,6 +193,7 @@ function getItemSnapshot(el) {
   const width = el.style.width || style.width || "150px";
   const height = el.style.height || style.height || "50px";
   const transform = el.style.transform || style.transform || "";
+  const opacity = el.style.opacity || style.opacity || "1"; // Snapshot de l'opacité
 
   const dataset = {};
   Object.keys(el.dataset || {}).forEach((k) => (dataset[k] = el.dataset[k]));
@@ -199,7 +201,7 @@ function getItemSnapshot(el) {
   return {
     className: el.className,
     innerHTML: el.innerHTML,
-    style: { left, top, width, height, transform },
+    style: { left, top, width, height, transform, opacity },
     dataset,
   };
 }
@@ -214,6 +216,7 @@ function pasteSnapshot(snapshot) {
   div.style.width = snapshot.style.width;
   div.style.height = snapshot.style.height;
   div.style.transform = snapshot.style.transform;
+  div.style.opacity = snapshot.style.opacity; // Application de l'opacité
 
   const leftNum = parseFloat(snapshot.style.left) || 0;
   const topNum = parseFloat(snapshot.style.top) || 0;
@@ -738,16 +741,28 @@ const sendToBackBtn = document.getElementById("sendToBackBtn");
 if (bringToFrontBtn) bringToFrontBtn.addEventListener("click", bringToFront);
 if (sendToBackBtn) sendToBackBtn.addEventListener("click", sendToBack);
 
+// --- LOGIQUE COULEUR ET OPACITÉ ---
 if (shapeColorPicker) {
   shapeColorPicker.addEventListener("input", (e) => {
     saveState();
     if (state.activeItem) {
+      // Pour les formes, on cible le contenu, sinon l'élément lui-même (bulle, bouton de lien)
       const shapeContent = state.activeItem.querySelector(".shape-content");
       if (shapeContent) {
         shapeContent.style.backgroundColor = e.target.value;
-      } else if (state.activeItem.classList.contains("bubble-box")) {
+      } else {
         state.activeItem.style.backgroundColor = e.target.value;
       }
+    }
+  });
+}
+
+// Nouvel écouteur pour l'opacité
+if (opacityPicker) {
+  opacityPicker.addEventListener("input", (e) => {
+    if (state.activeItem) {
+      saveState();
+      state.activeItem.style.opacity = e.target.value;
     }
   });
 }
