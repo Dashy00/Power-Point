@@ -43,6 +43,34 @@ let addBubbleBtn = document.getElementById("addBubbleBtn");
 // État global pour les lignes pointillées
 let showLinkLines = true; 
 
+// --- GESTION DE L'UNICITÉ DES NUMÉROS (Feedback Visuel) ---
+if (slideNumberInput) {
+    const checkDuplicate = (val) => {
+        const currentId = state.currentEditingId;
+        return Object.entries(state.slidesContent).some(([id, data]) => {
+            return id !== currentId && 
+                   data.type !== 'condition' && 
+                   String(data.slideNum) === String(val);
+        });
+    };
+
+    slideNumberInput.addEventListener('input', (e) => {
+        const newNum = e.target.value.trim();
+        
+        if (newNum && checkDuplicate(newNum)) {
+            e.target.style.color = "red";
+            e.target.style.borderColor = "red";
+            e.target.style.backgroundColor = "#fff0f0";
+            e.target.title = "Ce numéro est déjà choisi !";
+        } else {
+            e.target.style.color = "#4e342e";
+            e.target.style.borderColor = "#dcd7c9";
+            e.target.style.backgroundColor = "#fdfbf7";
+            e.target.title = "Numéro de la diapositive";
+        }
+    });
+}
+
 // --- ZOOM : UNIQUEMENT LA PAGE (DIAPO) ---
 let slideZoomWrapper = null;
 const overlayWorkspace = document.querySelector(".overlay-workspace") || slide?.parentElement || document.body;
@@ -75,7 +103,6 @@ function initSlideZoomWrapper() {
     if (wsStyle.overflow === "visible") {
       overlayWorkspace.style.overflow = "auto";
     }
-    // Mise à jour des lignes au scroll
     overlayWorkspace.addEventListener("scroll", drawEditorLines);
   }
 
@@ -130,7 +157,6 @@ function applyZoom(keepPoint = false, anchor = null) {
     overlayWorkspace.scrollTop = before.yInWs * ratio - (anchor.clientY - overlayWorkspace.getBoundingClientRect().top);
   }
 
-  // Redessiner après zoom
   drawEditorLines();
 }
 
@@ -246,7 +272,6 @@ function pasteSnapshot(snapshot) {
   state.activeItem = div;
   renumberBubbles();
 
-  // Mise à jour lignes si bouton
   if (div.classList.contains("link-button")) drawEditorLines();
 }
 
@@ -295,6 +320,47 @@ function applyState(stateData) {
   drawEditorLines();
 }
 
+// --- FONCTION DE SAUVEGARDE DE LA DIAPO COURANTE ---
+function saveCurrentSlide() {
+  if (!state.currentEditingId) return;
+
+  // Vérifier si le numéro est valide (pas rouge)
+  let finalNum = slideNumberInput ? slideNumberInput.value : "";
+  if (slideNumberInput && slideNumberInput.style.color === "red") {
+      const originalData = state.slidesContent[state.currentEditingId];
+      finalNum = originalData ? originalData.slideNum : "";
+  }
+
+  // Sauvegarde des données
+  state.slidesContent[state.currentEditingId] = {
+    html: slide.innerHTML,
+    bg: slide.style.backgroundColor,
+    bgImg: slide.style.backgroundImage,
+    slideNum: finalNum,
+  };
+  
+  // Mise à jour visuelle du noeud dans le graphe
+  const slideElement = document.getElementById(state.currentEditingId);
+  if (slideElement) {
+    const infoOverlay = slideElement.querySelector(".slide-info-overlay");
+    if (infoOverlay) {
+      const type = slideElement.className.includes("condition") ? "condition" : 
+                   slideElement.className.includes("fin") ? "fin" : "normal";
+      
+      if (type === "condition") {
+        infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span>`;
+      } else if (type === "fin") {
+        infoOverlay.innerHTML = "🏁 " + finalNum;
+      } else {
+        infoOverlay.innerHTML = finalNum;
+      }
+    }
+  }
+  
+  // Mise à jour de l'aperçu
+  if (window.updateNodePreview) window.updateNodePreview(state.currentEditingId);
+}
+
 // --- OUVERTURE / FERMETURE ---
 function openEditor(slideId) {
   state.currentEditingId = slideId;
@@ -303,7 +369,13 @@ function openEditor(slideId) {
   slide.style.backgroundColor = data.bg;
   slide.style.backgroundImage = data.bgImg || "";
   bgColorPicker.value = data.bg || "#ffffff";
-  if (slideNumberInput) slideNumberInput.value = data.slideNum || "";
+  if (slideNumberInput) {
+      slideNumberInput.value = data.slideNum || "";
+      slideNumberInput.style.color = "#4e342e";
+      slideNumberInput.style.borderColor = "#dcd7c9";
+      slideNumberInput.style.backgroundColor = "#fdfbf7";
+      slideNumberInput.title = "Numéro de la diapositive";
+  }
 
   historyStack = [];
   redoStack = [];
@@ -317,34 +389,9 @@ function openEditor(slideId) {
 }
 
 document.getElementById("btn-close-editor").onclick = () => {
-  if (state.currentEditingId) {
-    state.slidesContent[state.currentEditingId] = {
-      html: slide.innerHTML,
-      bg: slide.style.backgroundColor,
-      bgImg: slide.style.backgroundImage,
-      slideNum: slideNumberInput ? slideNumberInput.value : "",
-    };
-    
-    const slideElement = document.getElementById(state.currentEditingId);
-    if (slideElement) {
-      const infoOverlay = slideElement.querySelector(".slide-info-overlay");
-      if (infoOverlay) {
-        const newNum = slideNumberInput ? slideNumberInput.value : "";
-        const type = slideElement.className.includes("condition") ? "condition" : 
-                     slideElement.className.includes("fin") ? "fin" : "normal";
-        
-        if (type === "condition") {
-          infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span>`;
-        } else if (type === "fin") {
-          infoOverlay.innerHTML = "🏁 " + newNum;
-        } else {
-          infoOverlay.innerHTML = newNum;
-        }
-      }
-    }
-    
-    if (window.updateNodePreview) window.updateNodePreview(state.currentEditingId);
-  }
+  // Sauvegarder avant de quitter
+  saveCurrentSlide();
+  
   editorOverlay.style.display = "none";
   state.currentEditingId = null;
   if(editorLinesLayer) editorLinesLayer.innerHTML = '';
@@ -431,6 +478,7 @@ function renderLinkedSlidesPanel() {
 
         card.addEventListener('click', (e) => {
             e.stopPropagation();
+            saveCurrentSlide(); // <--- SAUVEGARDE AVANT CHANGEMENT
             openEditor(resolved.id);
         });
         
@@ -629,17 +677,14 @@ function handleLinkDelete(div) {
   if (!state.currentEditingId) return;
   const targetId = div.dataset.target;
 
-  // 1. Identifier les connexions à supprimer
   const connsToDelete = state.connections.filter(c => 
     c.fromId === state.currentEditingId && c.toId === targetId
   );
 
-  // 2. Supprimer visuellement les lignes (SVG) du DOM
   connsToDelete.forEach(conn => {
     if (conn.line) conn.line.remove();
   });
 
-  // 3. Mettre à jour l'état
   state.connections = state.connections.filter(c => 
     !(c.fromId === state.currentEditingId && c.toId === targetId)
   );
