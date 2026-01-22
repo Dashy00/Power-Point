@@ -667,6 +667,30 @@ highlightColor.addEventListener("input", () => {
   document.execCommand("backColor", false, highlightColor.value);
 });
 
+// --- GESTION DE L'ORDRE D'EMPILEMENT (Z-INDEX) ---
+function bringToFront() {
+  if (!state.activeItem) return;
+  saveState();
+  const allItems = slide.querySelectorAll(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button");
+  let maxZ = 0;
+  allItems.forEach(item => {
+    const z = parseInt(window.getComputedStyle(item).zIndex) || 0;
+    maxZ = Math.max(maxZ, z);
+  });
+  state.activeItem.style.zIndex = maxZ + 1;
+}
+
+function sendToBack() {
+  if (!state.activeItem) return;
+  saveState();
+  state.activeItem.style.zIndex = 0;
+}
+
+const bringToFrontBtn = document.getElementById("bringToFrontBtn");
+const sendToBackBtn = document.getElementById("sendToBackBtn");
+if (bringToFrontBtn) bringToFrontBtn.addEventListener("click", bringToFront);
+if (sendToBackBtn) sendToBackBtn.addEventListener("click", sendToBack);
+
 // Gestionnaire pour la couleur des formes dans la barre latérale
 if (shapeColorPicker) {
   shapeColorPicker.addEventListener("input", (e) => {
