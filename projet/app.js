@@ -1,11 +1,11 @@
 // =================================================================
-// GESTION DU GRAPHE (ZOOM, PAN, SLIDES, FLÈCHES, SAUVEGARDE)
+// 1. GESTION DU GRAPHE (ZOOM, PAN, SELECTION)
 // =================================================================
 
-// --- 1. ZOOM & PAN ---
+// --- ZOOM & PAN ---
 function setTransform() {
   canvas.style.transform = `translate(${state.pointX}px, ${state.pointY}px) scale(${state.scale})`;
-  zoomText.innerText = Math.round(state.scale * 100) + "%";
+  if (zoomText) zoomText.innerText = Math.round(state.scale * 100) + "%";
 }
 document.getElementById("btn-zoom-in").onclick = () => { state.scale = Math.min(state.scale + 0.1, 3); setTransform(); };
 document.getElementById("btn-zoom-out").onclick = () => { state.scale = Math.max(state.scale - 0.1, 0.2); setTransform(); };
@@ -69,7 +69,31 @@ viewport.addEventListener("mouseup", () => {
   }
 });
 
-// --- GESTION DU BOUTON "DÉFINIR COMME DÉBUT" ---
+// --- GESTION DE LA SÉLECTION ---
+function deselectAll() {
+    if (state.selectedSlide) {
+        state.selectedSlide.classList.remove('selected');
+        state.selectedSlide = null;
+    }
+    if (state.selectedConnection) {
+        state.selectedConnection.line.classList.remove('selected');
+        state.selectedConnection = null;
+    }
+}
+
+function selectSlide(slide) {
+    deselectAll();
+    state.selectedSlide = slide;
+    slide.classList.add('selected');
+}
+
+function selectConnection(connObj) {
+    deselectAll();
+    state.selectedConnection = connObj;
+    connObj.line.classList.add('selected');
+}
+
+// --- DÉFINIR LE DÉBUT ---
 document.getElementById("btn-set-start").onclick = () => {
     if (!state.selectedSlide) {
         alert("Veuillez sélectionner une diapositive d'abord.");
@@ -98,64 +122,14 @@ function setAsStartNode(id) {
     }
 }
 
-// --- GESTION DE LA SÉLECTION ---
-function deselectAll() {
-    if (state.selectedSlide) {
-        state.selectedSlide.classList.remove('selected');
-        state.selectedSlide = null;
-    }
-    if (state.selectedConnection) {
-        state.selectedConnection.line.classList.remove('selected');
-        state.selectedConnection = null;
-    }
-}
+// =================================================================
+// 2. CRÉATION ET GESTION DES SLIDES & CONNEXIONS
+// =================================================================
 
-function selectSlide(slide) {
-    deselectAll();
-    state.selectedSlide = slide;
-    slide.classList.add('selected');
-}
-
-function selectConnection(connObj) {
-    deselectAll();
-    state.selectedConnection = connObj;
-    connObj.line.classList.add('selected');
-}
-
-// --- BOUTONS D'ACTION ---
+// --- CRÉATION ---
 document.getElementById("btn-new-slide").onclick = () => createSlide("default");
 document.getElementById("btn-condition").onclick = () => createSlide("condition");
 document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
-
-// --- SUPPRESSION INTELLIGENTE ---
-document.getElementById("btn-delete").onclick = () => {
-    if (state.selectedSlide) {
-        const deletedId = state.selectedSlide.id;
-        if (state.startSlideId === deletedId) state.startSlideId = null;
-
-        state.connections = state.connections.filter(c => {
-            if (c.fromId === deletedId || c.toId === deletedId) {
-                c.line.remove(); 
-                if (c.toId === deletedId) removeLinkButtonFromSlide(c.fromId, deletedId);
-                if (c.fromId === deletedId && c.type === 'double') removeLinkButtonFromSlide(c.toId, deletedId);
-                return false;
-            }
-            return true;
-        });
-
-        if (state.slidesContent[deletedId]) delete state.slidesContent[deletedId];
-        state.selectedSlide.remove();
-        state.selectedSlide = null;
-    } 
-    else if (state.selectedConnection) {
-        const conn = state.selectedConnection;
-        removeLinkButtonFromSlide(conn.fromId, conn.toId);
-        if (conn.type === 'double') removeLinkButtonFromSlide(conn.toId, conn.fromId);
-        conn.line.remove();
-        state.connections = state.connections.filter(c => c !== conn);
-        state.selectedConnection = null;
-    }
-};
 
 function getNextAvailableNumber() {
     const existingNumbers = new Set();
@@ -167,7 +141,6 @@ function getNextAvailableNumber() {
     return num.toString();
 }
 
-// --- CREATION SLIDES ---
 function createSlide(type, savedId = null, savedPos = null, savedNum = null) {
   if(!savedId) state.slideCount++;
   
@@ -257,6 +230,12 @@ window.updateNodePreview = function (id) {
   const wrapper = document.getElementById(`preview-${id}`);
   const data = state.slidesContent[id];
   if (!wrapper || !data) return;
+  
+  if (data.type === 'condition') {
+      wrapper.innerHTML = "";
+      return;
+  }
+  
   wrapper.innerHTML = data.html || "";
   wrapper.style.backgroundColor = data.bg || "#ffffff";
   wrapper.style.backgroundImage = data.bgImg || "none";
@@ -319,15 +298,18 @@ function createConnectionObject(lineElement, fromId, toId, fromPort, toPort, typ
         selectConnection(connectionObj);
     });
 
+    // Double-clic pour changer le type de flèche (Aller-Retour)
     lineElement.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
         
         if (start) {
+            // Devient Simple
             this.removeAttribute("marker-start");
             connectionObj.type = 'simple';
             removeLinkButtonFromSlide(connectionObj.toId, connectionObj.fromId);
         } else {
+            // Devient Double
             this.setAttribute("marker-start", "url(#arrow-start)");
             connectionObj.type = 'double';
             addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
@@ -357,7 +339,7 @@ function updateConnections() {
   });
 }
 
-// --- GESTION BOUTONS LIEN ---
+// --- BOUTONS LIEN ---
 function addLinkButtonToSlide(sourceId, targetId) {
     let slideData = state.slidesContent[sourceId];
     if (!slideData) {
@@ -395,24 +377,68 @@ function removeLinkButtonFromSlide(sourceId, targetId) {
     }
 }
 
+// --- SUPPRESSION ---
+document.getElementById("btn-delete").onclick = () => {
+    if (state.selectedSlide) {
+        const deletedId = state.selectedSlide.id;
+        if (state.startSlideId === deletedId) state.startSlideId = null;
+
+        state.connections = state.connections.filter(c => {
+            if (c.fromId === deletedId || c.toId === deletedId) {
+                c.line.remove(); 
+                if (c.toId === deletedId) removeLinkButtonFromSlide(c.fromId, deletedId);
+                if (c.fromId === deletedId && c.type === 'double') removeLinkButtonFromSlide(c.toId, deletedId);
+                return false;
+            }
+            return true;
+        });
+
+        if (state.slidesContent[deletedId]) delete state.slidesContent[deletedId];
+        state.selectedSlide.remove();
+        state.selectedSlide = null;
+    } 
+    else if (state.selectedConnection) {
+        const conn = state.selectedConnection;
+        removeLinkButtonFromSlide(conn.fromId, conn.toId);
+        if (conn.type === 'double') removeLinkButtonFromSlide(conn.toId, conn.fromId);
+        conn.line.remove();
+        state.connections = state.connections.filter(c => c !== conn);
+        state.selectedConnection = null;
+    }
+};
+
 // =================================================================
-// --- GESTION DES MODALES ---
+// 3. CONFIGURATION DES CONDITIONS (MODALE)
 // =================================================================
 
 const conditionOverlay = document.getElementById('condition-overlay');
 const conditionList = document.getElementById('condition-list');
+const timeSlideSelect = document.getElementById('time-slide-select'); 
+const timeDurationInput = document.getElementById('time-duration-input');
+const chkOneTime = document.getElementById('chk-one-time'); // Passage unique
 let currentConditionId = null;
 
 function openConditionModal(slideId) {
     currentConditionId = slideId;
     conditionList.innerHTML = ""; 
+    timeSlideSelect.innerHTML = '<option value="">-- Aucune contrainte de temps --</option>'; 
     
-    const savedReqs = state.slidesContent[slideId].requiredSlides || [];
+    const data = state.slidesContent[slideId] || {};
+    const savedReqs = data.requiredSlides || [];
+    const savedTime = data.timeCondition || { slideId: "", duration: 0 }; 
+    const isOneTime = data.oneTimeOnly || false;
 
+    // Réinitialiser la checkbox passage unique
+    if(chkOneTime) chkOneTime.checked = isOneTime;
+
+    // Création de la liste des slides disponibles
     Object.keys(state.slidesContent).forEach(otherId => {
         if (otherId === slideId) return;
-        const data = state.slidesContent[otherId];
-        const labelText = `Diapo ${data.slideNum || "?"} `; 
+
+        const otherData = state.slidesContent[otherId];
+        const labelText = `Diapo ${otherData.slideNum || "?"}`; 
+
+        // 1. Visites
         const div = document.createElement("div");
         div.className = "condition-item";
         div.innerHTML = `
@@ -420,8 +446,16 @@ function openConditionModal(slideId) {
             <input type="checkbox" id="chk-${otherId}" value="${otherId}" ${savedReqs.includes(otherId) ? "checked" : ""}>
         `;
         conditionList.appendChild(div);
+
+        // 2. Temps
+        const option = document.createElement("option");
+        option.value = otherId;
+        option.innerText = labelText;
+        if (savedTime.slideId === otherId) option.selected = true;
+        timeSlideSelect.appendChild(option);
     });
 
+    timeDurationInput.value = savedTime.duration > 0 ? savedTime.duration : "";
     if(conditionOverlay) conditionOverlay.style.display = "flex";
 }
 
@@ -438,15 +472,43 @@ if(btnSaveCondition) {
     btnSaveCondition.onclick = () => {
         if (!currentConditionId) return;
         
+        // 1. Visites
         const checkboxes = conditionList.querySelectorAll('input[type="checkbox"]:checked');
         const requiredIds = Array.from(checkboxes).map(cb => cb.value);
         
-        state.slidesContent[currentConditionId].requiredSlides = requiredIds;
+        // 2. Temps
+        const timeTarget = timeSlideSelect.value;
+        const timeDuration = parseInt(timeDurationInput.value) || 0;
+
+        // 3. Passage Unique
+        const isOneTime = chkOneTime ? chkOneTime.checked : false;
+
+        if (!state.slidesContent[currentConditionId]) {
+            state.slidesContent[currentConditionId] = {};
+        }
         
+        state.slidesContent[currentConditionId].requiredSlides = requiredIds;
+        state.slidesContent[currentConditionId].oneTimeOnly = isOneTime;
+        
+        if (timeTarget && timeDuration > 0) {
+            state.slidesContent[currentConditionId].timeCondition = {
+                slideId: timeTarget,
+                duration: timeDuration
+            };
+        } else {
+            delete state.slidesContent[currentConditionId].timeCondition;
+        }
+        
+        // Mise à jour visuelle (Label sur le graphe)
         const slideNode = document.getElementById(currentConditionId);
         if(slideNode) {
             const info = slideNode.querySelector('.slide-info-overlay');
-            if(info) info.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${state.slidesContent[currentConditionId].slideNum} (${requiredIds.length})</span>`;
+            let label = `❓ ${state.slidesContent[currentConditionId].slideNum}`;
+            if (requiredIds.length > 0) label += ` (V:${requiredIds.length})`;
+            if (timeTarget && timeDuration > 0) label += ` (⏱️)`;
+            if (isOneTime) label += ` (1️⃣)`; 
+            
+            if(info) info.innerHTML = `<span style="font-size:18px;">${label}</span>`;
         }
 
         conditionOverlay.style.display = "none";
@@ -455,7 +517,7 @@ if(btnSaveCondition) {
 }
 
 // =================================================================
-// --- SAUVEGARDE ET CHARGEMENT ---
+// 4. SAUVEGARDE ET CHARGEMENT
 // =================================================================
 
 document.getElementById('btn-load').onclick = () => {
@@ -546,37 +608,61 @@ function loadProjectFromHTML(htmlContent) {
     }
 }
 
-// -----------------------------------------------------------------
-// --- LOGIQUE DU LECTEUR (MODE AFFICHER & GÉNÉRER) ---
-// -----------------------------------------------------------------
+// =================================================================
+// 5. LECTEUR (PLAYER ENGINE)
+// =================================================================
 
 const playerOverlay = document.getElementById('presentation-overlay');
 const playerStage = document.getElementById('player-stage');
 const btnClosePlayer = document.getElementById('btn-close-player');
-let visitedSlides = new Set(); 
 
-// --- AFFICHER ---
+// Variables de session de jeu
+let visitedSlides = new Set(); 
+let visitedDurations = {}; 
+let currentSlideStartTime = 0;
+let currentPlayingSlideId = null;
+
+// --- DÉMARRER ---
 document.getElementById('btn-play').onclick = () => {
     if (!state.startSlideId) {
         alert("Veuillez définir une diapositive de départ (drapeau 🚩).");
         return;
     }
     
+    // Reset session
     visitedSlides.clear();
-    loadSlideInPlayer(state.startSlideId);
+    visitedDurations = {};
     
     playerOverlay.style.display = 'flex';
-
-    if (playerOverlay.requestFullscreen) {
-        playerOverlay.requestFullscreen();
-    } else if (playerOverlay.webkitRequestFullscreen) { 
-        playerOverlay.webkitRequestFullscreen();
-    } else if (playerOverlay.msRequestFullscreen) { 
-        playerOverlay.msRequestFullscreen();
-    }
+    loadSlideInPlayer(state.startSlideId);
     
+    if (playerOverlay.requestFullscreen) playerOverlay.requestFullscreen();
     fitStageToScreen();
 };
+
+// --- UTILITAIRES PLAYER ---
+function fitStageToScreen() {
+    const stageWidth = 960;
+    const stageHeight = 540;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const scale = Math.min(windowWidth / stageWidth, windowHeight / stageHeight);
+    playerStage.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener('resize', () => {
+    if (playerOverlay.style.display === 'flex') fitStageToScreen();
+});
+
+if (btnClosePlayer) {
+    btnClosePlayer.onclick = () => {
+        playerOverlay.style.display = 'none';
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => console.log(err));
+        }
+        currentPlayingSlideId = null;
+    };
+}
 
 document.addEventListener('fullscreenchange', exitHandler);
 document.addEventListener('webkitfullscreenchange', exitHandler);
@@ -584,98 +670,141 @@ document.addEventListener('mozfullscreenchange', exitHandler);
 document.addEventListener('MSFullscreenChange', exitHandler);
 
 function exitHandler() {
-    if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-        playerOverlay.style.display = 'none';
-        playerStage.innerHTML = '';
-        playerStage.style.transform = 'scale(1)';
-    }
+    // Actions à la sortie du plein écran si nécessaire
 }
 
-btnClosePlayer.onclick = () => {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else {
-        playerOverlay.style.display = 'none';
-        playerStage.innerHTML = '';
-    }
-};
+// --- NOTIFICATION VISUELLE INTERNE ---
+function showPlayerNotification(msg) {
+    const notif = document.createElement('div');
+    notif.style.position = 'absolute';
+    notif.style.top = '20px';
+    notif.style.left = '50%';
+    notif.style.transform = 'translateX(-50%)';
+    notif.style.background = 'rgba(192, 57, 43, 0.95)'; // Rouge alerte
+    notif.style.color = '#fff';
+    notif.style.padding = '10px 20px';
+    notif.style.borderRadius = '5px';
+    notif.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+    notif.style.zIndex = '9999';
+    notif.style.fontWeight = 'bold';
+    notif.style.fontSize = '16px';
+    notif.style.pointerEvents = 'none';
+    notif.innerHTML = msg.replace(/\n/g, '<br>');
 
-function fitStageToScreen() {
-    const margin = 0; 
-    const availableWidth = window.innerWidth;
-    const availableHeight = window.innerHeight;
-    const scaleX = availableWidth / 960;
-    const scaleY = availableHeight / 540;
-    const scale = Math.min(scaleX, scaleY); 
-    
-    playerStage.style.transform = `scale(${scale})`;
+    playerStage.appendChild(notif);
+
+    setTimeout(() => {
+        notif.style.transition = "opacity 0.5s";
+        notif.style.opacity = "0";
+        setTimeout(() => notif.remove(), 500);
+    }, 3000);
 }
 
-window.addEventListener('resize', () => {
-    if(playerOverlay.style.display === 'flex') fitStageToScreen();
-});
-
-// --- MOTEUR DE NAVIGATION INTELLIGENT ---
+// --- LOGIQUE PRINCIPALE DU JEU ---
 function loadSlideInPlayer(slideId) {
     const data = state.slidesContent[slideId];
     if (!data) return;
 
+    currentPlayingSlideId = slideId;
+    currentSlideStartTime = Date.now();
+    
     visitedSlides.add(slideId);
+    if (!visitedDurations[slideId]) visitedDurations[slideId] = 0;
 
-    // Rendu visuel
+    // Rendu
     playerStage.innerHTML = data.html;
     playerStage.style.backgroundColor = data.bg || '#ffffff';
     playerStage.style.backgroundImage = data.bgImg || 'none';
     playerStage.style.backgroundSize = 'cover';
 
-    // *** MODIF : DESACTIVER L'EDITION ***
-    playerStage.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-    playerStage.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-
-    // 1. DÉSACTIVATION DES BOUTONS NON VALIDES
     const links = playerStage.querySelectorAll('.link-button');
     links.forEach(link => {
         const targetId = link.dataset.target;
-        const targetNodeElement = document.getElementById(targetId);
-        
-        // Si la cible est une condition
-        if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
-            const targetData = state.slidesContent[targetId];
-            const requiredIds = targetData.requiredSlides || [];
-            
-            // Vérifier si conditions remplies
-            const missing = requiredIds.filter(reqId => !visitedSlides.has(reqId));
-            
-            if (missing.length > 0) {
-                // Condition non remplie : On désactive le bouton
-                link.classList.add('disabled');
+        const targetData = state.slidesContent[targetId];
+
+        // --- GESTION PASSAGE UNIQUE (Masquer bouton si déjà utilisé) ---
+        if (targetData && targetData.type === 'condition' && targetData.oneTimeOnly) {
+            // Trouver la sortie de cette condition
+            const outgoingConn = state.connections.find(c => {
+                const isConnected = (c.fromId === targetId || c.toId === targetId);
+                const otherEnd = (c.fromId === targetId) ? c.toId : c.fromId;
+                return isConnected && otherEnd !== slideId;
+            });
+
+            // Si la destination a déjà été visitée, on cache le bouton
+            if (outgoingConn) {
+                const destId = (outgoingConn.fromId === targetId) ? outgoingConn.toId : outgoingConn.fromId;
+                if (visitedSlides.has(destId)) {
+                    link.style.display = 'none';
+                }
             }
         }
-    });
+        // ----------------------------------------------------------------
 
-    // 2. GESTION DU CLIC
-    links.forEach(link => {
         link.onclick = (e) => {
             e.stopPropagation();
             
-            if (link.classList.contains('disabled')) return; // Inactif, pas d'alerte
-
-            const targetId = link.dataset.target;
-            const targetNodeElement = document.getElementById(targetId);
-
-            // Si on clique vers une condition (valide)
-            if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
-                // SAUT DE LA SLIDE CONDITION
-                const outgoingConn = state.connections.find(c => c.fromId === targetId);
-                if (outgoingConn) {
-                    goToSlideWithTransition(outgoingConn.toId);
-                } else {
-                    alert("Erreur : Condition sans sortie.");
-                }
-                return;
+            // Calcul du temps passé
+            const now = Date.now();
+            const timeSpentSeconds = (now - currentSlideStartTime) / 1000;
+            if (currentPlayingSlideId) {
+                visitedDurations[currentPlayingSlideId] += timeSpentSeconds;
+                currentSlideStartTime = now;
             }
 
-            // Navigation standard
+            const targetNodeElement = document.getElementById(targetId);
+
+            // CAS 1 : CIBLE = CONDITION
+            if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
+                
+                let errors = [];
+
+                // A. Visites Requises
+                const requiredIds = targetData.requiredSlides || [];
+                const missingVisits = requiredIds.filter(reqId => !visitedSlides.has(reqId));
+                if (missingVisits.length > 0) {
+                   missingVisits.forEach(id => {
+                       const num = state.slidesContent[id].slideNum || "?";
+                       errors.push(`❌ Visiter la diapositive N° ${num}`);
+                   });
+                }
+
+                // B. Temps Requis
+                const timeCond = targetData.timeCondition;
+                if (timeCond && timeCond.slideId && timeCond.duration > 0) {
+                    const timeSpent = visitedDurations[timeCond.slideId] || 0;
+                    if (timeSpent < timeCond.duration) {
+                        const remaining = Math.ceil(timeCond.duration - timeSpent);
+                        const slideNum = state.slidesContent[timeCond.slideId].slideNum || "?";
+                        errors.push(`⏳ Rester encore ${remaining}s sur la diapo N° ${slideNum}`);
+                    }
+                }
+
+                // C. Vérification
+                if (errors.length > 0) {
+                    showPlayerNotification("Accès refusé :<br>" + errors.join("<br>"));
+                    return; 
+                } else {
+                    // SUCCÈS : ROUTAGE INTELLIGENT (Support Double Flèche & Aller-Retour)
+                    const nextConnection = state.connections.find(c => {
+                        // Connexion reliée à la condition...
+                        const isConnectedToCondition = (c.fromId === targetId || c.toId === targetId);
+                        // ... dont l'autre bout n'est PAS là d'où je viens
+                        const otherEnd = (c.fromId === targetId) ? c.toId : c.fromId;
+                        return isConnectedToCondition && otherEnd !== currentPlayingSlideId;
+                    });
+
+                    if (nextConnection) {
+                        const destId = (nextConnection.fromId === targetId) ? nextConnection.toId : nextConnection.fromId;
+                        goToSlideWithTransition(destId);
+                    } else {
+                        showPlayerNotification("Impasse : Aucune autre destination détectée.");
+                    }
+                    return;
+                }
+            }
+
+            // CAS 2 : CIBLE = SLIDE NORMALE
             goToSlideWithTransition(targetId);
         };
     });
@@ -689,7 +818,10 @@ function goToSlideWithTransition(targetId) {
     }, 150);
 }
 
-// --- GÉNÉRER ---
+// =================================================================
+// 6. EXPORT (GÉNÉRER HTML)
+// =================================================================
+
 document.getElementById('btn-generate').onclick = () => {
     if (!state.startSlideId) {
         alert("Impossible de générer : aucune diapositive de départ définie.");
@@ -706,7 +838,7 @@ function generateStandaloneHTML() {
     });
 
     const appState = {
-        version: "1.0",
+        version: "1.1",
         slides: state.slidesContent,
         connections: state.connections.map(c => ({ from: c.fromId, to: c.toId, type: c.type })),
         positions: nodePositions,
@@ -742,10 +874,10 @@ function generateStandaloneHTML() {
         .link-button:active { transform: scale(0.95); }
         .link-button.square { border-radius: 4px; } .link-button.round { border-radius: 50%; }
         
-        .link-button.disabled { background-color: #b0bec5 !important; border-color: #90a4ae !important; color: #cfd8dc !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; filter: grayscale(100%); }
-
         .resize-handle, .delete-btn, .rotate-handle { display: none !important; }
         .content { outline: none; }
+        
+        .player-notif { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(192, 57, 43, 0.95); color: #fff; padding: 10px 20px; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999; font-weight: bold; pointer-events: none; transition: opacity 0.5s; }
     </style>
 </head>
 <body>
@@ -758,13 +890,23 @@ function generateStandaloneHTML() {
         const connections = ${connectionsJSON};
         const startId = "${startId}";
         const stage = document.getElementById('stage');
-        let visited = new Set(); 
+        let visited = new Set();
+        let currentId = null; 
+
+        function showNotif(msg) {
+            const notif = document.createElement('div');
+            notif.className = 'player-notif';
+            notif.innerHTML = msg;
+            stage.appendChild(notif);
+            setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 500); }, 3000);
+        }
 
         function goToSlide(id) {
             const data = slides[id];
             if (!data) return;
             
             visited.add(id);
+            currentId = id;
 
             stage.style.opacity = 0;
             setTimeout(() => {
@@ -773,7 +915,7 @@ function generateStandaloneHTML() {
                 stage.style.backgroundImage = data.bgImg || 'none';
                 stage.style.backgroundSize = 'cover';
 
-                // DESACTIVER L'EDITION ICI AUSSI
+                // DESACTIVER L'EDITION
                 stage.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
                 stage.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
 
@@ -781,25 +923,42 @@ function generateStandaloneHTML() {
                 links.forEach(link => {
                     const targetId = link.dataset.target;
                     const targetData = slides[targetId];
-                    
-                    // Vérification Condition
-                    if (targetData && targetData.type === 'condition') {
-                        const requiredIds = targetData.requiredSlides || [];
-                        const missing = requiredIds.filter(reqId => !visited.has(reqId));
-                        
-                        if (missing.length > 0) {
-                            link.classList.add('disabled');
+
+                    // Passage unique (Version Export)
+                    if (targetData && targetData.type === 'condition' && targetData.oneTimeOnly) {
+                         const outgoingConn = connections.find(c => {
+                            const isConnected = (c.from === targetId || c.to === targetId);
+                            const otherEnd = (c.from === targetId) ? c.to : c.from;
+                            return isConnected && otherEnd !== currentId;
+                        });
+                        if (outgoingConn) {
+                             const destId = (outgoingConn.from === targetId) ? outgoingConn.to : outgoingConn.from;
+                             if (visited.has(destId)) link.style.display = 'none';
                         }
                     }
 
                     link.onclick = (e) => {
                         e.stopPropagation();
-                        if (link.classList.contains('disabled')) return;
 
                         if (targetData && targetData.type === 'condition') {
-                            const outgoingConn = connections.find(c => c.from === targetId);
+                            const requiredIds = targetData.requiredSlides || [];
+                            const missing = requiredIds.filter(reqId => !visited.has(reqId));
+                            
+                            if (missing.length > 0) {
+                                showNotif("❌ Vous n'avez pas visité toutes les diapositives requises.");
+                                return;
+                            }
+
+                            // Routage intelligent Export
+                            const outgoingConn = connections.find(c => {
+                                const isConnected = (c.from === targetId || c.to === targetId);
+                                const otherEnd = (c.from === targetId) ? c.to : c.from;
+                                return isConnected && otherEnd !== currentId;
+                            });
+                            
                             if (outgoingConn) {
-                                goToSlide(outgoingConn.to); // Sauter la condition
+                                const destId = (outgoingConn.from === targetId) ? outgoingConn.to : outgoingConn.from;
+                                goToSlide(destId); 
                             }
                             return;
                         }
