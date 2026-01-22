@@ -481,7 +481,7 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .player-stage .shape-box, 
 .player-stage .bubble-box { 
     cursor: default !important; 
-    pointer-events: none; 
+    pointer-events: auto !important; 
 }
 .player-stage .text-box { pointer-events: auto; }
 
