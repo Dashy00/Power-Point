@@ -6,7 +6,9 @@ const zoomText = document.getElementById('zoom-text');
 const editorOverlay = document.getElementById('editor-overlay');
 const editableSlide = document.getElementById('editable-slide');
 
-// --- ÉTAT GLOBAL DE L'APPLICATION ---
+
+
+// --- ÉTAT GLOBAL DE L'APPLIATION ---
 const state = {
     // Graphe
     scale: 1,
