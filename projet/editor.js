@@ -40,7 +40,7 @@ let addBubbleMode = false;
 let activeTextBox = null;
 let addBubbleBtn = document.getElementById("addBubbleBtn");
 
-// NOUVEAU : État global pour les lignes pointillées
+// État global pour les lignes pointillées
 let showLinkLines = true; 
 
 // --- ZOOM : UNIQUEMENT LA PAGE (DIAPO) ---
@@ -381,7 +381,6 @@ function renderLinkedSlidesPanel() {
     const panel = document.getElementById('linkedSlidesPanel');
     if (!panel) return;
     
-    // NOUVEAU : On inclut le bouton Checkbox ici
     panel.innerHTML = `
         <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #3e2723;">Chemins & Logique</h3>
         <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
@@ -391,7 +390,6 @@ function renderLinkedSlidesPanel() {
         <hr style="border: 0; border-top: 1px solid #dcd7c9; margin-bottom: 20px;">
     `;
 
-    // Attacher l'événement au checkbox dynamique
     const chk = document.getElementById('sidebarToggleLines');
     if (chk) {
         chk.addEventListener('change', (e) => {
@@ -421,7 +419,6 @@ function renderLinkedSlidesPanel() {
 
         const card = document.createElement('div');
         card.className = 'link-card';
-        // Pour repérage visuel ligne
         if(isOutgoing) card.dataset.targetId = immediateId;
 
         card.innerHTML = `
@@ -493,17 +490,14 @@ function drawEditorLines() {
         const targetCard = document.querySelector(`.link-card[data-target-id="${targetId}"]`);
 
         if (targetCard) {
-            // Source : Bouton
             const btnRect = btn.getBoundingClientRect();
             const x1 = btnRect.right - svgRect.left;
             const y1 = btnRect.top + (btnRect.height / 2) - svgRect.top;
 
-            // Cible : Carte
             const cardRect = targetCard.getBoundingClientRect();
             const x2 = cardRect.left - svgRect.left;
             const y2 = cardRect.top + (cardRect.height / 2) - svgRect.top;
 
-            // Courbe de Bézier
             const dist = Math.abs(x2 - x1) / 2;
             const cp1x = x1 + dist; 
             const cp1y = y1;
@@ -592,7 +586,6 @@ slide.addEventListener("mousedown", (e) => {
     offsetX = (e.clientX - rect.left) / editorZoom;
     offsetY = (e.clientY - rect.top) / editorZoom;
 
-    // MAJ des sliders
     if (opacityPicker) opacityPicker.value = item.style.opacity || 1;
 
     e.preventDefault();
@@ -606,7 +599,6 @@ window.addEventListener("mousemove", (e) => {
     resizing.style.width = `${Math.max(30, startW + dx)}px`;
     resizing.style.height = `${Math.max(30, startH + dy)}px`;
     
-    // MAJ ligne si resize bouton
     if (resizing.classList.contains('link-button')) drawEditorLines();
 
   } else if (rotating) {
@@ -622,7 +614,6 @@ window.addEventListener("mousemove", (e) => {
     dragging.style.top = `${(e.clientY - slideRect.top) / editorZoom - offsetY}px`;
     if (dragging === activeTextBox) showToolbar(dragging);
     
-    // MAJ ligne si drag bouton
     if (dragging.classList.contains('link-button')) drawEditorLines();
   }
 });
@@ -633,12 +624,26 @@ window.addEventListener("mouseup", () => {
   rotating = null;
 });
 
+// --- CORRECTION : Suppression du lien SVG ---
 function handleLinkDelete(div) {
   if (!state.currentEditingId) return;
   const targetId = div.dataset.target;
+
+  // 1. Identifier les connexions à supprimer
+  const connsToDelete = state.connections.filter(c => 
+    c.fromId === state.currentEditingId && c.toId === targetId
+  );
+
+  // 2. Supprimer visuellement les lignes (SVG) du DOM
+  connsToDelete.forEach(conn => {
+    if (conn.line) conn.line.remove();
+  });
+
+  // 3. Mettre à jour l'état
   state.connections = state.connections.filter(c => 
     !(c.fromId === state.currentEditingId && c.toId === targetId)
   );
+
   if (typeof updateLinkedList === 'function') updateLinkedList();
 }
 
