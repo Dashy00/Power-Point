@@ -440,11 +440,17 @@ function openConditionModal(slideId) {
     if(chkOneTime) chkOneTime.checked = isOneTime;
 
     Object.keys(state.slidesContent).forEach(otherId => {
+        // 1. Exclure la diapo courante (self)
         if (otherId === slideId) return;
 
         const otherData = state.slidesContent[otherId];
+
+        // 2. Exclure les autres conditions (ne garder que les diapos)
+        if (otherData.type === 'condition') return;
+
         const labelText = `Diapo ${otherData.slideNum || "?"}`; 
 
+        // Ajouter à la liste des cases à cocher
         const div = document.createElement("div");
         div.className = "condition-item";
         div.innerHTML = `
@@ -453,6 +459,7 @@ function openConditionModal(slideId) {
         `;
         conditionList.appendChild(div);
 
+        // Ajouter à la liste déroulante du temps
         const option = document.createElement("option");
         option.value = otherId;
         option.innerText = labelText;
