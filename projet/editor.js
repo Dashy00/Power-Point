@@ -327,6 +327,8 @@ function openEditor(slideId) {
   // IMPORTANT : wrapper zoom au moment où l'éditeur s'ouvre
   initSlideZoomWrapper();
   editorOverlay.style.display = "flex";
+  // Mettre à jour la liste des diapositives liées
+  if (typeof updateLinkedList === 'function') updateLinkedList();
 }
 
 document.getElementById("btn-close-editor").onclick = () => {
@@ -362,6 +364,82 @@ document.getElementById("btn-close-editor").onclick = () => {
   editorOverlay.style.display = "none";
   state.currentEditingId = null;
 };
+
+  // --- LISTE DES DIAPOS LIEES (Panneau droit) ---
+  function getLinkedSlideIds(slideId) {
+    if (typeof state === 'undefined' || !state.connections) return { out: [], in: [] };
+    const out = state.connections.filter(c => c.fromId === slideId).map(c => c.toId);
+    const inp = state.connections.filter(c => c.toId === slideId).map(c => c.fromId);
+    return { out: Array.from(new Set(out)), in: Array.from(new Set(inp)) };
+  }
+
+  function renderLinkedSlidesPanel() {
+    const panel = document.getElementById('linkedSlidesList');
+    if (!panel) return;
+    panel.innerHTML = '';
+    const cur = state.currentEditingId;
+    if (!cur) return;
+
+    const linked = getLinkedSlideIds(cur);
+
+    const makeSection = (title, ids) => {
+      const header = document.createElement('div');
+      header.style.fontSize = '12px';
+      header.style.color = '#7a5a49';
+      header.style.margin = '6px 0 4px';
+      header.textContent = title;
+      panel.appendChild(header);
+
+      ids.forEach(id => {
+        const item = document.createElement('div');
+        item.className = 'linked-item';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'linked-thumb';
+        const inner = document.createElement('div');
+        inner.className = 'thumb-inner';
+        // utiliser l'HTML sauvegardé comme aperçu
+        const slideData = state.slidesContent[id] || { html: '' };
+        inner.innerHTML = slideData.html || '';
+        thumb.appendChild(inner);
+
+        const meta = document.createElement('div');
+        meta.className = 'linked-meta';
+        const num = document.createElement('div');
+        num.className = 'num';
+        num.textContent = slideData.slideNum || id;
+        meta.appendChild(num);
+        const openHint = document.createElement('div');
+        openHint.style.fontSize = '12px';
+        openHint.style.color = '#6d4c41';
+        openHint.textContent = 'Cliquer pour ouvrir';
+        meta.appendChild(openHint);
+
+        item.appendChild(thumb);
+        item.appendChild(meta);
+
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditor(id);
+        });
+
+        panel.appendChild(item);
+      });
+    };
+
+    if (linked.out.length > 0) makeSection('Sortie →', linked.out);
+    if (linked.in.length > 0) makeSection('Entrée ←', linked.in);
+    if (linked.out.length === 0 && linked.in.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.color = '#8d6e63';
+      empty.style.fontSize = '13px';
+      empty.textContent = 'Aucune diapositive liée.';
+      panel.appendChild(empty);
+    }
+  }
+
+  // Exposer une fonction globale qui peut être appelée depuis `app.js` après modification des connexions
+  window.updateLinkedList = renderLinkedSlidesPanel;
 
 // --- GESTION DES ITEMS ---
 function createItem(html, className, w = 150, h = 50) {

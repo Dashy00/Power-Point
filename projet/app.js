@@ -308,15 +308,18 @@ function createConnectionObject(lineElement, fromId, toId, fromPort, toPort, typ
             this.removeAttribute("marker-start");
             connectionObj.type = 'simple';
             removeLinkButtonFromSlide(connectionObj.toId, connectionObj.fromId);
+            if (window.updateLinkedList) window.updateLinkedList();
         } else {
             // Devient Double
             this.setAttribute("marker-start", "url(#arrow-start)");
             connectionObj.type = 'double';
             addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
+            if (window.updateLinkedList) window.updateLinkedList();
         }
     });
 
     state.connections.push(connectionObj);
+    if (window.updateLinkedList) window.updateLinkedList();
 }
 
 function getPortCenter(port) {
@@ -393,6 +396,8 @@ document.getElementById("btn-delete").onclick = () => {
             return true;
         });
 
+        if (window.updateLinkedList) window.updateLinkedList();
+
         if (state.slidesContent[deletedId]) delete state.slidesContent[deletedId];
         state.selectedSlide.remove();
         state.selectedSlide = null;
@@ -404,6 +409,7 @@ document.getElementById("btn-delete").onclick = () => {
         conn.line.remove();
         state.connections = state.connections.filter(c => c !== conn);
         state.selectedConnection = null;
+        if (window.updateLinkedList) window.updateLinkedList();
     }
 };
 
@@ -556,6 +562,7 @@ function loadProjectFromHTML(htmlContent) {
         }
         state.connections = [];
         state.startSlideId = null;
+        if (window.updateLinkedList) window.updateLinkedList();
 
         state.slidesContent = projectData.slides;
         state.slideCount = projectData.slideCount;
