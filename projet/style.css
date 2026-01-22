@@ -96,8 +96,6 @@ html, body {
 }
 
 /* --- COULEURS SPÉCIFIQUES --- */
-
-/* Bouton Début (Or/Marron) */
 .sidebar-item.set-start {
     background-color: transparent;
     border-color: transparent;
@@ -107,7 +105,6 @@ html, body {
     background-color: rgba(141, 110, 99, 0.2);
 }
 
-/* Bouton Charger (Orange - Dossier) */
 .sidebar-item.load {
     background-color: rgba(141, 110, 99, 0.1);
     border: 1px solid #8d6e63;
@@ -120,7 +117,6 @@ html, body {
     color: #5d4037;
 }
 
-/* Bouton Supprimer (Rouge/Noir) */
 .sidebar-item.delete { 
     background-color: rgba(141, 110, 99, 0.1); 
     color: #5d4037; 
@@ -131,7 +127,6 @@ html, body {
     color:#3e2723; 
 }
 
-/* Bouton Afficher (Bleu) */
 .sidebar-item.play {
     background-color: rgba(141, 110, 99, 0.1);
     border-color:#8d6e63;
@@ -144,7 +139,6 @@ html, body {
     color: #5d4037;
 }
 
-/* Bouton Générer (Gris/Vert) */
 .sidebar-item.export { 
     background-color: rgba(141, 110, 99, 0.1); 
     color: #5d4037; 
@@ -194,19 +188,12 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 }
 .slide.selected { outline: 2px solid #8d6e63; box-shadow: 0 0 15px rgba(141, 110, 99, 0.4); }
 
-/* Types de slides */
 .slide.fin { border-color: #3e2723; color: #3e2723; background-color: #efebe9; }
 
-/* Bloc Condition Spécifique */
 .slide.condition {
-    width: 100px;         
-    height: 80px;
-    background: #fff3e0;  
-    border: 2px dashed #f39c12; 
-    border-radius: 15px;  
-    color: #e67e22;
-    font-weight: bold;
-    font-size: 14px;
+    width: 100px; height: 80px;
+    background: #fff3e0; border: 2px dashed #f39c12; border-radius: 15px;  
+    color: #e67e22; font-weight: bold; font-size: 14px;
     box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
     z-index: 2;
 }
@@ -218,7 +205,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 }
 .slide.condition:hover { background: #ffe0b2; border-color: #d35400; }
 
-/* Start Node */
 .slide.start-node {
     border: 3px solid #fbc02d !important;
     box-shadow: 0 0 20px rgba(251, 192, 45, 0.5);
@@ -229,7 +215,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); z-index: 100;
 }
 
-/* Preview & Info */
 .slide-preview-wrapper { width: 960px; height: 540px; transform: scale(0.1667); transform-origin: top left; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: hidden; }
 .slide-info-overlay { 
     position: absolute; z-index: 10; 
@@ -249,7 +234,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 }
 .slide:hover .port { opacity: 1; }
 .port:hover { transform: scale(1.2); background-color: #5d4037; }
-
 .port.top { top: -10px; left: 50%; transform: translateX(-50%); }
 .port.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); }
 .port.left { left: -10px; top: 50%; transform: translateY(-50%); }
@@ -279,9 +263,30 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     display: flex; 
     flex: 1; 
     overflow: hidden; 
+    position: relative; /* Pour positionner le SVG */
 }
 
-/* La barre latérale d'édition (gauche et droite) */
+/* NOUVEAU : SVG pour les lignes de l'éditeur */
+#editor-lines-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50; 
+    overflow: visible;
+}
+
+/* NOUVEAU : Ligne pointillée Terracota */
+.editor-line {
+    fill: none;
+    stroke: #8d6e63; /* Terracota Brown */
+    stroke-width: 2px;
+    stroke-dasharray: 6 4; /* Pointillés */
+    opacity: 0.8;
+}
+
 .overlay-sidebar { 
     width: 240px; 
     background: #e8e4d9; 
@@ -304,7 +309,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .shape-btn { padding: 10px; font-size: 18px; background: transparent; border: 1px solid #dcd7c9; color: #5d4037; }
 .shape-btn:hover { background: rgba(255, 255, 255, 0.5); border-color: #8d6e63; }
 
-/* ESPACE DE TRAVAIL CENTRAL */
 .overlay-workspace { 
     flex: 1; 
     display: flex; 
@@ -318,7 +322,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .slide-zoom-wrapper { display: flex; justify-content: center; align-items: center; transition: transform 0.1s ease-out; transform-origin: center center; }
 .overlay-slide { width: 960px; height: 540px; background: white; position: relative; box-shadow: 0 5px 20px rgba(93, 64, 55, 0.15); overflow: hidden; background-size: cover; background-position: center; flex-shrink: 0; }
 
-/* --- BARRE DE DROITE (CHEMINS & LOGIQUE) --- */
 .right-sidebar {
     border-right: none;
     border-left: 1px solid #dcd7c9;
@@ -334,7 +337,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     letter-spacing: 0.5px;
 }
 
-/* --- CARTES DE LIENS (Style "StoryBuilder") --- */
 .link-card {
     background: white;
     border-radius: 8px;
@@ -347,6 +349,7 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
 }
 
 .link-card:hover {
@@ -384,7 +387,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     color: #888;
 }
 
-/* --- Floating Toolbar --- */
 .floating-toolbar { position: absolute; display: none; align-items: center; gap: 5px; padding: 8px 12px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); z-index: 2100; border: 1px solid #dcd7c9; }
 .floating-toolbar.visible { display: flex; }
 .floating-toolbar select { padding: 4px 8px; border: 1px solid #dcd7c9; border-radius: 4px; background: #fdfbf7; color: #4e342e; font-size: 13px; cursor: pointer; }
@@ -395,9 +397,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .tool-btn.active { background: #8d6e63; color: white; border-color: #8d6e63; }
 .toolbar-separator { width: 1px; height: 24px; background: #d7ccc8; margin: 0 4px; }
 
-/* =========================================
-   7. ITEMS SUR LA SLIDE
-   ========================================= */
 .text-box, .image-box, .shape-box, .bubble-box, .link-button { position: absolute; cursor: move; padding: 5px; }
 .text-box { min-width: 100px; background: transparent; border: 1px dashed transparent; z-index: 3; }
 .text-box:hover { border-color: #8d6e63; }
@@ -416,7 +415,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .bubble-box::after { content: attr(data-desc); position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%); background: rgba(62, 39, 35, 0.95); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; white-space: pre-line; text-align: left; opacity: 0; pointer-events: none; transition: 0.2s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 9999; line-height: 1.6; width: max-content; max-width: 400px; }
 .bubble-box:hover::after { opacity: 1; }
 
-/* Boutons de lien (Verts) */
 .link-button {
     background-color: #8d6e63; color: white; display: flex; justify-content: center; align-items: center;
     font-weight: bold; font-size: 24px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -426,7 +424,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .link-button.round { border-radius: 50%; }
 .link-button:hover { transform: scale(1.05); background-color: #6d4c41; }
 
-/* Contrôles (Resize, Rotate, Delete) */
 .delete-btn { position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; background: #2c2c2c; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 1010; border: 2px solid white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
 .text-box:hover .delete-btn, .image-box:hover .delete-btn, .shape-box:hover .delete-btn, .bubble-box:hover .delete-btn, .link-button:hover .delete-btn { opacity: 1; }
 .delete-btn:hover { transform: scale(1.2); background: #000000; }
@@ -438,16 +435,12 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .resize-handle { position: absolute; width: 12px; height: 12px; background: #8d6e63; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%; z-index: 1011; border: 2px solid white; }
 .selected { outline: 2px solid #8d6e63; outline-offset: 4px; }
 
-/* ZOOM Global (Canvas) */
 .zoom-controls { position: absolute; top: 20px; right: 20px; background-color: #fdfbf7; color: #5d4037; padding: 5px 10px; border-radius: 30px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border: 1px solid #dcd7c9; z-index: 100; }
 .zoom-btn { background: transparent; border: none; color: #795548; font-size: 18px; font-weight: bold; cursor: pointer; padding: 0 5px; }
 .zoom-btn:hover { color: #4e342e; }
 #zoom-text { font-size: 14px; min-width: 50px; text-align: center; }
 .reset-btn { background: transparent; border: 1px solid #bcaaa4; color: #795548; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
 
-/* =========================================
-   8. LECTEUR (MODE PRÉSENTATION & EXPORT)
-   ========================================= */
 .player-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-color: black; z-index: 5000;
@@ -473,7 +466,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     transform-origin: center center;
 }
 
-/* Cacher TOUS les outils d'édition en lecture */
 .player-stage .resize-handle,
 .player-stage .delete-btn,
 .player-stage .rotate-handle,
@@ -484,18 +476,15 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     display: none !important;
 }
 
-/* FIGER les éléments en mode lecture (pas de curseur move) */
 .player-stage .text-box, 
 .player-stage .image-box, 
 .player-stage .shape-box, 
 .player-stage .bubble-box { 
     cursor: default !important; 
-    pointer-events: none; /* Désactive aussi la sélection de texte si souhaité */
+    pointer-events: none; 
 }
-/* Réactiver les événements de pointeur uniquement pour le texte si on veut pouvoir le sélectionner */
 .player-stage .text-box { pointer-events: auto; }
 
-/* Boutons de navigation (interactifs) */
 .player-stage .link-button {
     cursor: pointer !important;
     pointer-events: auto !important;
@@ -509,7 +498,6 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
     transform: scale(0.95);
 }
 
-/* ÉTAT DÉSACTIVÉ (Condition non remplie) */
 .link-button.disabled {
     background-color: #b0bec5 !important;
     border-color: #90a4ae !important;

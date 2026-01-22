@@ -20,7 +20,9 @@ const highlightBtn = document.getElementById("highlightBtn");
 const shapeColorPicker = document.getElementById("shapeColorPicker");
 const opacityPicker = document.getElementById("opacityPicker");
 
-// Variables d'état pour les manipulations
+const editorLinesLayer = document.getElementById("editor-lines-layer");
+
+// Variables d'état
 let dragging = null,
   resizing = null,
   rotating = null;
@@ -37,6 +39,9 @@ let addMode = false;
 let addBubbleMode = false;
 let activeTextBox = null;
 let addBubbleBtn = document.getElementById("addBubbleBtn");
+
+// NOUVEAU : État global pour les lignes pointillées
+let showLinkLines = true; 
 
 // --- ZOOM : UNIQUEMENT LA PAGE (DIAPO) ---
 let slideZoomWrapper = null;
@@ -70,6 +75,8 @@ function initSlideZoomWrapper() {
     if (wsStyle.overflow === "visible") {
       overlayWorkspace.style.overflow = "auto";
     }
+    // Mise à jour des lignes au scroll
+    overlayWorkspace.addEventListener("scroll", drawEditorLines);
   }
 
   applyZoom(false);
@@ -122,6 +129,9 @@ function applyZoom(keepPoint = false, anchor = null) {
     overlayWorkspace.scrollLeft = before.xInWs * ratio - (anchor.clientX - overlayWorkspace.getBoundingClientRect().left);
     overlayWorkspace.scrollTop = before.yInWs * ratio - (anchor.clientY - overlayWorkspace.getBoundingClientRect().top);
   }
+
+  // Redessiner après zoom
+  drawEditorLines();
 }
 
 function zoomIn() {
@@ -235,6 +245,9 @@ function pasteSnapshot(snapshot) {
   div.classList.add("selected");
   state.activeItem = div;
   renumberBubbles();
+
+  // Mise à jour lignes si bouton
+  if (div.classList.contains("link-button")) drawEditorLines();
 }
 
 // --- HISTORIQUE (Undo/Redo) ---
@@ -279,6 +292,7 @@ function applyState(stateData) {
   slide.style.backgroundImage = stateData.img;
   reattachEventListeners();
   renumberBubbles();
+  drawEditorLines();
 }
 
 // --- OUVERTURE / FERMETURE ---
@@ -297,7 +311,9 @@ function openEditor(slideId) {
   reattachEventListeners();
   initSlideZoomWrapper();
   editorOverlay.style.display = "flex";
+  
   if (typeof updateLinkedList === 'function') updateLinkedList();
+  setTimeout(drawEditorLines, 100); 
 }
 
 document.getElementById("btn-close-editor").onclick = () => {
@@ -331,6 +347,7 @@ document.getElementById("btn-close-editor").onclick = () => {
   }
   editorOverlay.style.display = "none";
   state.currentEditingId = null;
+  if(editorLinesLayer) editorLinesLayer.innerHTML = '';
 };
 
 // --- LISTE DES DIAPOS LIEES (PANNEAU DROIT) ---
@@ -364,10 +381,24 @@ function renderLinkedSlidesPanel() {
     const panel = document.getElementById('linkedSlidesPanel');
     if (!panel) return;
     
+    // NOUVEAU : On inclut le bouton Checkbox ici
     panel.innerHTML = `
-        <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #3e2723;">Chemins & Logique</h3>
-        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Gérez les connexions de cette diapositive.</p>
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #3e2723;">Chemins & Logique</h3>
+        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+             <input type="checkbox" id="sidebarToggleLines" ${showLinkLines ? "checked" : ""} style="cursor: pointer;">
+             <label for="sidebarToggleLines" style="cursor: pointer; user-select: none;">Afficher pointillés</label>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #dcd7c9; margin-bottom: 20px;">
     `;
+
+    // Attacher l'événement au checkbox dynamique
+    const chk = document.getElementById('sidebarToggleLines');
+    if (chk) {
+        chk.addEventListener('change', (e) => {
+            showLinkLines = e.target.checked;
+            drawEditorLines();
+        });
+    }
 
     const cur = state.currentEditingId;
     if (!cur) return;
@@ -390,6 +421,9 @@ function renderLinkedSlidesPanel() {
 
         const card = document.createElement('div');
         card.className = 'link-card';
+        // Pour repérage visuel ligne
+        if(isOutgoing) card.dataset.targetId = immediateId;
+
         card.innerHTML = `
             <div class="link-card-icon">${icon}</div>
             <div class="link-card-info">
@@ -436,9 +470,54 @@ function renderLinkedSlidesPanel() {
         `;
         panel.appendChild(empty);
     }
+
+    setTimeout(drawEditorLines, 50);
 }
 
 window.updateLinkedList = renderLinkedSlidesPanel;
+
+// --- DESSIN DES LIGNES POINTILLÉES (SVG) ---
+function drawEditorLines() {
+    if (!editorLinesLayer) return;
+    editorLinesLayer.innerHTML = ''; 
+
+    if (!showLinkLines) return;
+
+    const linkButtons = slide.querySelectorAll('.link-button');
+    if (linkButtons.length === 0) return;
+
+    const svgRect = editorLinesLayer.getBoundingClientRect();
+
+    linkButtons.forEach(btn => {
+        const targetId = btn.dataset.target;
+        const targetCard = document.querySelector(`.link-card[data-target-id="${targetId}"]`);
+
+        if (targetCard) {
+            // Source : Bouton
+            const btnRect = btn.getBoundingClientRect();
+            const x1 = btnRect.right - svgRect.left;
+            const y1 = btnRect.top + (btnRect.height / 2) - svgRect.top;
+
+            // Cible : Carte
+            const cardRect = targetCard.getBoundingClientRect();
+            const x2 = cardRect.left - svgRect.left;
+            const y2 = cardRect.top + (cardRect.height / 2) - svgRect.top;
+
+            // Courbe de Bézier
+            const dist = Math.abs(x2 - x1) / 2;
+            const cp1x = x1 + dist; 
+            const cp1y = y1;
+            const cp2x = x2 - dist; 
+            const cp2y = y2;
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`);
+            path.setAttribute("class", "editor-line");
+
+            editorLinesLayer.appendChild(path);
+        }
+    });
+}
 
 // --- GESTION DES ITEMS ---
 function createItem(html, className, w = 150, h = 50) {
@@ -526,6 +605,10 @@ window.addEventListener("mousemove", (e) => {
     const dy = (e.clientY - startMouseY) / editorZoom;
     resizing.style.width = `${Math.max(30, startW + dx)}px`;
     resizing.style.height = `${Math.max(30, startH + dy)}px`;
+    
+    // MAJ ligne si resize bouton
+    if (resizing.classList.contains('link-button')) drawEditorLines();
+
   } else if (rotating) {
     const rect = rotating.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -538,6 +621,9 @@ window.addEventListener("mousemove", (e) => {
     dragging.style.left = `${(e.clientX - slideRect.left) / editorZoom - offsetX}px`;
     dragging.style.top = `${(e.clientY - slideRect.top) / editorZoom - offsetY}px`;
     if (dragging === activeTextBox) showToolbar(dragging);
+    
+    // MAJ ligne si drag bouton
+    if (dragging.classList.contains('link-button')) drawEditorLines();
   }
 });
 
@@ -566,6 +652,7 @@ function attachItemEvents(div) {
       div.remove();
       renumberBubbles();
       state.activeItem = null;
+      drawEditorLines();
     };
   }
 
@@ -770,7 +857,6 @@ if (shapeColorPicker) {
   });
 }
 
-// Opacité corrigée pour fonctionner sur tout
 if (opacityPicker) {
   opacityPicker.addEventListener("input", (e) => {
     if (state.activeItem) {
@@ -837,6 +923,7 @@ window.addEventListener("keydown", (e) => {
       state.activeItem.remove();
       state.activeItem = null;
       renumberBubbles();
+      drawEditorLines();
       return;
     }
   }
@@ -865,6 +952,7 @@ window.addEventListener("keydown", (e) => {
     state.activeItem.remove();
     state.activeItem = null;
     renumberBubbles();
+    drawEditorLines();
   }
 
   if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
