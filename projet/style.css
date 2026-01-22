@@ -69,7 +69,7 @@ html, body {
 }
 
 .sidebar-item:hover { 
-    background-color: rgba(255, 255, 255, 0.6); 
+    background-color: #cbb6af; 
 }
 
 .sidebar-item .icon { 
@@ -127,7 +127,7 @@ html, body {
     border: 1px solid rgba(0,0,0,0.1); 
 }
 .sidebar-item.delete:hover { 
-    background-color: #2c2c2c; 
+    background-color: #d7ccc8; 
     color: #ffffff; 
 }
 
@@ -151,7 +151,7 @@ html, body {
     border-color: rgba(0,0,0,0.1); 
 }
 .sidebar-item.export:hover { 
-    background-color: #2c2c2c; 
+    background-color: #d7ccc8; 
     color: #ffffff; 
 }
 
