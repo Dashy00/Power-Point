@@ -99,9 +99,9 @@ html, body {
 
 /* Bouton Début (Or/Marron) */
 .sidebar-item.set-start {
-    background-color: rgba(141, 110, 99, 0.1);
-    border-color: #8d6e63;
-    color: #5d4037;
+    background-color: transparent;
+    border-color: transparent;
+    color:#4a4a4a;
 }
 .sidebar-item.set-start:hover {
     background-color: rgba(141, 110, 99, 0.2);
@@ -109,49 +109,49 @@ html, body {
 
 /* Bouton Charger (Orange - Dossier) */
 .sidebar-item.load {
-    background-color: rgba(243, 156, 18, 0.1);
-    border: 1px solid #f39c12;
-    color: #e67e22;
+    background-color: rgba(141, 110, 99, 0.1);
+    border: 1px solid #8d6e63;
+    color: #5d4037;
 }
 .sidebar-item.load:hover {
-    background-color: rgba(243, 156, 18, 0.2);
+    background-color: rgba(141, 110, 99, 0.2);
 }
 .sidebar-item.load .icon-text {
-    color: #e67e22;
+    color: #5d4037;
 }
 
 /* Bouton Supprimer (Rouge/Noir) */
 .sidebar-item.delete { 
-    background-color: rgba(0, 0, 0, 0.05); 
-    color: #000000; 
-    border: 1px solid rgba(0,0,0,0.1); 
+    background-color: rgba(141, 110, 99, 0.1); 
+    color: #5d4037; 
+    border: 1px solid  #8d6e63; 
 }
 .sidebar-item.delete:hover { 
-    background-color: #d7ccc8; 
-    color: #ffffff; 
+    background-color:rgba(141, 110, 99, 0.2); 
+    color:#3e2723; 
 }
 
 /* Bouton Afficher (Bleu) */
 .sidebar-item.play {
-    background-color: rgba(52, 152, 219, 0.1);
-    border-color: #3498db;
-    color: #2980b9;
+    background-color: rgba(141, 110, 99, 0.1);
+    border-color:#8d6e63;
+    color:#5d4037;
 }
 .sidebar-item.play:hover {
-    background-color: rgba(52, 152, 219, 0.2);
+    background-color: rgba(141, 110, 99, 0.2);
 }
 .sidebar-item.play .icon-text {
-    color: #2980b9;
+    color: #5d4037;
 }
 
 /* Bouton Générer (Gris/Vert) */
 .sidebar-item.export { 
-    background-color: rgba(0, 0, 0, 0.05); 
-    color: #000000; 
-    border-color: rgba(0,0,0,0.1); 
+    background-color: rgba(141, 110, 99, 0.1); 
+    color: #5d4037; 
+    border-color: #8d6e63; 
 }
 .sidebar-item.export:hover { 
-    background-color: #d7ccc8; 
+    background-color: rgba(141, 110, 99, 0.2); 
     color: #ffffff; 
 }
 
