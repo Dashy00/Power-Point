@@ -38,8 +38,6 @@ let activeTextBox = null;
 let addBubbleBtn = document.getElementById("addBubbleBtn");
 
 // --- ZOOM : UNIQUEMENT LA PAGE (DIAPO) ---
-// IMPORTANT : on va WRAPPER la slide dans un conteneur qui sera scalé,
-// sans scaler toute la page/overlay.
 let slideZoomWrapper = null;
 const overlayWorkspace = document.querySelector(".overlay-workspace") || slide?.parentElement || document.body;
 
@@ -50,20 +48,15 @@ function clampZoom(z) {
 function initSlideZoomWrapper() {
   if (!slide) return;
 
-  // si déjà wrappée
   if (slide.parentElement && slide.parentElement.id === "slideZoomWrapper") {
     slideZoomWrapper = slide.parentElement;
   } else {
-    // créer wrapper
     slideZoomWrapper = document.createElement("div");
     slideZoomWrapper.id = "slideZoomWrapper";
-
-    // Style inline minimal (sans toucher votre CSS)
     slideZoomWrapper.style.display = "inline-block";
     slideZoomWrapper.style.transformOrigin = "top left";
     slideZoomWrapper.style.position = "relative";
 
-    // insérer wrapper à la place de la slide
     const parent = slide.parentElement;
     if (parent) {
       parent.insertBefore(slideZoomWrapper, slide);
@@ -71,7 +64,6 @@ function initSlideZoomWrapper() {
     }
   }
 
-  // s'assurer que le workspace peut scroller si on zoom
   if (overlayWorkspace) {
     const wsStyle = window.getComputedStyle(overlayWorkspace);
     if (wsStyle.overflow === "visible") {
@@ -82,21 +74,13 @@ function initSlideZoomWrapper() {
   applyZoom(false);
 }
 
-
-
-// Zoom au scroll Ctrl + molette : uniquement quand le curseur est sur l'espace diapo
 function attachWheelZoom() {
   if (!overlayWorkspace) return;
 
   overlayWorkspace.addEventListener(
     "wheel",
     (e) => {
-      // si l'utilisateur fait Ctrl+molette (ou trackpad pinch qui remonte comme ctrlKey)
-      // on empêche le zoom navigateur et on zoom uniquement la slide
       if (!e.ctrlKey) return;
-
-      // IMPORTANT : ne pas bloquer le zoom navigateur si on n'est PAS dans l'éditeur
-      // (si vous avez un overlay editorOverlay, on vérifie son affichage)
       if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "none") return;
 
       e.preventDefault();
@@ -115,11 +99,9 @@ function attachWheelZoom() {
   );
 }
 
-// Appliquer le zoom au wrapper (et garder le point sous la souris stable si demandé)
 function applyZoom(keepPoint = false, anchor = null) {
   if (!slideZoomWrapper) return;
 
-  // ancrage (pour garder le point stable)
   let before = null;
   if (keepPoint && anchor && overlayWorkspace) {
     const wsRect = overlayWorkspace.getBoundingClientRect();
@@ -131,11 +113,9 @@ function applyZoom(keepPoint = false, anchor = null) {
 
   slideZoomWrapper.style.transform = `scale(${editorZoom})`;
 
-  // mise à jour du texte %
   const z = document.getElementById("editor-zoom-text");
   if (z) z.textContent = Math.round(editorZoom * 100) + "%";
 
-  // garder le point sous la souris stable
   if (before && overlayWorkspace) {
     const ratio = editorZoom / before.prevZoom;
     overlayWorkspace.scrollLeft = before.xInWs * ratio - (anchor.clientX - overlayWorkspace.getBoundingClientRect().left);
@@ -161,7 +141,6 @@ function resetZoom() {
   applyZoom(false, { prevZoom });
 }
 
-// Hook optionnel si vous avez des boutons (ne casse rien si absents)
 const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
 const resetZoomBtn = document.getElementById("resetZoomBtn");
@@ -169,12 +148,11 @@ if (zoomInBtn) zoomInBtn.addEventListener("click", zoomIn);
 if (zoomOutBtn) zoomOutBtn.addEventListener("click", zoomOut);
 if (resetZoomBtn) resetZoomBtn.addEventListener("click", resetZoom);
 
-// Init wrapper + molette
 initSlideZoomWrapper();
 attachWheelZoom();
 
-// --- COPY / PASTE (CTRL+C / CTRL+V / CTRL+X) ---
-let itemClipboard = null; // presse-papiers interne (items)
+// --- COPY / PASTE ---
+let itemClipboard = null; 
 const PASTE_OFFSET = 20;
 
 function isEditingText() {
@@ -186,7 +164,6 @@ function isEditingText() {
 }
 
 function ensureHandlesIfNeeded(div) {
-  // Les link-button n'ont volontairement pas de handles chez vous
   if (div.classList.contains("link-button")) return;
 
   if (!div.querySelector(".resize-handle")) {
@@ -210,7 +187,6 @@ function ensureHandlesIfNeeded(div) {
 
 function getItemSnapshot(el) {
   const style = window.getComputedStyle(el);
-
   const left = el.style.left || style.left || "0px";
   const top = el.style.top || style.top || "0px";
   const width = el.style.width || style.width || "150px";
@@ -221,7 +197,7 @@ function getItemSnapshot(el) {
   Object.keys(el.dataset || {}).forEach((k) => (dataset[k] = el.dataset[k]));
 
   return {
-    className: el.className, // "item-box ..." etc.
+    className: el.className,
     innerHTML: el.innerHTML,
     style: { left, top, width, height, transform },
     dataset,
@@ -230,13 +206,11 @@ function getItemSnapshot(el) {
 
 function pasteSnapshot(snapshot) {
   if (!snapshot) return;
-
   saveState();
 
   const div = document.createElement("div");
   div.className = snapshot.className;
   div.innerHTML = snapshot.innerHTML;
-
   div.style.width = snapshot.style.width;
   div.style.height = snapshot.style.height;
   div.style.transform = snapshot.style.transform;
@@ -251,32 +225,27 @@ function pasteSnapshot(snapshot) {
   });
 
   ensureHandlesIfNeeded(div);
-
   slide.appendChild(div);
   attachItemEvents(div);
 
-  // sélectionner l'item collé
   document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
   div.classList.add("selected");
   state.activeItem = div;
-
   renumberBubbles();
 }
 
-// --- SYSTÈME UNDO / REDO ---
+// --- HISTORIQUE (Undo/Redo) ---
 let historyStack = [];
 let redoStack = [];
 
 function saveState() {
-  // On enregistre l'état actuel avant modification
   historyStack.push({
     innerHTML: slide.innerHTML,
     bg: slide.style.backgroundColor,
     img: slide.style.backgroundImage,
   });
-  // Limite l'historique pour les performances
   if (historyStack.length > 40) historyStack.shift();
-  redoStack = []; // On vide le redo car une nouvelle action est faite
+  redoStack = [];
 }
 
 function undo() {
@@ -319,15 +288,12 @@ function openEditor(slideId) {
   bgColorPicker.value = data.bg || "#ffffff";
   if (slideNumberInput) slideNumberInput.value = data.slideNum || "";
 
-  historyStack = []; // Reset l'historique pour cette slide
+  historyStack = [];
   redoStack = [];
 
   reattachEventListeners();
-
-  // IMPORTANT : wrapper zoom au moment où l'éditeur s'ouvre
   initSlideZoomWrapper();
   editorOverlay.style.display = "flex";
-  // Mettre à jour la liste des diapositives liées
   if (typeof updateLinkedList === 'function') updateLinkedList();
 }
 
@@ -340,7 +306,6 @@ document.getElementById("btn-close-editor").onclick = () => {
       slideNum: slideNumberInput ? slideNumberInput.value : "",
     };
     
-    // Mettre à jour le numéro sur la slide dans la page principale
     const slideElement = document.getElementById(state.currentEditingId);
     if (slideElement) {
       const infoOverlay = slideElement.querySelector(".slide-info-overlay");
@@ -350,7 +315,7 @@ document.getElementById("btn-close-editor").onclick = () => {
                      slideElement.className.includes("fin") ? "fin" : "normal";
         
         if (type === "condition") {
-          infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${newNum}</span>`;
+          infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span>`;
         } else if (type === "fin") {
           infoOverlay.innerHTML = "🏁 " + newNum;
         } else {
@@ -365,14 +330,31 @@ document.getElementById("btn-close-editor").onclick = () => {
   state.currentEditingId = null;
 };
 
-// --- LISTE DES DIAPOS LIEES (Panneau droit style "StoryBuilder") ---
+// --- LISTE DES DIAPOS LIEES (PANNEAU DROIT) ---
+
+// Fonction récursive pour sauter les conditions et trouver la vraie destination
+function resolveRealTarget(startNodeId, comingFromId) {
+    const nodeData = state.slidesContent[startNodeId];
+    if (!nodeData) return { id: startNodeId, isThroughCond: false };
+
+    if (nodeData.type === 'condition') {
+        const nextConn = state.connections.find(c => 
+            (c.fromId === startNodeId || c.toId === startNodeId) && 
+            (c.fromId === startNodeId ? c.toId : c.fromId) !== comingFromId
+        );
+        if (nextConn) {
+            const nextId = (nextConn.fromId === startNodeId) ? nextConn.toId : nextConn.fromId;
+            const result = resolveRealTarget(nextId, startNodeId);
+            return { id: result.id, isThroughCond: true };
+        }
+    }
+    return { id: startNodeId, isThroughCond: false };
+}
+
 function getLinkedSlideIds(slideId) {
-    if (typeof state === 'undefined' || !state.connections) return { out: [], in: [] };
-    
-    // On récupère les connexions complètes, pas juste les IDs
+    if (typeof state === 'undefined' || !state.connections) return { outgoing: [], incoming: [] };
     const outgoing = state.connections.filter(c => c.fromId === slideId);
     const incoming = state.connections.filter(c => c.toId === slideId);
-    
     return { outgoing, incoming };
 }
 
@@ -380,7 +362,6 @@ function renderLinkedSlidesPanel() {
     const panel = document.getElementById('linkedSlidesPanel');
     if (!panel) return;
     
-    // On vide et on remet le titre
     panel.innerHTML = `
         <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #3e2723;">Chemins & Logique</h3>
         <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Gérez les connexions de cette diapositive.</p>
@@ -391,77 +372,58 @@ function renderLinkedSlidesPanel() {
 
     const links = getLinkedSlideIds(cur);
 
-    // Fonction utilitaire pour créer une carte
     const createLinkCard = (connection, isOutgoing) => {
-        const targetId = isOutgoing ? connection.toId : connection.fromId;
-        const slideData = state.slidesContent[targetId] || {};
-        const slideNum = slideData.slideNum || "?";
-        const type = slideData.type === 'condition' ? 'Condition' : 'Diapositive';
+        const immediateId = isOutgoing ? connection.toId : connection.fromId;
+        const originId = isOutgoing ? connection.fromId : connection.toId;
         
-        // Icône selon le type
-        let icon = "📄";
-        if(slideData.type === 'condition') icon = "⚡";
-        if(slideData.type === 'fin') icon = "🏁";
+        // On traverse les conditions pour trouver la destination/source réelle
+        const resolved = resolveRealTarget(immediateId, originId);
+        const targetData = state.slidesContent[resolved.id] || {};
+        
+        // Numérotation basée sur la slide finale
+        const displayNum = targetData.slideNum || resolved.id.split('-')[1];
+        const isThroughCond = resolved.isThroughCond || (state.slidesContent[immediateId]?.type === 'condition');
+        
+        const typeLabel = targetData.type === 'fin' ? "Bloc Fin" : "Diapositive";
+        const descLabel = isThroughCond ? "Liaison avec Condition" : (connection.type === 'double' ? 'Liaison Aller-Retour' : 'Liaison Simple');
+        const icon = isThroughCond ? "⚡" : (targetData.type === 'fin' ? "🏁" : "📄");
 
         const card = document.createElement('div');
         card.className = 'link-card';
         card.innerHTML = `
             <div class="link-card-icon">${icon}</div>
             <div class="link-card-info">
-                <span class="link-card-title">${isOutgoing ? 'Vers' : 'De'} ${type} ${slideNum}</span>
-                <span class="link-card-desc">Liaison ${connection.type === 'double' ? 'Aller-Retour' : 'Simple'}</span>
+                <span class="link-card-title">${isOutgoing ? 'Vers' : 'De'} ${typeLabel} ${displayNum}</span>
+                <span class="link-card-desc">${descLabel}</span>
             </div>
         `;
 
         card.addEventListener('click', () => {
-            openEditor(targetId);
+            openEditor(resolved.id); // On ouvre la vraie diapositive cible
         });
         
         return card;
     };
 
-    // 1. Section SORTIES (Vers où on va)
     if (links.outgoing.length > 0) {
-        const title = document.createElement('div');
-        title.className = 'sidebar-section-title';
-        title.textContent = 'Connexions Sortantes';
-        panel.appendChild(title);
-
-        links.outgoing.forEach(conn => {
-            panel.appendChild(createLinkCard(conn, true));
-        });
+        panel.innerHTML += `<div class="sidebar-section-title">Connexions Sortantes</div>`;
+        links.outgoing.forEach(conn => panel.appendChild(createLinkCard(conn, true)));
     }
 
-    // 2. Section ENTRÉES (D'où on vient)
     if (links.incoming.length > 0) {
-        const title = document.createElement('div');
-        title.className = 'sidebar-section-title';
-        title.style.marginTop = "20px";
-        title.textContent = 'Connexions Entrantes';
-        panel.appendChild(title);
-
-        links.incoming.forEach(conn => {
-            panel.appendChild(createLinkCard(conn, false));
-        });
+        panel.innerHTML += `<div class="sidebar-section-title" style="margin-top:20px;">Connexions Entrantes</div>`;
+        links.incoming.forEach(conn => panel.appendChild(createLinkCard(conn, false)));
     }
 
-    // Cas vide
     if (links.outgoing.length === 0 && links.incoming.length === 0) {
-        const empty = document.createElement('div');
-        empty.style.padding = "20px";
-        empty.style.textAlign = "center";
-        empty.style.border = "2px dashed #dcd7c9";
-        empty.style.borderRadius = "8px";
-        empty.style.color = "#8d6e63";
-        empty.innerHTML = `
-            <span style="font-size: 24px; display:block; margin-bottom:5px;">🔗</span>
-            <span style="font-size: 13px;">Aucune connexion.<br>Reliez cette diapositive depuis le graphe.</span>
-        `;
-        panel.appendChild(empty);
+        panel.innerHTML += `
+            <div style="padding: 20px; text-align: center; border: 2px dashed #dcd7c9; border-radius: 8px; color: #8d6e63;">
+                <span style="font-size: 24px; display:block; margin-bottom:5px;">🔗</span>
+                <span style="font-size: 13px;">Aucune connexion.</span>
+            </div>`;
     }
 }
 
-// Exposer une fonction globale qui peut être appelée depuis `app.js` après modification des connexions
 window.updateLinkedList = renderLinkedSlidesPanel;
 
 // --- GESTION DES ITEMS ---
@@ -496,7 +458,7 @@ function addEditorShape(type) {
   createItem(content, `shape-box ${type}`, 100, 100);
 }
 
-// --- ÉVÉNEMENTS SOURIS (DRAG, RESIZE, ROTATE) ---
+// --- ÉVÉNEMENTS SOURIS ---
 slide.addEventListener("mousedown", (e) => {
   const item = e.target.closest(".item-box, .text-box, .image-box, .shape-box, .bubble-box, .link-button");
   const handle = e.target.closest(".resize-handle, .rotate-handle");
@@ -507,7 +469,6 @@ slide.addEventListener("mousedown", (e) => {
     return;
   }
 
-  // SAUVEGARDE AVANT TOUTE ACTION
   saveState();
 
   if (e.target.classList.contains("resize-handle")) {
@@ -568,7 +529,15 @@ window.addEventListener("mouseup", () => {
   rotating = null;
 });
 
-// --- ATTACHEMENT DES ÉVÉNEMENTS AUX BOXES ---
+function handleLinkDelete(div) {
+  if (!state.currentEditingId) return;
+  const targetId = div.dataset.target;
+  state.connections = state.connections.filter(c => 
+    !(c.fromId === state.currentEditingId && c.toId === targetId)
+  );
+  if (typeof updateLinkedList === 'function') updateLinkedList();
+}
+
 function attachItemEvents(div) {
   const delBtn = div.querySelector(".delete-btn");
   if (delBtn) {
@@ -603,7 +572,6 @@ addTextBtn.addEventListener("click", () =>
   createItem(`<div class="content" contenteditable="true">Texte...</div>`, "text-box")
 );
 
-// Gestion du double-clic sur le texte pour afficher la barre d'outils
 slide.addEventListener("dblclick", (e) => {
   const textBox = e.target.closest(".text-box");
   if (textBox) {
@@ -628,19 +596,13 @@ function activateTextBox(box, content) {
 
 function showToolbar(box) {
   floatingToolbar.classList.add("visible");
-
   const boxRect = box.getBoundingClientRect();
   const slideRect = document.querySelector(".overlay-workspace").getBoundingClientRect();
-
   let left = boxRect.left - slideRect.left;
   let top = boxRect.top - slideRect.top - 50;
-
-  if (left + floatingToolbar.offsetWidth > slideRect.width) {
-    left = slideRect.width - floatingToolbar.offsetWidth - 10;
-  }
+  if (left + floatingToolbar.offsetWidth > slideRect.width) left = slideRect.width - floatingToolbar.offsetWidth - 10;
   if (left < 0) left = 10;
   if (top < 0) top = boxRect.top - slideRect.top + boxRect.height + 10;
-
   floatingToolbar.style.left = `${left}px`;
   floatingToolbar.style.top = `${top}px`;
 }
@@ -653,21 +615,11 @@ function hideToolbar() {
   }
 }
 
-// Fermer la barre d'outils quand on clique ailleurs
-document.addEventListener(
-  "mousedown",
-  (e) => {
-    if (
-      !e.target.closest(".text-box") &&
-      !e.target.closest(".floating-toolbar") &&
-      !e.target.closest(".resize-handle") &&
-      !e.target.closest(".rotate-handle")
-    ) {
+document.addEventListener("mousedown", (e) => {
+    if (!e.target.closest(".text-box") && !e.target.closest(".floating-toolbar") && !e.target.closest(".resize-handle") && !e.target.closest(".rotate-handle")) {
       hideToolbar();
     }
-  },
-  true
-);
+}, true);
 
 addBubbleBtn.addEventListener("click", () => {
   addBubbleMode = !addBubbleMode;
@@ -703,36 +655,30 @@ function createBubble(x, y) {
 function renumberBubbles() {
   slide.querySelectorAll(".bubble-box").forEach((b, i) => {
     const n = b.querySelector(".bubble-num");
-    if (n) n.textContent = i + 1; // correction (i + + 1 => bug)
+    if (n) n.textContent = i + 1;
   });
 }
 
-// --- FORMATAGE ET COULEURS ---
+// --- FORMATAGE ---
 textColor.addEventListener("input", (e) => {
   if (!activeTextBox) return;
   saveState();
   const content = activeTextBox.querySelector(".content");
-  if (content) {
-    content.style.color = e.target.value;
-  }
+  if (content) content.style.color = e.target.value;
 });
 
 fontFamily.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
   const content = activeTextBox.querySelector(".content");
-  if (content) {
-    content.style.fontFamily = e.target.value;
-  }
+  if (content) content.style.fontFamily = e.target.value;
 });
 
 fontSize.addEventListener("change", (e) => {
   if (!activeTextBox) return;
   saveState();
   const content = activeTextBox.querySelector(".content");
-  if (content) {
-    content.style.fontSize = e.target.value;
-  }
+  if (content) content.style.fontSize = e.target.value;
 });
 
 boldBtn.addEventListener("click", () => {
@@ -768,7 +714,7 @@ highlightColor.addEventListener("input", () => {
   document.execCommand("backColor", false, highlightColor.value);
 });
 
-// --- GESTION DE L'ORDRE D'EMPILEMENT (Z-INDEX) ---
+// --- Z-INDEX ---
 function bringToFront() {
   if (!state.activeItem) return;
   saveState();
@@ -792,11 +738,9 @@ const sendToBackBtn = document.getElementById("sendToBackBtn");
 if (bringToFrontBtn) bringToFrontBtn.addEventListener("click", bringToFront);
 if (sendToBackBtn) sendToBackBtn.addEventListener("click", sendToBack);
 
-// Gestionnaire pour la couleur des formes dans la barre latérale
 if (shapeColorPicker) {
   shapeColorPicker.addEventListener("input", (e) => {
     saveState();
-
     if (state.activeItem) {
       const shapeContent = state.activeItem.querySelector(".shape-content");
       if (shapeContent) {
@@ -808,13 +752,8 @@ if (shapeColorPicker) {
   });
 }
 
-// --- RACCOURCIS ET BOUTONS ---
-
-// Gérer l'ajout d'images
-addImageBtn.addEventListener("click", () => {
-  imageInput.click();
-});
-
+// --- BOUTONS DIVERS ---
+addImageBtn.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -829,17 +768,13 @@ imageInput.addEventListener("change", (e) => {
   imageInput.value = "";
 });
 
-// --- GESTION DU FOND (ARRIÈRE-PLAN) ---
 bgColorPicker.addEventListener("input", (e) => {
   saveState();
   slide.style.backgroundImage = "none";
   slide.style.backgroundColor = e.target.value;
 });
 
-bgImageBtn.addEventListener("click", () => {
-  bgImageInput.click();
-});
-
+bgImageBtn.addEventListener("click", () => bgImageInput.click());
 bgImageInput.addEventListener("change", () => {
   const file = bgImageInput.files[0];
   if (!file) return;
@@ -857,7 +792,6 @@ document.getElementById("undoBtn").onclick = undo;
 document.getElementById("redoBtn").onclick = redo;
 
 window.addEventListener("keydown", (e) => {
-  // --- COPY / PASTE ITEMS ---
   if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
     if (!isEditingText() && state.activeItem) {
       e.preventDefault();
@@ -879,17 +813,14 @@ window.addEventListener("keydown", (e) => {
     }
   }
 
-  // Ctrl+V : si un item est en clipboard, on le colle en priorité (même si un texte est actif)
   if (e.ctrlKey && (e.key === "v" || e.key === "V")) {
     if (itemClipboard) {
       e.preventDefault();
       pasteSnapshot(itemClipboard);
       return;
     }
-    // sinon collage normal (zones texte)
   }
 
-  // --- vos raccourcis existants ---
   if (e.ctrlKey && e.key === "z") {
     e.preventDefault();
     undo();
@@ -908,7 +839,6 @@ window.addEventListener("keydown", (e) => {
     renumberBubbles();
   }
 
-  // Optionnel : Ctrl + + / Ctrl + - pour zoom slide (sans zoom navigateur) quand éditeur ouvert
   if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
     if (typeof editorOverlay !== "undefined" && editorOverlay && editorOverlay.style.display === "flex") {
       e.preventDefault();

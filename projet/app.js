@@ -134,7 +134,9 @@ document.getElementById("btn-bloc-fin").onclick = () => createSlide("fin");
 function getNextAvailableNumber() {
     const existingNumbers = new Set();
     Object.values(state.slidesContent).forEach(slide => {
-        if (slide.slideNum) existingNumbers.add(parseInt(slide.slideNum));
+        if (slide.slideNum && slide.type !== 'condition') {
+            existingNumbers.add(parseInt(slide.slideNum));
+        }
     });
     let num = 1;
     while (existingNumbers.has(num)) num++;
@@ -145,7 +147,11 @@ function createSlide(type, savedId = null, savedPos = null, savedNum = null) {
   if(!savedId) state.slideCount++;
   
   const id = savedId || `slide-${state.slideCount}`;
-  const autoNum = savedNum || getNextAvailableNumber();
+  
+  let autoNum = savedNum;
+  if (!autoNum && type !== 'condition') {
+      autoNum = getNextAvailableNumber();
+  }
   
   if (!state.slidesContent[id]) {
       state.slidesContent[id] = { 
@@ -172,11 +178,11 @@ function createSlide(type, savedId = null, savedPos = null, savedNum = null) {
   infoOverlay.className = "slide-info-overlay";
   
   if(type === "condition") {
-      infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span><br><span>${autoNum}</span>`;
+      infoOverlay.innerHTML = `<span style="font-size:24px;">❓</span>`;
   } else if(type === "fin") {
-      infoOverlay.innerHTML = "🏁 " + autoNum;
+      infoOverlay.innerHTML = "🏁 " + (autoNum || "");
   } else {
-      infoOverlay.innerHTML = autoNum;
+      infoOverlay.innerHTML = autoNum || "";
   }
 
   slide.appendChild(previewWrapper);
@@ -298,19 +304,16 @@ function createConnectionObject(lineElement, fromId, toId, fromPort, toPort, typ
         selectConnection(connectionObj);
     });
 
-    // Double-clic pour changer le type de flèche (Aller-Retour)
     lineElement.addEventListener("dblclick", function (evt) {
         evt.stopPropagation();
         const start = this.getAttribute("marker-start");
         
         if (start) {
-            // Devient Simple
             this.removeAttribute("marker-start");
             connectionObj.type = 'simple';
             removeLinkButtonFromSlide(connectionObj.toId, connectionObj.fromId);
             if (window.updateLinkedList) window.updateLinkedList();
         } else {
-            // Devient Double
             this.setAttribute("marker-start", "url(#arrow-start)");
             connectionObj.type = 'double';
             addLinkButtonToSlide(connectionObj.toId, connectionObj.fromId);
@@ -421,7 +424,7 @@ const conditionOverlay = document.getElementById('condition-overlay');
 const conditionList = document.getElementById('condition-list');
 const timeSlideSelect = document.getElementById('time-slide-select'); 
 const timeDurationInput = document.getElementById('time-duration-input');
-const chkOneTime = document.getElementById('chk-one-time'); // Passage unique
+const chkOneTime = document.getElementById('chk-one-time');
 let currentConditionId = null;
 
 function openConditionModal(slideId) {
@@ -434,17 +437,14 @@ function openConditionModal(slideId) {
     const savedTime = data.timeCondition || { slideId: "", duration: 0 }; 
     const isOneTime = data.oneTimeOnly || false;
 
-    // Réinitialiser la checkbox passage unique
     if(chkOneTime) chkOneTime.checked = isOneTime;
 
-    // Création de la liste des slides disponibles
     Object.keys(state.slidesContent).forEach(otherId => {
         if (otherId === slideId) return;
 
         const otherData = state.slidesContent[otherId];
         const labelText = `Diapo ${otherData.slideNum || "?"}`; 
 
-        // 1. Visites
         const div = document.createElement("div");
         div.className = "condition-item";
         div.innerHTML = `
@@ -453,7 +453,6 @@ function openConditionModal(slideId) {
         `;
         conditionList.appendChild(div);
 
-        // 2. Temps
         const option = document.createElement("option");
         option.value = otherId;
         option.innerText = labelText;
@@ -478,15 +477,11 @@ if(btnSaveCondition) {
     btnSaveCondition.onclick = () => {
         if (!currentConditionId) return;
         
-        // 1. Visites
         const checkboxes = conditionList.querySelectorAll('input[type="checkbox"]:checked');
         const requiredIds = Array.from(checkboxes).map(cb => cb.value);
         
-        // 2. Temps
         const timeTarget = timeSlideSelect.value;
         const timeDuration = parseInt(timeDurationInput.value) || 0;
-
-        // 3. Passage Unique
         const isOneTime = chkOneTime ? chkOneTime.checked : false;
 
         if (!state.slidesContent[currentConditionId]) {
@@ -505,11 +500,10 @@ if(btnSaveCondition) {
             delete state.slidesContent[currentConditionId].timeCondition;
         }
         
-        // Mise à jour visuelle (Label sur le graphe)
         const slideNode = document.getElementById(currentConditionId);
         if(slideNode) {
             const info = slideNode.querySelector('.slide-info-overlay');
-            let label = `❓ ${state.slidesContent[currentConditionId].slideNum}`;
+            let label = `❓`;
             if (requiredIds.length > 0) label += ` (V:${requiredIds.length})`;
             if (timeTarget && timeDuration > 0) label += ` (⏱️)`;
             if (isOneTime) label += ` (1️⃣)`; 
@@ -623,20 +617,17 @@ const playerOverlay = document.getElementById('presentation-overlay');
 const playerStage = document.getElementById('player-stage');
 const btnClosePlayer = document.getElementById('btn-close-player');
 
-// Variables de session de jeu
 let visitedSlides = new Set(); 
 let visitedDurations = {}; 
 let currentSlideStartTime = 0;
 let currentPlayingSlideId = null;
 
-// --- DÉMARRER ---
 document.getElementById('btn-play').onclick = () => {
     if (!state.startSlideId) {
         alert("Veuillez définir une diapositive de départ (drapeau 🚩).");
         return;
     }
     
-    // Reset session
     visitedSlides.clear();
     visitedDurations = {};
     
@@ -647,7 +638,6 @@ document.getElementById('btn-play').onclick = () => {
     fitStageToScreen();
 };
 
-// --- UTILITAIRES PLAYER ---
 function fitStageToScreen() {
     const stageWidth = 960;
     const stageHeight = 540;
@@ -677,17 +667,16 @@ document.addEventListener('mozfullscreenchange', exitHandler);
 document.addEventListener('MSFullscreenChange', exitHandler);
 
 function exitHandler() {
-    // Actions à la sortie du plein écran si nécessaire
+    //
 }
 
-// --- NOTIFICATION VISUELLE INTERNE ---
 function showPlayerNotification(msg) {
     const notif = document.createElement('div');
     notif.style.position = 'absolute';
     notif.style.top = '20px';
     notif.style.left = '50%';
     notif.style.transform = 'translateX(-50%)';
-    notif.style.background = 'rgba(192, 57, 43, 0.95)'; // Rouge alerte
+    notif.style.background = 'rgba(192, 57, 43, 0.95)';
     notif.style.color = '#fff';
     notif.style.padding = '10px 20px';
     notif.style.borderRadius = '5px';
@@ -707,10 +696,19 @@ function showPlayerNotification(msg) {
     }, 3000);
 }
 
-// --- LOGIQUE PRINCIPALE DU JEU ---
-function loadSlideInPlayer(slideId) {
+function loadSlideInPlayer(slideId, fromId = null) {
     const data = state.slidesContent[slideId];
     if (!data) return;
+
+    if (data.type === 'condition') {
+        const result = evaluateCondition(slideId, fromId);
+        if (result.success) {
+            loadSlideInPlayer(result.nextId, slideId);
+        } else {
+            showPlayerNotification("Impasse : " + (result.error || "Route bloquée"));
+        }
+        return;
+    }
 
     currentPlayingSlideId = slideId;
     currentSlideStartTime = Date.now();
@@ -718,7 +716,6 @@ function loadSlideInPlayer(slideId) {
     visitedSlides.add(slideId);
     if (!visitedDurations[slideId]) visitedDurations[slideId] = 0;
 
-    // Rendu
     playerStage.innerHTML = data.html;
     playerStage.style.backgroundColor = data.bg || '#ffffff';
     playerStage.style.backgroundImage = data.bgImg || 'none';
@@ -729,16 +726,13 @@ function loadSlideInPlayer(slideId) {
         const targetId = link.dataset.target;
         const targetData = state.slidesContent[targetId];
 
-        // --- GESTION PASSAGE UNIQUE (Masquer bouton si déjà utilisé) ---
         if (targetData && targetData.type === 'condition' && targetData.oneTimeOnly) {
-            // Trouver la sortie de cette condition
             const outgoingConn = state.connections.find(c => {
                 const isConnected = (c.fromId === targetId || c.toId === targetId);
                 const otherEnd = (c.fromId === targetId) ? c.toId : c.fromId;
                 return isConnected && otherEnd !== slideId;
             });
 
-            // Si la destination a déjà été visitée, on cache le bouton
             if (outgoingConn) {
                 const destId = (outgoingConn.fromId === targetId) ? outgoingConn.toId : outgoingConn.fromId;
                 if (visitedSlides.has(destId)) {
@@ -746,12 +740,10 @@ function loadSlideInPlayer(slideId) {
                 }
             }
         }
-        // ----------------------------------------------------------------
 
         link.onclick = (e) => {
             e.stopPropagation();
             
-            // Calcul du temps passé
             const now = Date.now();
             const timeSpentSeconds = (now - currentSlideStartTime) / 1000;
             if (currentPlayingSlideId) {
@@ -759,68 +751,63 @@ function loadSlideInPlayer(slideId) {
                 currentSlideStartTime = now;
             }
 
-            const targetNodeElement = document.getElementById(targetId);
-
-            // CAS 1 : CIBLE = CONDITION
-            if (targetNodeElement && targetNodeElement.classList.contains('condition')) {
-                
-                let errors = [];
-
-                // A. Visites Requises
-                const requiredIds = targetData.requiredSlides || [];
-                const missingVisits = requiredIds.filter(reqId => !visitedSlides.has(reqId));
-                if (missingVisits.length > 0) {
-                   missingVisits.forEach(id => {
-                       const num = state.slidesContent[id].slideNum || "?";
-                       errors.push(`❌ Visiter la diapositive N° ${num}`);
-                   });
-                }
-
-                // B. Temps Requis
-                const timeCond = targetData.timeCondition;
-                if (timeCond && timeCond.slideId && timeCond.duration > 0) {
-                    const timeSpent = visitedDurations[timeCond.slideId] || 0;
-                    if (timeSpent < timeCond.duration) {
-                        const remaining = Math.ceil(timeCond.duration - timeSpent);
-                        const slideNum = state.slidesContent[timeCond.slideId].slideNum || "?";
-                        errors.push(`⏳ Rester encore ${remaining}s sur la diapo N° ${slideNum}`);
-                    }
-                }
-
-                // C. Vérification
-                if (errors.length > 0) {
-                    showPlayerNotification("Accès refusé :<br>" + errors.join("<br>"));
-                    return; 
-                } else {
-                    // SUCCÈS : ROUTAGE INTELLIGENT (Support Double Flèche & Aller-Retour)
-                    const nextConnection = state.connections.find(c => {
-                        // Connexion reliée à la condition...
-                        const isConnectedToCondition = (c.fromId === targetId || c.toId === targetId);
-                        // ... dont l'autre bout n'est PAS là d'où je viens
-                        const otherEnd = (c.fromId === targetId) ? c.toId : c.fromId;
-                        return isConnectedToCondition && otherEnd !== currentPlayingSlideId;
-                    });
-
-                    if (nextConnection) {
-                        const destId = (nextConnection.fromId === targetId) ? nextConnection.toId : nextConnection.fromId;
-                        goToSlideWithTransition(destId);
-                    } else {
-                        showPlayerNotification("Impasse : Aucune autre destination détectée.");
-                    }
-                    return;
-                }
-            }
-
-            // CAS 2 : CIBLE = SLIDE NORMALE
             goToSlideWithTransition(targetId);
         };
     });
 }
 
+function evaluateCondition(conditionId, fromId) {
+    const data = state.slidesContent[conditionId];
+    if (!data) return { success: false, error: "Condition introuvable" };
+
+    let errors = [];
+
+    const requiredIds = data.requiredSlides || [];
+    const missingVisits = requiredIds.filter(reqId => !visitedSlides.has(reqId));
+    if (missingVisits.length > 0) {
+       missingVisits.forEach(id => {
+           const num = state.slidesContent[id].slideNum || "?";
+           errors.push(`❌ Visiter la diapositive N° ${num}`);
+       });
+    }
+
+    const timeCond = data.timeCondition;
+    if (timeCond && timeCond.slideId && timeCond.duration > 0) {
+        const timeSpent = visitedDurations[timeCond.slideId] || 0;
+        if (timeSpent < timeCond.duration) {
+            const remaining = Math.ceil(timeCond.duration - timeSpent);
+            const slideNum = state.slidesContent[timeCond.slideId].slideNum || "?";
+            errors.push(`⏳ Rester encore ${remaining}s sur la diapo N° ${slideNum}`);
+        }
+    }
+
+    if (errors.length > 0) {
+        return { success: false, error: errors.join("<br>") };
+    }
+
+    const nextConnection = state.connections.find(c => {
+        const isConnected = (c.fromId === conditionId || c.toId === conditionId);
+        const otherEnd = (c.fromId === conditionId) ? c.toId : c.fromId;
+        return isConnected && otherEnd !== fromId;
+    });
+
+    if (nextConnection) {
+        const destId = (nextConnection.fromId === conditionId) ? nextConnection.toId : nextConnection.fromId;
+        return { success: true, nextId: destId };
+    } else {
+        return { success: false, error: "Aucune issue trouvée" };
+    }
+}
+
 function goToSlideWithTransition(targetId) {
+    if (state.slidesContent[targetId] && state.slidesContent[targetId].type === 'condition') {
+        loadSlideInPlayer(targetId, currentPlayingSlideId);
+        return;
+    }
+
     playerStage.style.opacity = 0;
     setTimeout(() => {
-        loadSlideInPlayer(targetId);
+        loadSlideInPlayer(targetId, currentPlayingSlideId);
         playerStage.style.opacity = 1;
     }, 150);
 }
@@ -845,7 +832,7 @@ function generateStandaloneHTML() {
     });
 
     const appState = {
-        version: "1.1",
+        version: "1.2",
         slides: state.slidesContent,
         connections: state.connections.map(c => ({ from: c.fromId, to: c.toId, type: c.type })),
         positions: nodePositions,
@@ -897,8 +884,11 @@ function generateStandaloneHTML() {
         const connections = ${connectionsJSON};
         const startId = "${startId}";
         const stage = document.getElementById('stage');
+        
         let visited = new Set();
+        let visitedDurations = {};
         let currentId = null; 
+        let startTime = 0;
 
         function showNotif(msg) {
             const notif = document.createElement('div');
@@ -908,11 +898,78 @@ function generateStandaloneHTML() {
             setTimeout(() => { notif.style.opacity = '0'; setTimeout(() => notif.remove(), 500); }, 3000);
         }
 
-        function goToSlide(id) {
+        function evaluateCondition(conditionId, fromId) {
+            const data = slides[conditionId];
+            if (!data) return { success: false, error: "Condition introuvable" };
+
+            let errors = [];
+
+            // A. Visites Requises
+            const requiredIds = data.requiredSlides || [];
+            const missingVisits = requiredIds.filter(reqId => !visited.has(reqId));
+            if (missingVisits.length > 0) {
+               missingVisits.forEach(id => {
+                   const num = slides[id].slideNum || "?";
+                   errors.push("❌ Visiter la diapositive N° " + num);
+               });
+            }
+
+            // B. Temps Requis
+            const timeCond = data.timeCondition;
+            if (timeCond && timeCond.slideId && timeCond.duration > 0) {
+                const timeSpent = visitedDurations[timeCond.slideId] || 0;
+                if (timeSpent < timeCond.duration) {
+                    const remaining = Math.ceil(timeCond.duration - timeSpent);
+                    const slideNum = slides[timeCond.slideId].slideNum || "?";
+                    errors.push("⏳ Rester encore " + remaining + "s sur la diapo N° " + slideNum);
+                }
+            }
+
+            if (errors.length > 0) {
+                return { success: false, error: errors.join("<br>") };
+            }
+
+            // C. Trouver la sortie
+            const nextConnection = connections.find(c => {
+                const isConnected = (c.from === conditionId || c.to === conditionId);
+                const otherEnd = (c.from === conditionId) ? c.to : c.from;
+                return isConnected && otherEnd !== fromId;
+            });
+
+            if (nextConnection) {
+                const destId = (nextConnection.from === conditionId) ? nextConnection.to : nextConnection.from;
+                return { success: true, nextId: destId };
+            } else {
+                return { success: false, error: "Aucune issue trouvée" };
+            }
+        }
+
+        function goToSlide(id, fromId = null) {
             const data = slides[id];
             if (!data) return;
             
+            // --- GESTION DES CHAÎNES DE CONDITIONS ---
+            if (data.type === 'condition') {
+                const result = evaluateCondition(id, fromId);
+                if (result.success) {
+                    goToSlide(result.nextId, id);
+                } else {
+                    showNotif("Impasse : " + (result.error || "Route bloquée"));
+                }
+                return;
+            }
+
+            // Gestion du temps
+            const now = Date.now();
+            if (currentId) {
+                const timeSpent = (now - startTime) / 1000;
+                if (!visitedDurations[currentId]) visitedDurations[currentId] = 0;
+                visitedDurations[currentId] += timeSpent;
+            }
+            startTime = now;
+            
             visited.add(id);
+            if (!visitedDurations[id]) visitedDurations[id] = 0;
             currentId = id;
 
             stage.style.opacity = 0;
@@ -946,30 +1003,14 @@ function generateStandaloneHTML() {
 
                     link.onclick = (e) => {
                         e.stopPropagation();
+                        // Mise à jour du temps au clic avant transition
+                        const clickNow = Date.now();
+                        const clickTimeSpent = (clickNow - startTime) / 1000;
+                        if (!visitedDurations[currentId]) visitedDurations[currentId] = 0;
+                        visitedDurations[currentId] += clickTimeSpent;
+                        startTime = clickNow;
 
-                        if (targetData && targetData.type === 'condition') {
-                            const requiredIds = targetData.requiredSlides || [];
-                            const missing = requiredIds.filter(reqId => !visited.has(reqId));
-                            
-                            if (missing.length > 0) {
-                                showNotif("❌ Vous n'avez pas visité toutes les diapositives requises.");
-                                return;
-                            }
-
-                            // Routage intelligent Export
-                            const outgoingConn = connections.find(c => {
-                                const isConnected = (c.from === targetId || c.to === targetId);
-                                const otherEnd = (c.from === targetId) ? c.to : c.from;
-                                return isConnected && otherEnd !== currentId;
-                            });
-                            
-                            if (outgoingConn) {
-                                const destId = (outgoingConn.from === targetId) ? outgoingConn.to : outgoingConn.from;
-                                goToSlide(destId); 
-                            }
-                            return;
-                        }
-                        goToSlide(targetId);
+                        goToSlide(targetId, currentId);
                     };
                 });
                 stage.style.opacity = 1;
