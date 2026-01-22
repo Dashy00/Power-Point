@@ -69,7 +69,7 @@ html, body {
 }
 
 .sidebar-item:hover { 
-    background-color: #8d6e63; 
+    background-color: rgba(141, 110, 99, 0.2);
 }
 
 .sidebar-item .icon { 
@@ -101,7 +101,7 @@ html, body {
 .sidebar-item.set-start {
     background-color: rgba(141, 110, 99, 0.1);
     border-color: #8d6e63;
-    color: #8d6e63;
+    color: #5d4037;
 }
 .sidebar-item.set-start:hover {
     background-color: rgba(141, 110, 99, 0.2);
