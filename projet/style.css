@@ -275,8 +275,27 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .back-btn { padding: 6px 15px; background: #dcd7c9; color: #3e2723; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
 .back-btn:hover { background: #c7bba8; }
 
-.overlay-body { display: flex; flex: 1; }
-.overlay-sidebar { width: 200px; background: #e8e4d9; color: #4a4a4a; padding: 20px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #dcd7c9; }
+.overlay-body { 
+    display: flex; 
+    flex: 1; 
+    overflow: hidden; 
+}
+
+/* La barre latérale d'édition (gauche et droite) */
+.overlay-sidebar { 
+    width: 240px; 
+    background: #e8e4d9; 
+    color: #4a4a4a; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    border-right: 1px solid #dcd7c9; 
+    overflow-y: auto;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
 .overlay-sidebar h4 { margin-bottom: 5px; font-size: 14px; color: #795548; }
 .overlay-btn { padding: 10px; background: #8d6e63; color: white; border: none; border-radius: 5px; cursor: pointer; text-align: center; font-weight: bold; width: 100%; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .overlay-btn:hover { background: #6d4c41; }
@@ -285,50 +304,87 @@ line.selected { stroke: #8d6e63 !important; stroke-width: 5 !important; }
 .shape-btn { padding: 10px; font-size: 18px; background: transparent; border: 1px solid #dcd7c9; color: #5d4037; }
 .shape-btn:hover { background: rgba(255, 255, 255, 0.5); border-color: #8d6e63; }
 
-.overlay-workspace { flex: 1; display: flex; justify-content: center; align-items: center; background: #eceae4; overflow: auto; position: relative; padding: 40px; }
+/* ESPACE DE TRAVAIL CENTRAL */
+.overlay-workspace { 
+    flex: 1; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    background: #eceae4; 
+    overflow: auto; 
+    position: relative; 
+    padding: 40px; 
+}
 .slide-zoom-wrapper { display: flex; justify-content: center; align-items: center; transition: transform 0.1s ease-out; transform-origin: center center; }
 .overlay-slide { width: 960px; height: 540px; background: white; position: relative; box-shadow: 0 5px 20px rgba(93, 64, 55, 0.15); overflow: hidden; background-size: cover; background-position: center; flex-shrink: 0; }
 
-/* Panneau droit pour les diapositives liées dans l'éditeur */
-.overlay-linked {
-    width: 260px;
-    background: #faf7f4;
-    border-left: 1px solid #e1ddd6;
+/* --- BARRE DE DROITE (CHEMINS & LOGIQUE) --- */
+.right-sidebar {
+    border-right: none;
+    border-left: 1px solid #dcd7c9;
+}
+
+.sidebar-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #7a5a49;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+}
+
+/* --- CARTES DE LIENS (Style "StoryBuilder") --- */
+.link-card {
+    background: white;
+    border-radius: 8px;
     padding: 12px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-.overlay-linked h4 {
-    margin: 0 0 8px 0;
-    color: #5d4037;
-    font-size: 14px;
-}
-.linked-list { display: flex; flex-direction: column; gap: 8px; }
-.linked-item {
-    background: #fff;
-    border: 1px solid #e6e0d7;
-    border-radius: 6px;
-    padding: 6px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
     cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.linked-item:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
-.linked-thumb {
-    width: 72px;
-    height: 42px;
-    background: #f8f6f3;
-    border: 1px solid #eee;
-    overflow: hidden;
+
+.link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(141, 110, 99, 0.15);
+    border-color: #8d6e63;
+}
+
+.link-card-icon {
+    width: 36px;
+    height: 36px;
+    background: #f5f5f5;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 18px;
+    color: #8d6e63;
+    flex-shrink: 0;
 }
-.linked-thumb .thumb-inner { transform-origin: top left; transform: scale(0.35); width: 200%; }
-.linked-meta { flex: 1; font-size: 13px; color: #3e2723; }
-.linked-meta .num { font-weight: 700; display: inline-block; background: #fff; padding: 4px 8px; border-radius: 6px; border: 1px solid #eee; }
 
+.link-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.link-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #3e2723;
+}
+
+.link-card-desc {
+    font-size: 11px;
+    color: #888;
+}
+
+/* --- Floating Toolbar --- */
 .floating-toolbar { position: absolute; display: none; align-items: center; gap: 5px; padding: 8px 12px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); z-index: 2100; border: 1px solid #dcd7c9; }
 .floating-toolbar.visible { display: flex; }
 .floating-toolbar select { padding: 4px 8px; border: 1px solid #dcd7c9; border-radius: 4px; background: #fdfbf7; color: #4e342e; font-size: 13px; cursor: pointer; }

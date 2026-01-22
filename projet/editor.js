@@ -365,81 +365,104 @@ document.getElementById("btn-close-editor").onclick = () => {
   state.currentEditingId = null;
 };
 
-  // --- LISTE DES DIAPOS LIEES (Panneau droit) ---
-  function getLinkedSlideIds(slideId) {
+// --- LISTE DES DIAPOS LIEES (Panneau droit style "StoryBuilder") ---
+function getLinkedSlideIds(slideId) {
     if (typeof state === 'undefined' || !state.connections) return { out: [], in: [] };
-    const out = state.connections.filter(c => c.fromId === slideId).map(c => c.toId);
-    const inp = state.connections.filter(c => c.toId === slideId).map(c => c.fromId);
-    return { out: Array.from(new Set(out)), in: Array.from(new Set(inp)) };
-  }
+    
+    // On récupère les connexions complètes, pas juste les IDs
+    const outgoing = state.connections.filter(c => c.fromId === slideId);
+    const incoming = state.connections.filter(c => c.toId === slideId);
+    
+    return { outgoing, incoming };
+}
 
-  function renderLinkedSlidesPanel() {
-    const panel = document.getElementById('linkedSlidesList');
+function renderLinkedSlidesPanel() {
+    const panel = document.getElementById('linkedSlidesPanel');
     if (!panel) return;
-    panel.innerHTML = '';
+    
+    // On vide et on remet le titre
+    panel.innerHTML = `
+        <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #3e2723;">Chemins & Logique</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Gérez les connexions de cette diapositive.</p>
+    `;
+
     const cur = state.currentEditingId;
     if (!cur) return;
 
-    const linked = getLinkedSlideIds(cur);
+    const links = getLinkedSlideIds(cur);
 
-    const makeSection = (title, ids) => {
-      const header = document.createElement('div');
-      header.style.fontSize = '12px';
-      header.style.color = '#7a5a49';
-      header.style.margin = '6px 0 4px';
-      header.textContent = title;
-      panel.appendChild(header);
+    // Fonction utilitaire pour créer une carte
+    const createLinkCard = (connection, isOutgoing) => {
+        const targetId = isOutgoing ? connection.toId : connection.fromId;
+        const slideData = state.slidesContent[targetId] || {};
+        const slideNum = slideData.slideNum || "?";
+        const type = slideData.type === 'condition' ? 'Condition' : 'Diapositive';
+        
+        // Icône selon le type
+        let icon = "📄";
+        if(slideData.type === 'condition') icon = "⚡";
+        if(slideData.type === 'fin') icon = "🏁";
 
-      ids.forEach(id => {
-        const item = document.createElement('div');
-        item.className = 'linked-item';
+        const card = document.createElement('div');
+        card.className = 'link-card';
+        card.innerHTML = `
+            <div class="link-card-icon">${icon}</div>
+            <div class="link-card-info">
+                <span class="link-card-title">${isOutgoing ? 'Vers' : 'De'} ${type} ${slideNum}</span>
+                <span class="link-card-desc">Liaison ${connection.type === 'double' ? 'Aller-Retour' : 'Simple'}</span>
+            </div>
+        `;
 
-        const thumb = document.createElement('div');
-        thumb.className = 'linked-thumb';
-        const inner = document.createElement('div');
-        inner.className = 'thumb-inner';
-        // utiliser l'HTML sauvegardé comme aperçu
-        const slideData = state.slidesContent[id] || { html: '' };
-        inner.innerHTML = slideData.html || '';
-        thumb.appendChild(inner);
-
-        const meta = document.createElement('div');
-        meta.className = 'linked-meta';
-        const num = document.createElement('div');
-        num.className = 'num';
-        num.textContent = slideData.slideNum || id;
-        meta.appendChild(num);
-        const openHint = document.createElement('div');
-        openHint.style.fontSize = '12px';
-        openHint.style.color = '#6d4c41';
-        openHint.textContent = 'Cliquer pour ouvrir';
-        meta.appendChild(openHint);
-
-        item.appendChild(thumb);
-        item.appendChild(meta);
-
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openEditor(id);
+        card.addEventListener('click', () => {
+            openEditor(targetId);
         });
-
-        panel.appendChild(item);
-      });
+        
+        return card;
     };
 
-    if (linked.out.length > 0) makeSection('Sortie →', linked.out);
-    if (linked.in.length > 0) makeSection('Entrée ←', linked.in);
-    if (linked.out.length === 0 && linked.in.length === 0) {
-      const empty = document.createElement('div');
-      empty.style.color = '#8d6e63';
-      empty.style.fontSize = '13px';
-      empty.textContent = 'Aucune diapositive liée.';
-      panel.appendChild(empty);
-    }
-  }
+    // 1. Section SORTIES (Vers où on va)
+    if (links.outgoing.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'sidebar-section-title';
+        title.textContent = 'Connexions Sortantes';
+        panel.appendChild(title);
 
-  // Exposer une fonction globale qui peut être appelée depuis `app.js` après modification des connexions
-  window.updateLinkedList = renderLinkedSlidesPanel;
+        links.outgoing.forEach(conn => {
+            panel.appendChild(createLinkCard(conn, true));
+        });
+    }
+
+    // 2. Section ENTRÉES (D'où on vient)
+    if (links.incoming.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'sidebar-section-title';
+        title.style.marginTop = "20px";
+        title.textContent = 'Connexions Entrantes';
+        panel.appendChild(title);
+
+        links.incoming.forEach(conn => {
+            panel.appendChild(createLinkCard(conn, false));
+        });
+    }
+
+    // Cas vide
+    if (links.outgoing.length === 0 && links.incoming.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.padding = "20px";
+        empty.style.textAlign = "center";
+        empty.style.border = "2px dashed #dcd7c9";
+        empty.style.borderRadius = "8px";
+        empty.style.color = "#8d6e63";
+        empty.innerHTML = `
+            <span style="font-size: 24px; display:block; margin-bottom:5px;">🔗</span>
+            <span style="font-size: 13px;">Aucune connexion.<br>Reliez cette diapositive depuis le graphe.</span>
+        `;
+        panel.appendChild(empty);
+    }
+}
+
+// Exposer une fonction globale qui peut être appelée depuis `app.js` après modification des connexions
+window.updateLinkedList = renderLinkedSlidesPanel;
 
 // --- GESTION DES ITEMS ---
 function createItem(html, className, w = 150, h = 50) {
@@ -905,6 +928,3 @@ window.addEventListener("keydown", (e) => {
     }
   }
 });
-
-
-
